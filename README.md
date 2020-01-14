@@ -18,7 +18,7 @@ $ pip install runtype
 
 No dependencies.
 
-Requires Python 3.7 or up
+Requires Python 3.7 or up (or Python 3.6 with the dataclasses backport)
 
 [![Build Status](https://travis-ci.org/erezsh/runtype.svg?branch=master)](https://travis-ci.org/erezsh/runtype)
 [![codecov](https://codecov.io/gh/erezsh/runtype/branch/master/graph/badge.svg)](https://codecov.io/gh/erezsh/runtype)
