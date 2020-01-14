@@ -106,7 +106,7 @@ Dispatch is designed to always throw an error when the right choice isn't obviou
 
 ## Performance
 
-Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](examples/benchmark\_dispatch.py)), which is negligable.
+Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch]), which is negligable.
 
 ## Limitations
 

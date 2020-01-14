@@ -10,7 +10,7 @@ def __post_init__(self, isinstance=isa):
             raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
 
 def replace(self, **kwargs):
-    """Returns a new instance, with the given attibutes overwriting the existing ones.
+    """Returns a new instance, with the given attibutes and values overwriting the existing ones.
 
     Useful for making copies with small updates.
 
@@ -19,10 +19,10 @@ def replace(self, **kwargs):
         ... class A:
         ...     a: int
         ...     b: int
-        >>> A(1, 2).remake(a=-2)
+        >>> A(1, 2).replace(a=-2)
         A(a=-2, b=2)
 
-        >>> some_instance.remake() == copy(some_instance)   # Equivalent operations
+        >>> some_instance.replace() == copy(some_instance)   # Equivalent operations
         True
     """
     attrs = dict(self)

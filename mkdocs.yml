@@ -1,0 +1,7 @@
+site_name: Runtype
+theme: readthedocs
+nav:
+    - Main Page: index.md
+    - isa module: isa.md
+    - dispatch module: dispatch.md
+    - dataclass module: dataclass.md
