@@ -2,11 +2,13 @@ import unittest
 from unittest import TestCase
 
 from typing import Any, List, Dict, Tuple, Union, Optional
+from dataclasses import FrozenInstanceError
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
 from runtype.dispatch import Dispatch, DispatchError
+from runtype.dataclass import dataclass
 
 class TestDispatch(TestCase):
     def setUp(self):
@@ -315,6 +317,70 @@ class TestDispatch(TestCase):
 
 
 
+class TestDataclass(TestCase):
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        @dataclass
+        class Point:
+            x: int
+            y: int
+
+            def __post_init__(self):
+                assert self.x != 0
+
+        p = Point(2,3)
+        assert dict(p) == {'x':2, 'y':3}
+
+        p2 = p.replace(x=30)
+        assert dict(p2) == {'x':30, 'y':3}
+        assert p2.aslist() == [30, 3]
+        assert p2.astuple() == (30, 3)
+
+        self.assertRaises(AssertionError, Point, 0, 2)
+
+        self.assertRaises(TypeError, Point, 0, "a") # Before post_init
+        self.assertRaises(TypeError, Point, 1.2, 3)
+
+    def test_typing(self):
+        @dataclass
+        class A:
+            a: List[int]
+            b: Optional[str]
+
+        a = A([1,2,3], "a")
+        a = A([], None)
+
+        try:
+            a.b = "str"
+            assert False
+        except FrozenInstanceError:
+            pass
+
+        self.assertRaises(TypeError, A, [1,2,"a"], None)
+        self.assertRaises(TypeError, A, [1,2,3], 3)
+        self.assertRaises(TypeError, A, None, None)
+
+    def test_unfrozen(self):
+        @dataclass(frozen=False)
+        class A:
+            a: str
+
+        a = A("hello")
+        a.a = "ba"
+        a.a = 4     # Bad, but that's how it is
+
+    def test_custom_isinstance(self):
+        @dataclass(isinstance=lambda x,y: x in y)
+        class A:
+            a: range(10)
+            b: ("a", "b")
+
+        a = A(3, "a")
+        a = A(9, "b")
+        self.assertRaises(TypeError, A, 11, "a")
+        self.assertRaises(TypeError, A, 3, "c")
 
 
 if __name__ == '__main__':
