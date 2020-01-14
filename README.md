@@ -36,33 +36,28 @@ from runtype import Dispatch
 dp = Dispatch()
 
 @dp
-def add1(i: Optional[int]):
-    return i + 1
+def join(seq, sep: str = ''):
+    return sep.join(str(s) for s in seq)
 
 @dp
-def add1(s: Optional[str]):
-    return s + "1"
-
-@dp
-def add1(a):  # Any, which is the least-specific
-    return (a, 1)
-
+def join(seq, sep: list):
+    return join(join(sep, str(s)) for s in seq)
 ...
 
->>> add1(1)
-2
+>>> join([0, 0, 7])                 # -> 1st definition
+'007'
 
->>> add1("1")
-11
+>>> join([1, 2, 3], ', ')           # -> 1st definition
+'1, 2, 3'
 
->>> add1(1.0)
-(1.0, 1)
+>>> join([0, 0, 7], ['(', ')'])     # -> 2nd definition
+'(0)(0)(7)'
 
->>> add1(None)  # Uh oh! The first two functions are both specific enough!
+>>> join([1, 2, 3], 0)              # -> no definition
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
   ...
-runtype.dispatch.DispatchError: Ambiguous dispatch: Unable to resolve specificity of types: (<class 'str'>, <class 'NoneType'>), (<class 'int'>, <class 'NoneType'>)
+runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 'list'>, <class 'int'>)
 
 ```
 

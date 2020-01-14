@@ -14,6 +14,10 @@ Dispatch uses the [`isa`](isa.md) module as the basis for its type matching, whi
 
 Users who are familiar with Julia's multiple dispatch, will find runtype's dispatch to be very familiar.
 
+Unlike in Julia, you are asked to instanciate your own dispatch-group, to avoid collisions between different modules and projects that aren't aware of each other.
+
+Ideally, every project will instanciate Dispatch only once, in a module such as `utils.py` or `common.py`.
+
 ## Basic Use
 
 First, users must instanciate the `Dispatch` object, to create a dispatch group:
