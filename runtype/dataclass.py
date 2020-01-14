@@ -73,7 +73,7 @@ def _process_class(cls, isinstance, **kw):
     return _dataclass(c, **kw)
 
 
-def dataclass(cls=None, /, *, isinstance=isa, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+def dataclass(cls=None, *, isinstance=isa, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
     * Adds run-time type validation
