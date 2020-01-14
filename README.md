@@ -18,6 +18,8 @@ $ pip install runtype
 
 No dependencies.
 
+[![Build Status](https://travis-ci.org/erezsh/runtype.svg?branch=master)](https://travis-ci.org/erezsh/runtype)
+
 ## Examples
 
 ### Multiple Dispatch
