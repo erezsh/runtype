@@ -10,6 +10,10 @@
 
 Runtype's integration with the `typing` module allows to use type signatures such as `List[int]`, `Optional[str]`, or `Union[int, str, Callable]`.
 
+## Docs
+
+Read the docs here: https://runtype.readthedocs.io/
+
 ## Install
 
 ```bash
@@ -99,7 +103,7 @@ Traceback (most recent call last):
 [Animal] Attribute 'make_sound' expected value of type typing.Union[typing.Callable, NoneType], instead got 'woof'
 ```
 
-### Performance
+## Performance
 Type verification in classes introduces a slight run-time overhead.
 
 Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](examples/benchmark\_dispatch.py)), which is negligable.
