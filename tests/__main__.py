@@ -36,9 +36,16 @@ class TestIsa(TestCase):
         assert isa(lambda:0, Callable)
         assert not isa(1, Callable)
 
+
         assert issubclass(List[int], list)
         assert issubclass(Tuple[int], tuple)
+        assert issubclass(Tuple[int, int], tuple)
         assert not issubclass(tuple, Tuple[int])
+
+        assert isa((3,), Tuple[int])
+        assert isa((3, 5), Tuple[int, int])
+        assert not isa((3, 5), Tuple[int, float])
+        assert not isa((3, 5), Tuple[int])
 
 class TestDispatch(TestCase):
     def setUp(self):
@@ -285,7 +292,7 @@ class TestDispatch(TestCase):
 
         _test_canon(object, Any, Union[Any], include_none=True)
         _test_canon(list, List, List[Any], Union[List[Union[Any]]])
-        _test_canon(tuple, Tuple, Tuple[Any])
+        _test_canon(tuple, Tuple)
         _test_canon(dict, Dict, Dict[Any, Any])
         _test_canon(int, Union[int])
         _test_canon(int, Union[Union[int]])

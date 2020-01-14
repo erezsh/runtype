@@ -21,6 +21,12 @@ def isa(obj, t):
     elif isinstance(t, TypeBase):
         if t.__origin__ is list:
             return all(isa(item, t.__args__) for item in obj)
+        elif t.__origin__ is tuple:
+            if not isinstance(obj, tuple):
+                return False
+            if len(t.__args__) != len(obj):
+                return False
+            return all(isa(a, b) for a, b in zip(obj, t.__args__))
         elif t.__origin__ is dict:
             kt, vt = t.__args__
             return all(isa(k, kt) and isa(v, vt) for k, v in obj.items())

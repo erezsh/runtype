@@ -2,6 +2,8 @@
 
 The `dispatch` module provides a decorator that enables multiple-dispatch for functions.
 
+You can think of multiple-dispatch as function overloading on steroids.
+
 Multiple-dispatch allows you to:
 
 1. Write type-specific functions using a dispatch model that is much more flexible than object-oriented.
@@ -110,9 +112,9 @@ Multiple-dispatch caches call-signatures by default (disable at your own risk!),
 
 ## Limitations
 
-Dispatch currently doesn't support:
+Dispatch currently doesn't support, and will simply ignore:
 
-* keyword arguments
+* keyword arguments (Dispatch relies on the order of the arguments)
 
 * `*args`
 

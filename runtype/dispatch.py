@@ -8,6 +8,36 @@ class DispatchError(Exception):
     pass
 
 class Dispatch:
+    """Create a decorator attached to a dispatch group,
+    that when applied to a function, enables multiple-dispatch for it.
+
+    Example:
+        >>> from runtype import Dispatch
+        >>> dp = Dispatch()
+
+        >>> @dp
+        ... def add1(i: Optional[int]):
+        ...     return i + 1
+
+        >>> @dp
+        ... def add1(s: Optional[str]):
+        ...     return s + "1"
+
+        >>> @dp
+        ... def add1(a):  # Any, which is the least-specific
+        ...     return (a, 1)
+
+        >>> add1(1)
+        2
+
+        >>> add1("1")
+        11
+
+        >>> add1(1.0)
+        (1.0, 1)
+
+
+    """
     def __init__(self):
         self.roots = defaultdict(TypeTree)
 
@@ -118,8 +148,8 @@ def get_func_signatures(f):
     typesigs = []
     typesig = []
     for p in sig.parameters.values():
-        if p.kind is p.VAR_KEYWORD or p.kind is p.VAR_POSITIONAL:
-            raise TypeError("Dispatch doesn't support *args or **kwargs yet")
+        # if p.kind is p.VAR_KEYWORD or p.kind is p.VAR_POSITIONAL:
+        #     raise TypeError("Dispatch doesn't support *args or **kwargs yet")
 
         t = p.annotation
         if t is sig.empty:

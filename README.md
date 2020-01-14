@@ -32,23 +32,32 @@ Requires Python 3.7 or up (or Python 3.6 with the dataclasses backport)
 ### Multiple Dispatch
 
 ```python
->>> from runtype import Dispatch
->>> dp = Dispatch()
->>> @dp
-... def add1(i: Optional[int]):
-...     return i + 1
->>> @dp
-... def add1(s: Optional[str]):
-...     return s + "1"
->>> @dp
-... def add1(a):  # Any, which is the least-specific
-...     return (a, 1)
+from runtype import Dispatch
+dp = Dispatch()
+
+@dp
+def add1(i: Optional[int]):
+    return i + 1
+
+@dp
+def add1(s: Optional[str]):
+    return s + "1"
+
+@dp
+def add1(a):  # Any, which is the least-specific
+    return (a, 1)
+
+...
+
 >>> add1(1)
 2
+
 >>> add1("1")
 11
+
 >>> add1(1.0)
 (1.0, 1)
+
 >>> add1(None)  # Uh oh! The first two functions are both specific enough!
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
