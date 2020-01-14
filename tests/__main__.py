@@ -102,6 +102,27 @@ class TestDispatch(TestCase):
         assert to_list([1]) == [1]
         assert to_list({1: 2}) == [(1, 2)]
 
+    def test_keywords(self):
+        dp = Dispatch()
+
+        @dp
+        def f(x:int=2, y:int=2):
+            return x-y
+
+        assert f(5, 1) == 4
+        assert f(4) == 2
+        assert f() == 0
+
+        @dp
+        def f(x:object, y:int=2):
+            return x+y
+
+        assert f(5, 1) == 4
+        assert f(4) == 2
+        assert f() == 0
+        assert f(1.5) == 3.5
+        assert f(1.5, 1) == 2.5
+
     def test_methods(self):
         dy = Dispatch()
 

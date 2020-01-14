@@ -42,7 +42,7 @@ def test_add(f):
 def test():
     ta = test_add(add)
     td = test_add(dispatched_add)
-    print(f"Dispatch is only {td/ta} times slower than adding two numbers!")
+    print(f"Dispatch is only {(td-ta)/ta} times slower than adding two numbers!")
 
 if __name__ == '__main__':
     test()

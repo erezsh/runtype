@@ -84,11 +84,11 @@ Although both functions "match" with `f(1, 2)`, the first definition is unambigu
 
 ## Ambiguity in Dispatch
 
-Ambiguity can result in two situations:
+Ambiguity can result from two situations:
 
 1. The argument matches two parameters, and neither is a subclass of the other (Example: `None` matches both `Optional[str]` and `Optional[int]`)
 
-2. Two (or more) arguments are most specific in different functions.
+2. Specificity isn't consistent in one function - each argument "wins" in a different function.
 
 Example:
 ```python
@@ -106,7 +106,7 @@ Dispatch is designed to always throw an error when the right choice isn't obviou
 
 ## Performance
 
-Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch]), which is negligable.
+Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py)), which is negligable for most use-cases.
 
 ## Limitations
 

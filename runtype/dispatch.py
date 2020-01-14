@@ -13,6 +13,7 @@ class Dispatch:
 
     def __call__(self, f):
         root = self.roots[f.__name__]
+        root.name = f.__name__
 
         root.define_function(f)
 
@@ -34,10 +35,10 @@ class TypeTree:
         for a in args:
             nodes = [n for node in nodes for n in node.follow_arg(a)]
 
-        funcs = [node.func for node in nodes]
+        funcs = [node.func for node in nodes if node.func]
 
         if len(funcs) == 0:
-            raise DispatchError("Function not found")
+            raise DispatchError(f"Function '{self.name}' not found for signature {get_args_simple_signature(args)}")
         elif len(funcs) > 1:
             f, _sig = max_cmp(funcs, choose_most_specific_function)
         else:
@@ -56,14 +57,14 @@ class TypeTree:
 
 
     def define_function(self, f):
-        signature = list(get_func_simple_signature(f))
-        node = self.root
-        for t in signature:
-            node = node.follow_type[t]
+        for signature in get_func_signatures(f):
+            node = self.root
+            for t in signature:
+                node = node.follow_type[t]
 
-        if node.func is not None:
-            raise ValueError(f"Function {f.__name__} matches existing signature: {signature}!")
-        node.func = f, signature
+            if node.func is not None:
+                raise ValueError(f"Function {f.__name__} matches existing signature: {signature}!")
+            node.func = f, signature
 
 
 class TypeNode:
@@ -112,17 +113,31 @@ def choose_most_specific_function(func1, func2):
     return f2, sig2
 
 
-def get_func_simple_signature(f):
+def get_func_signatures(f):
     sig = inspect.signature(f)
+    typesigs = []
+    typesig = []
     for p in sig.parameters.values():
+        if p.kind is p.VAR_KEYWORD or p.kind is p.VAR_POSITIONAL:
+            raise TypeError("Dispatch doesn't support *args or **kwargs yet")
+
         t = p.annotation
-        if t is inspect._empty:
+        if t is sig.empty:
             t = object
         else:
             t = canonize_type(t)
         # elif not isinstance(t, type):
         #     raise TypeError("Annotation isn't a type")
-        yield t
+
+        if p.default is not p.empty:
+            # From now on, everything is optional
+            typesigs.append(list(typesig))
+
+        typesig.append(t)
+
+    typesigs.append(typesig)
+    return typesigs
+
 
 def get_args_simple_signature(args):
     return tuple(type(a) for a in args)
