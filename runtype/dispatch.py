@@ -2,7 +2,7 @@ from collections import defaultdict
 import inspect
 from functools import wraps
 
-from .isa import isa, test_subclass, canonize_type
+from .isa import isa, issubclass, canonize_type
 
 class DispatchError(Exception):
     pass
@@ -93,9 +93,9 @@ def choose_most_specific_function(func1, func2):
         if a == b:
             continue
 
-        if test_subclass(a, b):
+        if issubclass(a, b):
             x = -1
-        elif test_subclass(b, a):
+        elif issubclass(b, a):
             x = 1
         else:
             raise DispatchError(f"Ambiguous dispatch: Unable to resolve specificity of types: {a}, {b}")

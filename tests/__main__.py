@@ -1,14 +1,44 @@
 import unittest
 from unittest import TestCase
 
-from typing import Any, List, Dict, Tuple, Union, Optional
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable
 from dataclasses import FrozenInstanceError
 
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype.dispatch import Dispatch, DispatchError
-from runtype.dataclass import dataclass
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass
+
+class TestIsa(TestCase):
+    def setUp(self):
+        pass
+
+    def test_basic(self):
+        assert isa(1, int)
+        assert issubclass(int, object)
+        assert isa([1,2], List[int])
+        assert not isa([1,"a"], List[int])
+        assert not isa([1,2], List[str])
+
+        self.assertRaises(TypeError, isa, 1, 1)
+        self.assertRaises(TypeError, issubclass, 1, 1)
+
+        assert isa(object, Any)
+        assert isa(Any, object)
+
+        assert issubclass(object, Any)
+        assert issubclass(Any, object)
+        assert issubclass(Callable, Callable)
+
+        assert isa({'a': 1}, Dict[str, int])
+        assert not isa({'a': 1}, Dict[str, str])
+        assert not isa({'a': 'a'}, Dict[str, int])
+        assert isa(lambda:0, Callable)
+        assert not isa(1, Callable)
+
+        assert issubclass(List[int], list)
+        assert issubclass(Tuple[int], tuple)
+        assert not issubclass(tuple, Tuple[int])
 
 class TestDispatch(TestCase):
     def setUp(self):

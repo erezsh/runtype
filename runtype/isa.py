@@ -6,9 +6,10 @@ def _isinstance(a, b):
     except TypeError as e:
         raise TypeError(f"Bad arguments to isinstance: {a}, {b}") from e
 
+_orig_issubclass = issubclass
 def _issubclass(a, b):
     try:
-        return issubclass(a, b)
+        return _orig_issubclass(a, b)
     except TypeError as e:
         raise TypeError(f"Bad arguments to issubclass: {a}, {b}") from e
 
@@ -25,9 +26,9 @@ def isa(obj, t):
             return all(isa(k, kt) and isa(v, vt) for k, v in obj.items())
         elif t.__origin__ is Union:
             return isa(obj, t.__args__)
-        elif issubclass(t, Callable):
+        elif _issubclass(t, Callable):
             return callable(obj)
-        assert False, t.__origin__
+        assert False, t
     return _isinstance(obj, t)
 
 
@@ -50,17 +51,24 @@ def canonize_type(t):
                 return t.__args__
         return t
 
-def test_subclass(t1, t2):
+def issubclass(t1, t2):
     if t2 is Any:
         return True
 
     t1 = canonize_type(t1)
     if isinstance(t1, tuple):
-        return all(test_subclass(t, t2) for t in t1)
+        return all(issubclass(t, t2) for t in t1)
 
     if isinstance(t2, tuple):
-        return any(test_subclass(t1, t) for t in t2)
+        return any(issubclass(t1, t) for t in t2)
     elif isinstance(t2, TypeBase):
         t2 = canonize_type(t2)
+
+    if isinstance(t2, TypeBase):
+        return t1 == t2    # TODO add some clever logic here
+
+    elif isinstance(t1, TypeBase):
+        return issubclass(t1.__origin__, t2)    # XXX more complicated than that?
+
 
     return _issubclass(t1, t2)
