@@ -48,12 +48,11 @@ class TypeTree:
         "Memoized version of find_function"
         sig = get_args_simple_signature(args)
         try:
-            f = self._cache[sig]
+            return self._cache[sig]
         except KeyError:
             f = self.find_function(args)
             self._cache[sig] = f
-
-        return f
+            return f
 
 
     def define_function(self, f):

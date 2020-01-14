@@ -1,7 +1,5 @@
 # Runtype
 
-(Work In Progress! Check back in a few days)
-
 **runtype** is composed of several utility modules:
 
 1. **dispatch** - Provides a decorator for fast multi-dispatch at run-time for functions, with sophisticated ambiguity resolution.
@@ -20,7 +18,7 @@ $ pip install runtype
 
 No dependencies.
 
-## Example
+## Examples
 
 ### Multiple Dispatch
 
@@ -97,12 +95,21 @@ Traceback (most recent call last):
 ```
 
 ### Performance
-Type verification introduces a slight run-time overhead, but dataclasses already present such an overhead,
-and should be in general avoided in time-critical parts of the code, for classes of mass instances.
+Type verification in classes introduces a slight run-time overhead.
 
-Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Still, it's not recommended for use in functions that are called often in time-critical code.
+Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](examples/benchmark\_dispatch.py)), which is negligable.
+
+Runtype is not recommended for use in functions that are called often in time-critical code (or classes that are created often).
 
 ### Similar projects
 
 * [typical](https://github.com/seandstewart/typical) - Provides type verification for classes and methods, with a focus on type coercion.
 
+
+## License
+
+Runtype uses the [MIT license](LICENSE).
+
+## Donate
+
+If you like Runtype and want to show your appreciation, you can do so at my [patreon page](https://www.patreon.com/erezsh), or [ko-fi page](https://ko-fi.com/erezsh).
