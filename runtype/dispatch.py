@@ -119,22 +119,24 @@ def choose_most_specific_function(func1, func2):
     f2, sig2 = func2
 
     most_specific = set()
-    for pair in zip(sig1, sig2):
+    for i, pair in enumerate(zip(sig1, sig2)):
         a, b = pair
         if a == b:
             continue
 
         if issubclass(a, b):
-            x = -1
+            x = -1  # left
         elif issubclass(b, a):
-            x = 1
+            x = 1   # right
         else:
-            raise DispatchError(f"Ambiguous dispatch: Unable to resolve specificity of types: {a}, {b}")
+            n = f1.__name__
+            raise DispatchError(f"Ambiguous dispatch in '{n}', argument #{i+1}: Unable to resolve the specificity of the types:\n\t- {a}\n\t- {b}")
 
         most_specific.add(x)
 
-    if most_specific == {-1, 1}:
-        raise DispatchError("Ambiguous dispatch")
+    if most_specific == {-1, 1}:    # Both left & right were chosen?
+        n = f1.__name__
+        raise DispatchError(f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions:\n\t- {n}{tuple(sig1)}\n\t- {n}{tuple(sig2)}")
 
     elif most_specific == {-1}:
         return f1, sig1

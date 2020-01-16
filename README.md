@@ -61,6 +61,8 @@ runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 
 
 ```
 
+Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
+
 ### Dataclasses
 
 Basic usage:

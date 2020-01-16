@@ -10,13 +10,20 @@ Multiple-dispatch allows you to:
 
 2. Group your functions based on "action" instead of based on type.
 
-Dispatch uses the [`isa`](isa.md) module as the basis for its type matching, which means that it supports the use of `typing` classes (See "limitations" for more on that).
+Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on:
+
+    MyStr(str) < str < Union[int, str] < object
+
+It uses the [`isa`](isa.md) module as the basis for its type matching, which means that it supports the use of `typing` classes such as `List` or `Union` (See "limitations" for more on that).
+
+Some classes cannot be compared, for example `Optional[int]` and `Optional[str]` are ambiguous for the value `None`. See "ambiguity" for more details.
 
 Users who are familiar with Julia's multiple dispatch, will find runtype's dispatch to be very familiar.
 
-Unlike in Julia, you are asked to instanciate your own dispatch-group, to avoid collisions between different modules and projects that aren't aware of each other.
+Unlike Julia, Runtype asks to instanciate your own dispatch-group, to avoid collisions between different modules and projects that aren't aware of each other.
 
 Ideally, every project will instanciate Dispatch only once, in a module such as `utils.py` or `common.py`.
+
 
 ## Basic Use
 
