@@ -1,12 +1,14 @@
 # Runtype
 
+Runtype provides multiple-dispatch and type-safe dataclasses, for Python 3.7+
+
 **runtype** is composed of several utility modules:
 
 1. **dispatch** - Provides a decorator for fast multi-dispatch at run-time for functions, with sophisticated ambiguity resolution.
 
 2. **dataclass** - Improves on Python's existing dataclass, by verifying the type-correctness of its attributes at run-time. Also provides a few useful methods for dataclasses.
 
-3. **isa** - Provides alternative functions to `isinstance` and `issubclass`, that undestand Python's `typing` module.
+3. **isa** - Provides alternative functions to `isinstance` and `issubclass`, that understand Python's `typing` module.
 
 Runtype's integration with the `typing` module allows to use type signatures such as `List[int]`, `Optional[str]`, or `Union[int, str, Callable]`.
 
@@ -115,11 +117,6 @@ Type verification in classes introduces a slight run-time overhead.
 Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](examples/benchmark\_dispatch.py)), which is negligable.
 
 Runtype is not recommended for use in functions that are called often in time-critical code (or classes that are created often).
-
-### Similar projects
-
-* [typical](https://github.com/seandstewart/typical) - Provides type verification for classes and methods, with a focus on type coercion.
-
 
 ## License
 
