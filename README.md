@@ -1,16 +1,30 @@
 # Runtype
 
-Runtype provides multiple-dispatch and type-safe dataclasses, for Python 3.7+
+Runtype offers fast run-time type validation for Python, by providing utilities for multiple-dispatch and type-safe dataclasses.
 
-**runtype** is composed of several utility modules:
+Runtype's integration with the `typing` module allows users to invoke type signatures such as `List[int]`, `Dict[str, Optional[str]]`, or `Union[str, Callable]`.
 
-1. **dispatch** - Provides a decorator for fast multi-dispatch at run-time for functions, with sophisticated ambiguity resolution.
+## Multiple Dispatch
 
-2. **dataclass** - Improves on Python's existing dataclass, by verifying the type-correctness of its attributes at run-time. Also provides a few useful methods for dataclasses.
+Multiple-dispatch is a state-of-the-art technique for structuring code, that complements object-oriented programming.
 
-3. **isa** - Provides alternative functions to `isinstance` and `issubclass`, that understand Python's `typing` module.
+Unlike in OOP, where the type of the "object" (or: first argument) is always what determines the dispatch, in multiple-dispatch all the arguments decide together, according the idea of specificity: The more specific classes (i.e. subclasses) get picked before the more abstract ones (i.e. superclasses).
 
-Runtype's integration with the `typing` module allows to use type signatures such as `List[int]`, `Optional[str]`, or `Union[int, str, Callable]`.
+That means that when you need to define a logical operation that applies to several types, you can first solve the most abstract case, and then slowly add special handling for more specific types as required. If you ever found yourself writing several "isinstance" in a row, you could probably use multiple-dispatch to write better code!
+
+Runtype's dispatcher is fast, and will never make an arbitrary choice: in ambiguous situations it will always throw an error.
+
+As a side-effect, it also provides type-validation to functions. Trying to dispatch with types that don't match, will result in a dispatch-error.
+
+## Type-Safe Dataclasses
+
+The ability to annotate dataclasses with types has spurred the creation of many great static type-validation tools (such as `mypy`). Unfortunately, they can't always predict what types your dataclasses will receive.
+
+The trouble with storing the wrong data, is that it can just sit there for a while, and by time you get the error, it's hard to track which component or thread put it there.
+
+Runtype provides a `dataclass` drop-in replacement to Python's native dataclass, that validates the types in runtime, and makes sure you'll see the error the moment something goes wrong, and in the right context.
+
+While Runtype's validation can add a small runtime overhead, it's relatively light. And because it's a drop-in replacement, you can always just switch the import back once you're done debugging.
 
 ## Docs
 
