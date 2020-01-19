@@ -3,11 +3,21 @@ from dataclasses import dataclass as _dataclass
 
 from .isa import isa
 
-def __post_init__(self, isinstance=isa):
+def _post_init(self, isinstance=isa):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
         if not isinstance(value, field.type):
             raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
+
+def _setattr(self, name, value, isinstance=isa):
+    try:
+        field = self.__dataclass_fields__[name]
+    except (KeyError, AttributeError):
+        pass
+    else:
+        if not isinstance(value, field.type):
+            raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
+
 
 def replace(self, **kwargs):
     """Returns a new instance, with the given attibutes and values overwriting the existing ones.
@@ -57,13 +67,21 @@ def _set_if_not_exists(cls, d):
 
 
 def _process_class(cls, isinstance, **kw):
+    c = copy(cls)
     orig_post_init = getattr(cls, '__post_init__', None)
-    def __post_init(self):
-        __post_init__(self, isinstance=isinstance)
+    def __post_init__(self):
+        _post_init(self, isinstance=isinstance)
         if orig_post_init is not None:
             orig_post_init(self)
-    c = copy(cls)
-    c.__post_init__ = __post_init
+    c.__post_init__ = __post_init__
+
+    if not kw['frozen']:
+        orig_set_attr = getattr(cls, '__setattr__')
+        def __setattr__(self, name, value):
+            _setattr(self, name, value, isinstance=isinstance)
+            orig_set_attr(self, name, value)
+        c.__setattr__ = __setattr__
+
     _set_if_not_exists(c, {
         'replace': replace,
         'aslist': aslist,

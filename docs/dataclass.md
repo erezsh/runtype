@@ -14,11 +14,9 @@ These are the differences:
 
 ## Type validation
 
-Runtype's dataclass, when instanciated, tests every annotated attribute against its annotation.
+Runtype's dataclass tests every annotated attribute against its annotation, when instanciating a dataclass, or when changing one of its attributes (when `frozen=False`).
 
-It supports annotations with `typing` classes, by using the [`isa` module](isa.md).
-
-Note: If you change the attributes after the instance is created (possible with `frozen=False`), they will not be validated!
+Runtype supports annotations with `typing` classes, by using the [`isa` module](isa.md).
 
 Example:
 

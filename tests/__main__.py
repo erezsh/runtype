@@ -427,7 +427,23 @@ class TestDataclass(TestCase):
 
         a = A("hello")
         a.a = "ba"
-        a.a = 4     # Bad, but that's how it is
+        a.b = 4 # New attributes aren't tested
+        try:
+            a.a = 4
+        except TypeError:
+            pass
+
+    def test_frozen(self):
+        @dataclass
+        class A:
+            a: str
+
+        a = A("a")
+        b = A("a")
+        x = A("c")
+        assert a == b
+        assert hash(a) == hash(b)
+        assert a != x
 
     def test_custom_isinstance(self):
         @dataclass(isinstance=lambda x,y: x in y)
