@@ -2,13 +2,27 @@
 
 The `dispatch` module provides a decorator that enables multiple-dispatch for functions.
 
-You can think of multiple-dispatch as function overloading on steroids.
+### What is multiple-dispatch?
+
+Multiple-dispatch is a state-of-the-art technique for structuring code, that complements object-oriented programming.
+
+Unlike in OOP, where the type of the "object" (or: first argument) is always what determines the dispatch, in multiple-dispatch all the arguments decide together, according the idea of specificity: The more specific classes (i.e. subclasses) get picked before the more abstract ones (i.e. superclasses).
+
+That means that when you need to define a logical operation that applies to several types, you can first solve the most abstract case, and then slowly add special handling for more specific types as required. If you ever found yourself writing several "isinstance" in a row, you could probably use multiple-dispatch to write better code!
 
 Multiple-dispatch allows you to:
 
 1. Write type-specific functions using a dispatch model that is much more flexible than object-oriented.
 
 2. Group your functions based on "action" instead of based on type.
+
+You can think of multiple-dispatch as function overloading on steroids.
+
+### Runtype's dispatcher
+
+Runtype's dispatcher is fast, and will never make an arbitrary choice: in ambiguous situations it will always throw an error.
+
+As a side-effect, it also provides type-validation to functions. Trying to dispatch with types that don't match, will result in a dispatch-error.
 
 Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on:
 
@@ -23,7 +37,6 @@ Users who are familiar with Julia's multiple dispatch, will find runtype's dispa
 Unlike Julia, Runtype asks to instanciate your own dispatch-group, to avoid collisions between different modules and projects that aren't aware of each other.
 
 Ideally, every project will instanciate Dispatch only once, in a module such as `utils.py` or `common.py`.
-
 
 ## Basic Use
 

@@ -6,7 +6,7 @@ Dataclasses are especially useful for passing around different components, when 
 
 These are the differences:
 
-1. Type validation - all the annotated attributes are validated, with `typing` support, when the dataclass is created.
+1. Type validation - all the annotated attributes are validated, with `typing` support.
 
 2. Frozen by default - which allows for automatic comparison and hashing based on the annotated attributes.
 

@@ -16,7 +16,7 @@ Supported classes include: `List`, `Tuple`, `Dict`, `Union`, `Optional`, `Callab
 
 ### Element-wise validation
 
-Testing `isa` with `List[T]`, `Tuple[T]` and `Dict[T1, T2]` will iterate over each element and call `isa(elem, T)` recursively.
+Testing `isa` with `List[T]`, `Tuple[T1, T2, T3]` and `Dict[T1, T2]` will iterate over each element and call `isa(elem, T)` recursively.
 
 Example:
 ```python
@@ -24,6 +24,8 @@ Example:
 True
 >>> isa([1,"a"], List[int])
 False
+>>> isa([1,"a"], Tuple[int, str])
+True
 ```
 
 ### Limitations
