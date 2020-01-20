@@ -1,5 +1,7 @@
 from typing import _GenericAlias as TypeBase, Any, Union, Callable, List, Dict, Tuple
 
+from .typesystem import TypeSystem
+
 def _isinstance(a, b):
     try:
         return isinstance(a, b)
@@ -78,3 +80,10 @@ def issubclass(t1, t2):
 
 
     return _issubclass(t1, t2)
+
+
+class PythonTyping(TypeSystem):
+    isinstance = staticmethod(isa)
+    issubclass = staticmethod(issubclass)
+    canonize_type = staticmethod(canonize_type)
+    get_type = type

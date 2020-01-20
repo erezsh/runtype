@@ -4,7 +4,7 @@ The `dispatch` module provides a decorator that enables multiple-dispatch for fu
 
 ### What is multiple-dispatch?
 
-Multiple-dispatch is a state-of-the-art technique for structuring code, that complements object-oriented programming.
+Multiple-dispatch is an advanced technique for structuring code, that complements object-oriented programming.
 
 Unlike in OOP, where the type of the "object" (or: first argument) is always what determines the dispatch, in multiple-dispatch all the arguments decide together, according the idea of specificity: The more specific classes (i.e. subclasses) get picked before the more abstract ones (i.e. superclasses).
 
