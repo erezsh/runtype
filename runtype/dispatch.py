@@ -2,12 +2,10 @@ from collections import defaultdict
 import inspect
 from functools import wraps
 
-from .isa import PythonTyping
-
 class DispatchError(Exception):
     pass
 
-class Dispatch:
+class MultiDispatch:
     """Create a decorator attached to a dispatch group,
     that when applied to a function, enables multiple-dispatch for it.
 
@@ -38,7 +36,7 @@ class Dispatch:
 
 
     """
-    def __init__(self, typesystem=PythonTyping()):
+    def __init__(self, typesystem):
         self.roots = defaultdict(TypeTree)
         self.typesystem = typesystem
 

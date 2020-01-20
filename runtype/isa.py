@@ -1,6 +1,9 @@
 from typing import _GenericAlias as TypeBase, Any, Union, Callable, List, Dict, Tuple
 
-from .typesystem import TypeSystem
+from .typesystem import TypeSystem, PythonBasic
+from .dispatch import MultiDispatch
+
+dp = MultiDispatch(PythonBasic)
 
 def _isinstance(a, b):
     try:
@@ -15,30 +18,32 @@ def _issubclass(a, b):
     except TypeError as e:
         raise TypeError(f"Bad arguments to issubclass: {a}, {b}") from e
 
+@dp
 def isa(obj, t):
     if t is Any or t == (Any,):
         return True
-    elif isinstance(t, tuple):
-        return any(isa(obj, opt) for opt in t)
-    elif isinstance(t, TypeBase):
-        if t.__origin__ is list:
-            return all(isa(item, t.__args__) for item in obj)
-        elif t.__origin__ is tuple:
-            if not isinstance(obj, tuple):
-                return False
-            if len(t.__args__) != len(obj):
-                return False
-            return all(isa(a, b) for a, b in zip(obj, t.__args__))
-        elif t.__origin__ is dict:
-            kt, vt = t.__args__
-            return all(isa(k, kt) and isa(v, vt) for k, v in obj.items())
-        elif t.__origin__ is Union:
-            return isa(obj, t.__args__)
-        elif _issubclass(t, Callable):
-            return callable(obj)
-        assert False, t
     return _isinstance(obj, t)
 
+@dp
+def isa(obj, t: tuple):
+    return any(isa(obj, opt) for opt in t)
+
+@dp
+def isa(obj, t: TypeBase):
+    if t.__origin__ is list:
+        return all(isa(item, t.__args__) for item in obj)
+    elif t.__origin__ is tuple:
+        if not (isinstance(obj, tuple) and len(t.__args__) == len(obj)):
+            return False
+        return all(isa(a, b) for a, b in zip(obj, t.__args__))
+    elif t.__origin__ is dict:
+        kt, vt = t.__args__
+        return all(isa(k, kt) and isa(v, vt) for k, v in obj.items())
+    elif t.__origin__ is Union:
+        return isa(obj, t.__args__)
+    elif _issubclass(t, Callable):
+        return callable(obj)
+    assert False, t
 
 
 def canonize_type(t):
@@ -71,13 +76,10 @@ def issubclass(t1, t2):
         return any(issubclass(t1, t) for t in t2)
     elif isinstance(t2, TypeBase):
         t2 = canonize_type(t2)
-
-    if isinstance(t2, TypeBase):
         return t1 == t2    # TODO add some clever logic here
 
     elif isinstance(t1, TypeBase):
         return issubclass(t1.__origin__, t2)    # XXX more complicated than that?
-
 
     return _issubclass(t1, t2)
 

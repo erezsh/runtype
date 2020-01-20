@@ -19,6 +19,8 @@ class TestIsa(TestCase):
         assert isa([1,2], List[int])
         assert not isa([1,"a"], List[int])
         assert not isa([1,2], List[str])
+        assert isa(1, (int, str))
+        assert not isa(1, (float, str))
 
         self.assertRaises(TypeError, isa, 1, 1)
         self.assertRaises(TypeError, issubclass, 1, 1)
@@ -36,7 +38,6 @@ class TestIsa(TestCase):
         assert isa(lambda:0, Callable)
         assert not isa(1, Callable)
 
-
         assert issubclass(List[int], list)
         assert issubclass(Tuple[int], tuple)
         assert issubclass(Tuple[int, int], tuple)
@@ -46,6 +47,8 @@ class TestIsa(TestCase):
         assert isa((3, 5), Tuple[int, int])
         assert not isa((3, 5), Tuple[int, float])
         assert not isa((3, 5), Tuple[int])
+
+        assert isa((3,), (Tuple[int], list))
 
 class TestDispatch(TestCase):
     def setUp(self):
