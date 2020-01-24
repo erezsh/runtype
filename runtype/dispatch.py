@@ -81,6 +81,7 @@ class TypeTree:
             (f, _sig) ,= funcs
         return f
 
+
     def find_function_cached(self, args):
         "Memoized version of find_function"
         sig = self.get_args_simple_signature(args)
@@ -102,6 +103,7 @@ class TypeTree:
                 raise ValueError(f"Function {f.__name__} matches existing signature: {signature}!")
             node.func = f, signature
 
+
     def get_func_signatures(self, f):
         sig = inspect.signature(f)
         typesigs = []
@@ -114,6 +116,7 @@ class TypeTree:
             if t is sig.empty:
                 t = object
             else:
+                # Canonize to detect more collisions on construction, instead of during dispatch
                 t = self.typesystem.canonize_type(t)
             # elif not isinstance(t, type):
             #     raise TypeError("Annotation isn't a type")

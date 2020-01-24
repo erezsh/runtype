@@ -69,19 +69,20 @@ def issubclass(t1, t2):
         return True
 
     t1 = canonize_type(t1)
+
     if isinstance(t1, tuple):
         return all(issubclass(t, t2) for t in t1)
-
-    if isinstance(t2, tuple):
+    elif isinstance(t2, tuple):
         return any(issubclass(t1, t) for t in t2)
-    elif isinstance(t2, TypeBase):
+
+    if isinstance(t2, TypeBase):
         t2 = canonize_type(t2)
         return t1 == t2    # TODO add some clever logic here
-
     elif isinstance(t1, TypeBase):
         return issubclass(t1.__origin__, t2)    # XXX more complicated than that?
 
     return _issubclass(t1, t2)
+
 
 
 class PythonTyping(TypeSystem):

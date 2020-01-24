@@ -50,6 +50,10 @@ class TestIsa(TestCase):
 
         assert isa((3,), (Tuple[int], list))
 
+        assert issubclass(Any, Any)
+        assert not issubclass(Any, int)
+        assert issubclass(List[int], Any)
+
 class TestDispatch(TestCase):
     def setUp(self):
         pass
