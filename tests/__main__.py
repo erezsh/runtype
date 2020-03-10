@@ -463,6 +463,15 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, A, 11, "a")
         self.assertRaises(TypeError, A, 3, "c")
 
+    def test_check_types(self):
+        @dataclass(frozen=False, check_types=False)
+        class A:
+            a: str
+
+        a = A(6)
+        a.a = 4
+
+
 
 if __name__ == '__main__':
     unittest.main()
