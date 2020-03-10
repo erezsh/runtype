@@ -6,7 +6,7 @@ Dataclasses are especially useful for passing around different components, when 
 
 These are the differences:
 
-1. Type validation - all the annotated attributes are validated, with `typing` support.
+1. Type validation - all the annotated attributes are validated, with `typing` support (disable with `check_types=False`).
 
 2. Frozen by default - which allows for automatic comparison and hashing based on the annotated attributes.
 
@@ -17,6 +17,9 @@ These are the differences:
 Runtype's dataclass tests every annotated attribute against its annotation, when instanciating a dataclass, or when changing one of its attributes (when `frozen=False`).
 
 Runtype supports annotations with `typing` classes, by using the [`isa` module](isa.md).
+
+
+
 
 Example:
 
@@ -44,7 +47,7 @@ TypeError: [A] Attribute 'a' expected value of type <class 'int'>, instead got N
 ```
 
 
-## Custom validation
+### Custom validation
 
 It's possible to provide your own `isinstance` replacement when creating a dataclass, instead of `isa`.
 
@@ -66,6 +69,24 @@ Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
 TypeError: [Form] Attribute 'score' expected value of type range(1, 11), instead got 12
 ```
+
+### Performance (debug vs production)
+
+Type-checking every instance may slow down your program considerably.
+
+It is therefor recommended to use a shared dataclass decorator, so that you can enable/disable type-checking with a single change.
+
+Example:
+
+```python
+# common.py
+import runtype
+
+from .settings import DEBUG   # Define DEBUG whereever you want
+
+dataclass = runtype.dataclass(check_types=DEBUG)
+```
+
 ## Methods
 
 * `.replace(**delta)` - Returns a new instance, with the given attibutes and values overwriting the existing ones.

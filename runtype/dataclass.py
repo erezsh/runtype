@@ -66,21 +66,25 @@ def _set_if_not_exists(cls, d):
             setattr(cls, attr, value)
 
 
-def _process_class(cls, isinstance, **kw):
-    c = copy(cls)
-    orig_post_init = getattr(cls, '__post_init__', None)
-    def __post_init__(self):
-        _post_init(self, isinstance=isinstance)
-        if orig_post_init is not None:
-            orig_post_init(self)
-    c.__post_init__ = __post_init__
+def _process_class(cls, isinstance, check_types, **kw):
+    if check_types:
+        c = copy(cls)
 
-    if not kw['frozen']:
-        orig_set_attr = getattr(cls, '__setattr__')
-        def __setattr__(self, name, value):
-            _setattr(self, name, value, isinstance=isinstance)
-            orig_set_attr(self, name, value)
-        c.__setattr__ = __setattr__
+        orig_post_init = getattr(cls, '__post_init__', None)
+        def __post_init__(self):
+            _post_init(self, isinstance=isinstance)
+            if orig_post_init is not None:
+                orig_post_init(self)
+        c.__post_init__ = __post_init__
+
+        if not kw['frozen']:
+            orig_set_attr = getattr(cls, '__setattr__')
+            def __setattr__(self, name, value):
+                _setattr(self, name, value, isinstance=isinstance)
+                orig_set_attr(self, name, value)
+            c.__setattr__ = __setattr__
+    else:
+        c = cls
 
     _set_if_not_exists(c, {
         'replace': replace,
@@ -91,7 +95,7 @@ def _process_class(cls, isinstance, **kw):
     return _dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, isinstance=isa, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+def dataclass(cls=None, *, isinstance=isa, check_types=True, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
     * Adds run-time type validation
@@ -122,7 +126,7 @@ def dataclass(cls=None, *, isinstance=isa, init=True, repr=True, eq=True, order=
     """
 
     def wrap(cls):
-        return _process_class(cls, isinstance, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
+        return _process_class(cls, isinstance, check_types, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:
