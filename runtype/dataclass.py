@@ -1,7 +1,10 @@
+import sys
 from copy import copy
 from dataclasses import dataclass as _dataclass
 
 from .isa import isa
+
+CHECK_TYPES = (sys.flags.optimize == 0)
 
 def _post_init(self, isinstance=isa):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
@@ -95,7 +98,7 @@ def _process_class(cls, isinstance, check_types, **kw):
     return _dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, isinstance=isa, check_types=True, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+def dataclass(cls=None, *, isinstance=isa, check_types=CHECK_TYPES, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
     * Adds run-time type validation

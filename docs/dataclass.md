@@ -6,7 +6,7 @@ Dataclasses are especially useful for passing around different components, when 
 
 These are the differences:
 
-1. Type validation - all the annotated attributes are validated, with `typing` support (disable with `check_types=False`).
+1. Type validation - all the annotated attributes are validated, with `typing` support (disable with `check_types=False`, or by running `python -O`).
 
 2. Frozen by default - which allows for automatic comparison and hashing based on the annotated attributes.
 
@@ -70,11 +70,13 @@ Traceback (most recent call last):
 TypeError: [Form] Attribute 'score' expected value of type range(1, 11), instead got 12
 ```
 
-### Performance (debug vs production)
+### Performance (debug vs production; optimize mode)
 
 Type-checking every instance may slow down your program considerably.
 
-It is therefor recommended to use a shared dataclass decorator, so that you can enable/disable type-checking with a single change.
+If you're running in production, you should use Python's optimize flag (`python -O ...`), which will disable dataclass type-checking, and also disables asserts.
+
+Alternatively, you can use a shared dataclass decorator, and enable/disable type-checking with a single change.
 
 Example:
 
@@ -82,7 +84,7 @@ Example:
 # common.py
 import runtype
 
-from .settings import DEBUG   # Define DEBUG whereever you want
+from .settings import DEBUG   # Define DEBUG however you want
 
 dataclass = runtype.dataclass(check_types=DEBUG)
 ```
