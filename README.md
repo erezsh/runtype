@@ -126,7 +126,7 @@ Traceback (most recent call last):
 ```
 
 ## Performance
-Type verification in classes introduces a slight run-time overhead.
+Type verification in classes introduces a slight run-time overhead. When running in production, it's recommended to use the `-O` switch for Python. It will skip all `assert`s, and also skip type verification on classes by default (use the `check_types` option to adjust it manually).
 
 Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal overhead after the initial resolution. Dispatch is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](examples/benchmark\_dispatch.py)), which is negligable.
 
