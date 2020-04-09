@@ -36,7 +36,7 @@ Runtype's integration with the `typing` module allows to use type signatures suc
 ''',
 
     classifiers=[
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
         "Topic :: Software Development :: Libraries :: Python Modules",
