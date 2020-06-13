@@ -8,15 +8,17 @@ class TypeSystem:
         raise NotImplementedError()
 
     def canonize_type(self, t):
-        raise NotImplementedError()
+        return t
 
     def get_type(self, obj):
         raise NotImplementedError()
+
+    default_type = NotImplemented
 
 
 
 class PythonBasic(TypeSystem):
     isinstance = isinstance
     issubclass = issubclass
-    canonize_type = lambda x:x
     get_type = type
+    default_type = object

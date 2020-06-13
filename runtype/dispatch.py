@@ -114,7 +114,7 @@ class TypeTree:
 
             t = p.annotation
             if t is sig.empty:
-                t = object
+                t = self.typesystem.default_type
             else:
                 # Canonize to detect more collisions on construction, instead of during dispatch
                 t = self.typesystem.canonize_type(t)

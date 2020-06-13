@@ -3,7 +3,7 @@ from typing import _GenericAlias as TypeBase, Any, Union, Callable, List, Dict, 
 from .typesystem import TypeSystem, PythonBasic
 from .dispatch import MultiDispatch
 
-dp = MultiDispatch(PythonBasic)
+dp = MultiDispatch(PythonBasic())
 
 def _isinstance(a, b):
     try:
@@ -90,3 +90,4 @@ class PythonTyping(TypeSystem):
     issubclass = staticmethod(issubclass)
     canonize_type = staticmethod(canonize_type)
     get_type = type
+    default_type = object
