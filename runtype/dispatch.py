@@ -100,7 +100,8 @@ class TypeTree:
                 node = node.follow_type[t]
 
             if node.func is not None:
-                raise ValueError(f"Function {f.__name__} matches existing signature: {signature}!")
+                code_obj = node.func[0].__code__
+                raise ValueError(f"Function {f.__name__} at {code_obj.co_filename}:{code_obj.co_firstlineno} matches existing signature: {signature}!")
             node.func = f, signature
 
 
