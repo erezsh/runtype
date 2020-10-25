@@ -130,6 +130,41 @@ runtype.dispatch.DispatchError: Ambiguous dispatch
 
 Dispatch is designed to always throw an error when the right choice isn't obvious.
 
+## Another example
+
+```python
+from runtype import Dispatch
+dp = Dispatch()
+
+@dp
+def join(seq, sep: str = ''):
+    return sep.join(str(s) for s in seq)
+
+@dp
+def join(seq, sep: list):
+    return join(join(sep, str(s)) for s in seq)
+...
+
+>>> join([0, 0, 7])                 # -> 1st definition
+'007'
+
+>>> join([1, 2, 3], ', ')           # -> 1st definition
+'1, 2, 3'
+
+>>> join([0, 0, 7], ['(', ')'])     # -> 2nd definition
+'(0)(0)(7)'
+
+>>> join([1, 2, 3], 0)              # -> no definition
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  ...
+runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 'list'>, <class 'int'>)
+
+```
+
+Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
+
+
 ## Performance
 
 Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py)), which is negligable for most use-cases.

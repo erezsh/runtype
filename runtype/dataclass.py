@@ -9,7 +9,12 @@ CHECK_TYPES = (sys.flags.optimize == 0)
 def _post_init(self, isinstance=isa):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
-        if not isinstance(value, field.type):
+        try:
+            res = isinstance(value, field.type)
+        except Exception as e:
+            raise RuntimeError(f"Error while validating field '{name}': {e}") from e
+
+        if not res:
             raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
 
 def _setattr(self, name, value, isinstance=isa):

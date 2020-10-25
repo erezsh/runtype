@@ -52,32 +52,25 @@ from runtype import Dispatch
 dp = Dispatch()
 
 @dp
-def join(seq, sep: str = ''):
-    return sep.join(str(s) for s in seq)
+def append(a: list, b):
+    return a + [b]
 
 @dp
-def join(seq, sep: list):
-    return join(join(sep, str(s)) for s in seq)
-...
+def append(a: tuple, b):
+    return a + (b,)
 
->>> join([0, 0, 7])                 # -> 1st definition
-'007'
+@dp
+def append(a: str, b: str):
+    return a + b
 
->>> join([1, 2, 3], ', ')           # -> 1st definition
-'1, 2, 3'
 
->>> join([0, 0, 7], ['(', ')'])     # -> 2nd definition
-'(0)(0)(7)'
+print( append([1, 2, 3], 4) )        # prints [1, 2, 3, 4]
+print( append((1, 2, 3), 4) )        # prints (1, 2, 3, 4)
+print( append('foo', 'bar') )        # prints foobar
+print( append('foo', 4)     )        # raises DispatchError, no signature for (str, int)
 
->>> join([1, 2, 3], 0)              # -> no definition
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  ...
-runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 'list'>, <class 'int'>)
 
 ```
-
-Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
 
 ### Dataclasses
 
@@ -94,7 +87,7 @@ Basic usage:
 >>> p = Point(2, 3)
 >>> p
 Point(x=2, y=3)
->>> dict(p)         # Maintains order
+>>> dict(p)          # Maintains order
 {'x': 2, 'y': 3}
 
 >>> p.replace(x=30)  # New instance
