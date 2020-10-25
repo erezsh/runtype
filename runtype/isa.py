@@ -18,32 +18,67 @@ def _issubclass(a, b):
     except TypeError as e:
         raise TypeError(f"Bad arguments to issubclass: {a}, {b}") from e
 
+
+class RuntypeError(TypeError):
+    pass
+
+class TypeMistmatchError(RuntypeError):
+    pass
+
+class TupleLengthError(TypeMistmatchError):
+    pass
+
+
 @dp
-def isa(obj, t):
+def ensure_isa(obj, t):
     if t is Any or t == (Any,):
-        return True
-    return _isinstance(obj, t)
+        return
+    if not _isinstance(obj, t):
+        raise TypeMistmatchError(obj, t)
 
 @dp
-def isa(obj, t: tuple):
-    return any(isa(obj, opt) for opt in t)
+def ensure_isa(obj, t: tuple):
+    if not any(isa(obj, opt) for opt in t):
+        raise TypeMistmatchError(obj, t)
 
 @dp
-def isa(obj, t: TypeBase):
+def ensure_isa(obj, t: TypeBase):
     if t.__origin__ is list:
-        return all(isa(item, t.__args__) for item in obj)
+        ensure_isa(obj, list)
+        for item in obj:
+            ensure_isa(item, t.__args__)
+    elif t.__origin__ is set:
+        ensure_isa(obj, set)
+        for item in obj:
+            ensure_isa(item, t.__args__)
     elif t.__origin__ is tuple:
-        if not (isinstance(obj, tuple) and len(t.__args__) == len(obj)):
-            return False
-        return all(isa(a, b) for a, b in zip(obj, t.__args__))
+        ensure_isa(obj, tuple)
+        if len(obj) != len(t.__args__):
+            raise TupleLengthError(obj, t.__args__)
+        for item, type_ in zip(obj, t.__args__):
+            ensure_isa(item, type_)
     elif t.__origin__ is dict:
+        ensure_isa(obj, dict)
         kt, vt = t.__args__
-        return all(isa(k, kt) and isa(v, vt) for k, v in obj.items())
+        for k, v in obj.items():
+            ensure_isa(k, kt)
+            ensure_isa(v, vt)
     elif t.__origin__ is Union:
-        return isa(obj, t.__args__)
+        ensure_isa(obj, t.__args__)    # Send as tuple
     elif _issubclass(t, Callable):
-        return callable(obj)
-    assert False, t
+        if not callable(obj):
+            raise TypeMistmatchError(obj, callable)
+    else:
+        assert False, t
+
+
+
+def isa(obj, t):
+    try:
+        ensure_isa(obj, t)
+        return True
+    except TypeMistmatchError as e:
+        return False
 
 
 def canonize_type(t):

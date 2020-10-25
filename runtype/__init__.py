@@ -1,4 +1,4 @@
-from .isa import isa, issubclass, PythonTyping
+from .isa import isa, issubclass, PythonTyping, TypeMistmatchError
 from .dispatch import MultiDispatch, DispatchError
 from .dataclass import dataclass
 

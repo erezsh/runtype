@@ -2,29 +2,27 @@ import sys
 from copy import copy
 from dataclasses import dataclass as _dataclass
 
-from .isa import isa
+from .isa import ensure_isa as default_ensure_isa, TypeMistmatchError
 
 CHECK_TYPES = (sys.flags.optimize == 0)
 
-def _post_init(self, isinstance=isa):
+def _post_init(self, ensure_isa):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
         try:
-            res = isinstance(value, field.type)
-        except Exception as e:
-            raise RuntimeError(f"Error while validating field '{name}': {e}") from e
-
-        if not res:
+            ensure_isa(value, field.type)
+        except TypeMistmatchError as e:
+            item_value, item_type = e.args
             raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
 
-def _setattr(self, name, value, isinstance=isa):
+
+def _setattr(self, name, value, ensure_isa):
     try:
         field = self.__dataclass_fields__[name]
     except (KeyError, AttributeError):
         pass
     else:
-        if not isinstance(value, field.type):
-            raise TypeError(f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}")
+        ensure_isa(value, field.type)
 
 
 def replace(self, **kwargs):
@@ -74,13 +72,13 @@ def _set_if_not_exists(cls, d):
             setattr(cls, attr, value)
 
 
-def _process_class(cls, isinstance, check_types, **kw):
+def _process_class(cls, ensure_isa, check_types, **kw):
     if check_types:
         c = copy(cls)
 
         orig_post_init = getattr(cls, '__post_init__', None)
         def __post_init__(self):
-            _post_init(self, isinstance=isinstance)
+            _post_init(self, ensure_isa=ensure_isa)
             if orig_post_init is not None:
                 orig_post_init(self)
         c.__post_init__ = __post_init__
@@ -88,7 +86,7 @@ def _process_class(cls, isinstance, check_types, **kw):
         if not kw['frozen']:
             orig_set_attr = getattr(cls, '__setattr__')
             def __setattr__(self, name, value):
-                _setattr(self, name, value, isinstance=isinstance)
+                _setattr(self, name, value, ensure_isa=ensure_isa)
                 orig_set_attr(self, name, value)
             c.__setattr__ = __setattr__
     else:
@@ -103,7 +101,7 @@ def _process_class(cls, isinstance, check_types, **kw):
     return _dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, isinstance=isa, check_types=CHECK_TYPES, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPES, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
     * Adds run-time type validation
@@ -134,7 +132,7 @@ def dataclass(cls=None, *, isinstance=isa, check_types=CHECK_TYPES, init=True, r
     """
 
     def wrap(cls):
-        return _process_class(cls, isinstance, check_types, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
+        return _process_class(cls, ensure_isa, check_types, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:

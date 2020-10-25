@@ -7,7 +7,7 @@ from dataclasses import FrozenInstanceError
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, TypeMistmatchError
 
 class TestIsa(TestCase):
     def setUp(self):
@@ -453,7 +453,11 @@ class TestDataclass(TestCase):
         assert a != x
 
     def test_custom_isinstance(self):
-        @dataclass(isinstance=lambda x,y: x in y)
+        def ensure_contains(item, container):
+            if item not in container:
+                raise TypeError(item)
+
+        @dataclass(ensure_isa=ensure_contains)
         class A:
             a: range(10)
             b: ("a", "b")
