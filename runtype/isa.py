@@ -1,5 +1,6 @@
 from typing import _GenericAlias as TypeBase, Any, Union, Callable, List, Dict, Tuple
 
+from .common import CHECK_TYPES
 from .typesystem import TypeSystem, PythonBasic
 from .dispatch import MultiDispatch
 
@@ -79,6 +80,18 @@ def isa(obj, t):
         return True
     except TypeMistmatchError as e:
         return False
+
+
+def assert_isa(obj, t):
+    if CHECK_TYPES:
+        try:
+            ensure_isa(obj, t)
+        except TypeMistmatchError as e:
+            item_value, item_type = e.args
+            msg = f"Expected value of type {t}, instead got {obj!r}"
+            if item_value is not obj:
+                msg += f'\n\n    Failed on item: {item_value}, expected type {item_type}'
+            raise TypeError(msg)
 
 
 def canonize_type(t):

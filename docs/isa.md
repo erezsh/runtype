@@ -6,7 +6,7 @@ The `isa` module provides these functions:
 
 * `issubclass` - a replacement for the built-in `issubclass`
 
-* `ensure_isa` - a validator that throws a detailed exception (akin to assert)
+* `assert_isa` - a validator that throws an exception, but won't run if the  `python -O` flag is specified.
 
 Both functions improve on the built-ins by also accepting `typing` classes.
 

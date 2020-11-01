@@ -1,10 +1,8 @@
-import sys
 from copy import copy
 from dataclasses import dataclass as _dataclass
 
+from .common import CHECK_TYPES
 from .isa import ensure_isa as default_ensure_isa, TypeMistmatchError
-
-CHECK_TYPES = (sys.flags.optimize == 0)
 
 def _post_init(self, ensure_isa):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
