@@ -1,10 +1,12 @@
 # isa.py
 
-The `isa` module provides two main functions:
+The `isa` module provides these functions:
 
 * `isa` - a replacement for `isinstance`
 
 * `issubclass` - a replacement for the built-in `issubclass`
+
+* `ensure_isa` - a validator that throws a detailed exception (akin to assert)
 
 Both functions improve on the built-ins by also accepting `typing` classes.
 
