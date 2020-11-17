@@ -116,6 +116,28 @@ class TestDispatch(TestCase):
         assert to_list([1]) == [1]
         assert to_list({1: 2}) == [(1, 2)]
 
+    def test_ambiguity(self):
+        dp = Dispatch()
+
+        @dp
+        def sum_ints(x, y):
+            return None
+        @dp
+        def sum_ints(x: int, y):
+            return x
+        @dp
+        def sum_ints(x, y: int):
+            return y
+        @dp
+        def sum_ints(x: int, y: int):
+            return x+y
+
+        assert sum_ints("a", "b") == None
+        assert sum_ints(27, "b") == 27
+        assert sum_ints("a", 27) == 27
+        assert sum_ints(13, 27) == 40
+
+
     def test_keywords(self):
         dp = Dispatch()
 

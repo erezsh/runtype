@@ -76,7 +76,7 @@ class TypeTree:
         if len(funcs) == 0:
             raise DispatchError(f"Function '{self.name}' not found for signature {self.get_args_simple_signature(args)}")
         elif len(funcs) > 1:
-            f, _sig = max_cmp(funcs, self.choose_most_specific_function)
+            f, _sig = self.choose_most_specific_function(*funcs)
         else:
             (f, _sig) ,= funcs
         return f
@@ -131,35 +131,52 @@ class TypeTree:
         typesigs.append(typesig)
         return typesigs
 
-    def choose_most_specific_function(self, func1, func2):
-        f1, sig1 = func1
-        f2, sig2 = func2
+    def choose_most_specific_function(self, *funcs):
+        issubclass = self.typesystem.issubclass
 
-        most_specific = set()
-        for i, pair in enumerate(zip(sig1, sig2)):
-            a, b = pair
-            if a == b:
+        class IsSubclass:
+            def __init__(self, k):
+                self.i, self.t = k
+
+            def __lt__(self, other):
+                return issubclass(self.t, other.t)
+
+        most_specific_per_param = []
+        sigs = [f[1] for f in funcs]
+        for arg_idx, zipped_params in enumerate(zip(*sigs)):
+            if all_eq(zipped_params):
                 continue
+            x = sorted(enumerate(zipped_params), key=IsSubclass)
+            ms_i, ms_t = x[0]   # Most significant index and type
+            ms_set = {ms_i}     # Init set of indexes of most significant params
+            for i, t in x[1:]:
+                if ms_t == t:
+                    ms_set.add(i)   # Add more indexes with the same type
+                elif issubclass(t, ms_t) or not issubclass(ms_t, t):
+                    # Cannot resolve ordering of these two types
+                    n = funcs[0][0].__name__
+                    msg = f"Ambiguous dispatch in '{n}', argument #{arg_idx+1}: Unable to resolve the specificity of the types: \n\t- {t}\n\t- {ms_t}"
+                    raise DispatchError(msg)
 
-            if self.typesystem.issubclass(a, b):
-                x = -1  # left
-            elif self.typesystem.issubclass(b, a):
-                x = 1   # right
-            else:
-                n = f1.__name__
-                raise DispatchError(f"Ambiguous dispatch in '{n}', argument #{i+1}: Unable to resolve the specificity of the types:\n\t- {a}\n\t- {b}")
+            most_specific_per_param.append(ms_set)
 
-            most_specific.add(x)
+        # Is there only one function that matches each and every parameter?
+        most_specific = set.intersection(*most_specific_per_param)
+        if len(most_specific) != 1:
+            n = funcs[0][0].__name__
+            msg = f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions"
+            msg += ''.join(f'\n\t- {n}{tuple(f[1])}' for f in funcs)
+            raise DispatchError(msg)
 
-        if most_specific == {-1, 1}:    # Both left & right were chosen?
-            n = f1.__name__
-            raise DispatchError(f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions:\n\t- {n}{tuple(sig1)}\n\t- {n}{tuple(sig2)}")
+        ms ,= most_specific
+        return funcs[ms]
 
-        elif most_specific == {-1}:
-            return f1, sig1
-
-        assert most_specific == {1}, (most_specific, sig1, sig2)
-        return f2, sig2
+def all_eq(xs):
+    a = xs[0]
+    for b in xs[1:]:
+        if a != b:
+            return False
+    return True
 
 class TypeNode:
     def __init__(self):
@@ -170,12 +187,4 @@ class TypeNode:
         for type_, tree in self.follow_type.items():
             if ts.isinstance(arg, type_):
                 yield tree
-
-
-def max_cmp(lst, f):
-    best = lst[0]
-    for i in lst[1:]:
-        best = f(i, best)
-    return best
-
 

@@ -1,5 +1,5 @@
 from copy import copy
-from dataclasses import dataclass as _dataclass
+import dataclasses
 
 from .common import CHECK_TYPES
 from .isa import ensure_isa as default_ensure_isa, TypeMistmatchError
@@ -42,9 +42,7 @@ def replace(self, **kwargs):
         >>> some_instance.replace() == copy(some_instance)   # Equivalent operations
         True
     """
-    attrs = dict(self)
-    attrs.update(kwargs)
-    return type(self)(**attrs)
+    return dataclasses.replace(self, **kwargs)
 
 def __iter__(self):
     "Yields a list of tuples [(name, value), ...]"
@@ -99,7 +97,7 @@ def _process_class(cls, ensure_isa, check_types, **kw):
         'astuple': astuple,
         '__iter__': __iter__,
     })
-    return _dataclass(c, **kw)
+    return dataclasses.dataclass(c, **kw)
 
 
 def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPES, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
