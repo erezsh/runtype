@@ -1,10 +1,12 @@
-from typing import _GenericAlias as TypeBase, Any, Union, Callable, List, Dict, Tuple
+from typing import Any, Union, Callable, List, Dict, Tuple
+from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .typesystem import TypeSystem, PythonBasic
 from .dispatch import MultiDispatch
 
 dp = MultiDispatch(PythonBasic())
+
 
 def _isinstance(a, b):
     try:
@@ -20,6 +22,11 @@ def _issubclass(a, b):
         raise TypeError(f"Bad arguments to issubclass: {a}, {b}") from e
 
 
+class SubclassDispatch(PythonBasic):
+    isinstance = issubclass
+
+dp_type = MultiDispatch(SubclassDispatch())
+
 class RuntypeError(TypeError):
     pass
 
@@ -30,47 +37,58 @@ class TupleLengthError(TypeMistmatchError):
     pass
 
 
-@dp
+def switch_subclass(t, d):
+    for k, v in d.items():
+        if _issubclass(t, k):
+            return v
+
+
+def ensure_isa_seq(obj, t):
+    ensure_isa(obj, list)
+    for item in obj:
+        ensure_isa(item, t.__args__)
+
+def ensure_isa_tuple(obj, t):
+    ensure_isa(obj, tuple)
+    if len(obj) != len(t.__args__):
+        raise TupleLengthError(obj, t.__args__)
+    for item, type_ in zip(obj, t.__args__):
+        ensure_isa(item, type_)
+
+def ensure_isa_dict(obj, t):
+    ensure_isa(obj, dict)
+    kt, vt = t.__args__
+    for k, v in obj.items():
+        ensure_isa(k, kt)
+        ensure_isa(v, vt)
+
+
 def ensure_isa(obj, t):
-    if t is Any or t == (Any,):
+    if type(t) is tuple:
+        if not any(isa(obj, opt) for opt in t):
+            raise TypeMistmatchError(obj, t)
         return
-    if not _isinstance(obj, t):
-        raise TypeMistmatchError(obj, t)
-
-@dp
-def ensure_isa(obj, t: tuple):
-    if not any(isa(obj, opt) for opt in t):
-        raise TypeMistmatchError(obj, t)
-
-@dp
-def ensure_isa(obj, t: TypeBase):
-    if t.__origin__ is list:
-        ensure_isa(obj, list)
-        for item in obj:
-            ensure_isa(item, t.__args__)
-    elif t.__origin__ is set:
-        ensure_isa(obj, set)
-        for item in obj:
-            ensure_isa(item, t.__args__)
-    elif t.__origin__ is tuple:
-        ensure_isa(obj, tuple)
-        if len(obj) != len(t.__args__):
-            raise TupleLengthError(obj, t.__args__)
-        for item, type_ in zip(obj, t.__args__):
-            ensure_isa(item, type_)
-    elif t.__origin__ is dict:
-        ensure_isa(obj, dict)
-        kt, vt = t.__args__
-        for k, v in obj.items():
-            ensure_isa(k, kt)
-            ensure_isa(v, vt)
-    elif t.__origin__ is Union:
-        ensure_isa(obj, t.__args__)    # Send as tuple
-    elif _issubclass(t, Callable):
-        if not callable(obj):
-            raise TypeMistmatchError(obj, callable)
+    try:
+        t.__origin__
+    except AttributeError:
+        if t is Any or t == (Any,):
+            return
+        if not _isinstance(obj, t):
+            raise TypeMistmatchError(obj, t)
     else:
-        assert False, t
+        if t.__origin__ is Union:
+            ensure_isa(obj, t.__args__)    # Send as tuple
+        elif t is Callable:
+            if not callable(obj):
+                raise TypeMistmatchError(obj, callable)
+        else:
+            assert t.__origin__, t
+            f = switch_subclass(t.__origin__, {
+                (list, set): ensure_isa_seq,
+                tuple: ensure_isa_tuple,
+                dict: ensure_isa_dict,
+            })
+            f(obj, t)
 
 
 
@@ -107,7 +125,7 @@ def canonize_type(t):
             Tuple[Any]: tuple,
         }[t]
     except KeyError:
-        if isinstance(t, TypeBase):
+        with suppress(AttributeError):
             if t.__origin__ is Union:
                 return t.__args__
         return t
@@ -123,10 +141,10 @@ def issubclass(t1, t2):
     elif isinstance(t2, tuple):
         return any(issubclass(t1, t) for t in t2)
 
-    if isinstance(t2, TypeBase):
+    if hasattr(t2, '__origin__'):
         t2 = canonize_type(t2)
         return t1 == t2    # TODO add some clever logic here
-    elif isinstance(t1, TypeBase):
+    elif hasattr(t1, '__origin__'):
         return issubclass(t1.__origin__, t2)    # XXX more complicated than that?
 
     return _issubclass(t1, t2)
