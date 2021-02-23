@@ -30,7 +30,7 @@ runtype is composed of several utility modules:
 
 2. dataclass - Improves on Python's existing dataclass, by verifying the type-correctness of its attributes at run-time. Also provides a few useful methods for dataclasses.
 
-3. isa - Provides alternative functions to `isinstance` and `issubclass`, that undestand Python's `typing` module.
+3. isa - Provides alternative functions to `isinstance` and `issubclass`, that understand Python's `typing` module.
 
 Runtype's integration with the `typing` module allows to use type signatures such as `List[int]`, `Optional[str]`, or `Union[int, str, Callable]`.
 ''',

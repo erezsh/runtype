@@ -92,6 +92,11 @@ Point(x=2, y=3)
 
 >>> p.replace(x=30)  # New instance
 Point(x=30, y=3)
+
+>>> Point(10, 3.5)   # Actively validates types
+Traceback (most recent call last):
+    ...
+TypeError: [Point] Attribute 'y' expected value of type <class 'int'>, instead got 3.5
 ```
 
 Using advanced types:
