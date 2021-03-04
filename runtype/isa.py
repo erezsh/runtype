@@ -4,6 +4,7 @@ from contextlib import suppress
 from .common import CHECK_TYPES
 from .typesystem import TypeSystem, PythonBasic
 from .dispatch import MultiDispatch
+from .pytypes import ensure_isa, TypeMistmatchError
 
 dp = MultiDispatch(PythonBasic())
 
@@ -27,68 +28,11 @@ class SubclassDispatch(PythonBasic):
 
 dp_type = MultiDispatch(SubclassDispatch())
 
-class RuntypeError(TypeError):
-    pass
-
-class TypeMistmatchError(RuntypeError):
-    pass
-
-class TupleLengthError(TypeMistmatchError):
-    pass
-
-
 def switch_subclass(t, d):
     for k, v in d.items():
         if _issubclass(t, k):
             return v
 
-
-def ensure_isa_seq(obj, t):
-    ensure_isa(obj, list)
-    for item in obj:
-        ensure_isa(item, t.__args__)
-
-def ensure_isa_tuple(obj, t):
-    ensure_isa(obj, tuple)
-    if len(obj) != len(t.__args__):
-        raise TupleLengthError(obj, t.__args__)
-    for item, type_ in zip(obj, t.__args__):
-        ensure_isa(item, type_)
-
-def ensure_isa_dict(obj, t):
-    ensure_isa(obj, dict)
-    kt, vt = t.__args__
-    for k, v in obj.items():
-        ensure_isa(k, kt)
-        ensure_isa(v, vt)
-
-
-def ensure_isa(obj, t):
-    if type(t) is tuple:
-        if not any(isa(obj, opt) for opt in t):
-            raise TypeMistmatchError(obj, t)
-        return
-    try:
-        t.__origin__
-    except AttributeError:
-        if t is Any or t == (Any,):
-            return
-        if not _isinstance(obj, t):
-            raise TypeMistmatchError(obj, t)
-    else:
-        if t.__origin__ is Union:
-            ensure_isa(obj, t.__args__)    # Send as tuple
-        elif t is Callable:
-            if not callable(obj):
-                raise TypeMistmatchError(obj, callable)
-        else:
-            assert t.__origin__, t
-            f = switch_subclass(t.__origin__, {
-                (list, set): ensure_isa_seq,
-                tuple: ensure_isa_tuple,
-                dict: ensure_isa_dict,
-            })
-            f(obj, t)
 
 
 
@@ -110,6 +54,7 @@ def assert_isa(obj, t):
             if item_value is not obj:
                 msg += f'\n\n    Failed on item: {item_value}, expected type {item_type}'
             raise TypeError(msg)
+
 
 
 def canonize_type(t):
