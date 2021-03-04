@@ -18,6 +18,8 @@ class Type:
             return False
 
 class AnyType(Type):
+    supertypes = ()
+
     def __add__(self, other):
         return self
 
@@ -55,14 +57,13 @@ class TupleLengthError(TypeMistmatchError):
 class DataType(Type):
     def __init__(self, pytype, supertypes={Any}):
         self.pytype = pytype
-        self.supertypes = frozenset(supertypes)
 
     def __repr__(self):
         return self.pytype.__name__
 
     def __le__(self, other):
         if isinstance(other, DataType):
-            return self in _get_supertypes(other)
+            return issubclass(self.pytype, other.pytype)
 
         return NotImplemented
 
@@ -94,7 +95,7 @@ class SumType(Type):
         return all(t <= other for t in self.types)
 
     def __ge__(self, other):
-        if not isinstance(other, SumType):
+        if not isinstance(other, Type):
             return False
 
         return any(other <= t for t in self.types)
@@ -112,6 +113,13 @@ class SumType(Type):
             raise TypeMistmatchError(self, obj)
 
 
+class GenericProductType(Type):
+    def __le__(self, other):
+        return isinstance(other, GenericProductType)
+
+    def validate_instance(self, obj):
+        return isinstance(obj, tuple)
+
 class ProductType(Type):
     def __init__(self, types):
         self.types = tuple(types)
@@ -128,7 +136,9 @@ class ProductType(Type):
         return self.types == other.types
 
     def __le__(self, other):
-        if isinstance(other, ProductType):
+        if isinstance(other, GenericProductType):
+            return True
+        elif isinstance(other, ProductType):
             if len(self.types) != len(other.types):
                 return False
 
@@ -169,6 +179,8 @@ class GenericType(DataType):
     def __le__(self, other):
         if isinstance(other, GenericType):
             return issubclass(self.pytype, other.pytype) and self.item <= other.item
+        elif isinstance(other, DataType):
+            return False
 
         return NotImplemented
 
@@ -206,11 +218,12 @@ class DictType(GenericType):
         return type(self)(self.pytype, item)
 
 
+
 Object = DataType(object)
 List = SequenceType(list)
 Set = SequenceType(set)
 Dict = DictType(dict)
-Tuple = GenericType(tuple)
+Tuple = GenericProductType()
 Int = DataType(int)
 Str = DataType(str)
 Float = DataType(float)
@@ -277,7 +290,3 @@ def cast_to_type(t):
         _type_cast_mapping[t] = res     # memoize
         return res
 
-
-def ensure_isa(obj, t):
-    t = cast_to_type(t)
-    t.validate_instance(obj)

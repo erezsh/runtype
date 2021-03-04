@@ -4,37 +4,17 @@ from contextlib import suppress
 from .common import CHECK_TYPES
 from .typesystem import TypeSystem, PythonBasic
 from .dispatch import MultiDispatch
-from .pytypes import ensure_isa, TypeMistmatchError
-
-dp = MultiDispatch(PythonBasic())
+from .pytypes import cast_to_type, TypeMistmatchError
 
 
-def _isinstance(a, b):
-    try:
-        return isinstance(a, b)
-    except TypeError as e:
-        raise TypeError(f"Bad arguments to isinstance: {a}, {b}") from e
+def ensure_isa(obj, t):
+    t = cast_to_type(t)
+    t.validate_instance(obj)
 
-_orig_issubclass = issubclass
-def _issubclass(a, b):
-    try:
-        return _orig_issubclass(a, b)
-    except TypeError as e:
-        raise TypeError(f"Bad arguments to issubclass: {a}, {b}") from e
-
-
-class SubclassDispatch(PythonBasic):
-    isinstance = issubclass
-
-dp_type = MultiDispatch(SubclassDispatch())
-
-def switch_subclass(t, d):
-    for k, v in d.items():
-        if _issubclass(t, k):
-            return v
-
-
-
+def is_subtype(t1, t2):
+    t1 = cast_to_type(t1)
+    t2 = cast_to_type(t2)
+    return t1 <= t2
 
 def isa(obj, t):
     try:
@@ -76,24 +56,7 @@ def canonize_type(t):
         return t
 
 def issubclass(t1, t2):
-    if t2 is Any:
-        return True
-
-    t1 = canonize_type(t1)
-
-    if isinstance(t1, tuple):
-        return all(issubclass(t, t2) for t in t1)
-    elif isinstance(t2, tuple):
-        return any(issubclass(t1, t) for t in t2)
-
-    if hasattr(t2, '__origin__'):
-        t2 = canonize_type(t2)
-        return t1 == t2    # TODO add some clever logic here
-    elif hasattr(t1, '__origin__'):
-        return issubclass(t1.__origin__, t2)    # XXX more complicated than that?
-
-    return _issubclass(t1, t2)
-
+    return is_subtype(t1, t2)
 
 
 class PythonTyping(TypeSystem):

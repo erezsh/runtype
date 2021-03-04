@@ -236,6 +236,9 @@ class TestDispatch(TestCase):
         class test_int(int):
             pass
 
+        assert issubclass(test_int, int)
+        assert not issubclass(int, test_int)
+
         @dy
         def f(i:int):
             return int
@@ -296,6 +299,10 @@ class TestDispatch(TestCase):
     def test_canonization(self):
         def _test_canon(*types, include_none=False):
             dp = Dispatch()
+
+            # for t1 in types:
+            #     for t2 in types:
+            #         assert issubclass(t1, t2), (t1, t2)
 
             @dp
             def f(x: types[0]):
@@ -363,6 +370,10 @@ class TestDispatch(TestCase):
 
 
     def test_union2(self):
+        assert issubclass(int, Union[int, str])
+        assert issubclass(Union[int, str], Union[int, str])
+        assert issubclass(Union[int, str], Union[int, str, dict])
+
         dp = Dispatch()
 
         @dp
