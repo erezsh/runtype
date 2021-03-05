@@ -2,6 +2,8 @@ import sys
 from collections import abc
 import typing
 
+py38 = sys.version_info >= (3,8)
+
 class Type:
     def __add__(self, other):
         return SumType.create((self, other))
@@ -296,12 +298,15 @@ def _cast_to_type(t):
         if t.__origin__ is abc.Callable or t is typing.Callable:
             # return Callable[ProductType(cast_to_type(x) for x in t.__args__)]
             return Callable # TODO
-        if t.__origin__ is typing.Literal:
+        if py38 and t.__origin__ is typing.Literal:
             return OneOf(t.__args__)
-        if t.__origin__ is abc.Mapping:
+        if t is typing.Mapping: # 3.6
+            return Mapping
+        elif t.__origin__ is abc.Mapping:
             k, v = t.__args__
-            return Dict[cast_to_type(k), cast_to_type(v)]
+            return Mapping[cast_to_type(k), cast_to_type(v)]
 
+        import pdb; pdb.set_trace()
         assert False, t
 
     if isinstance(t, typing.TypeVar):

@@ -1,9 +1,10 @@
 import unittest
 from unittest import TestCase
 from collections import abc
+import sys
 
 import typing
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Literal
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable
 from dataclasses import FrozenInstanceError
 
 import logging
@@ -56,8 +57,6 @@ class TestIsa(TestCase):
         assert not issubclass(Any, int)
         assert issubclass(List[int], Any)
 
-        assert isa('a', Literal['a', 'b'])
-        assert not isa('c', Literal['a', 'b'])
 
         # Mappings
         assert issubclass(dict, abc.Mapping)
@@ -69,6 +68,11 @@ class TestIsa(TestCase):
         assert not isa({'a': 1}, Dict[str, str])
         assert not isa({2: 'a'}, Dict[str, str])
         assert isa({2: 'a'}, Dict[int, str])
+
+    @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
+    def test_py38(self):
+        assert isa('a', typing.Literal['a', 'b'])
+        assert not isa('c', typing.Literal['a', 'b'])
 
 
 class TestDispatch(TestCase):
