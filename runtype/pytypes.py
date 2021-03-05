@@ -1,3 +1,4 @@
+import sys
 from collections import abc
 import typing
 
@@ -248,6 +249,14 @@ _type_cast_mapping = {
 }
 
 
+if sys.version_info >= (3,7):
+    origin_list = list
+    origin_dict = dict
+    origin_tuple = tuple
+else:
+    origin_list = typing.List
+    origin_dict = typing.Dict
+    origin_tuple = typing.Tuple
 
 def _cast_to_type(t):
     if isinstance(t, Type):
@@ -261,17 +270,17 @@ def _cast_to_type(t):
     except AttributeError:
         pass
     else:
-        if t.__origin__ is list:
+        if t.__origin__ is origin_list:
             x ,= t.__args__
             return List[cast_to_type(x)]
-        if t.__origin__ is dict:
+        if t.__origin__ is origin_dict:
             k, v = t.__args__
             return Dict[cast_to_type(k), cast_to_type(v)]
-        if t.__origin__ is tuple:
+        if t.__origin__ is origin_tuple:
             return ProductType([cast_to_type(x) for x in t.__args__])
         if t.__origin__ is typing.Union:
             return SumType([cast_to_type(x) for x in t.__args__])
-        if t.__origin__ is abc.Callable:
+        if t.__origin__ is abc.Callable or t is typing.Callable:
             # return Callable[ProductType(cast_to_type(x) for x in t.__args__)]
             return Callable # TODO
 
