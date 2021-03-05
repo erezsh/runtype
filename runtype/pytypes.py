@@ -39,7 +39,9 @@ class AnyType(Type):
     def validate_instance(self, obj):
         return True
 
+
 Any = AnyType()
+
 
 def _get_supertypes(t):
     yield t
@@ -71,6 +73,18 @@ class DataType(Type):
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
             raise TypeMistmatchError(self, obj)
+
+class OneOf(Type):
+    def __init__(self, values):
+        self.values = values
+
+    def __le__(self, other):
+        breakpoint()
+
+    def validate_instance(self, obj):
+        if obj not in self.values:
+            raise TypeMistmatchError(self, obj)
+
 
 class SumType(Type):
     def __init__(self, types):
@@ -156,9 +170,6 @@ class ProductType(Type):
             type_.validate_instance(item)
 
 
-Any = AnyType()
-
-
 class GenericType(DataType):
     def __init__(self, pytype, item=Any):
         super().__init__(pytype)
@@ -169,7 +180,7 @@ class GenericType(DataType):
         return '%s[%s]' % (self.pytype.__name__, self.item)
 
     def __getitem__(self, item):
-        assert self.item is Any
+        assert self.item is Any, self.item
         return type(self)(self.pytype, item)
 
     def __eq__(self, other):
@@ -181,7 +192,7 @@ class GenericType(DataType):
         if isinstance(other, GenericType):
             return issubclass(self.pytype, other.pytype) and self.item <= other.item
         elif isinstance(other, DataType):
-            return False
+            return issubclass(self.pytype, other.pytype)
 
         return NotImplemented
 
@@ -224,6 +235,7 @@ Object = DataType(object)
 List = SequenceType(list)
 Set = SequenceType(set)
 Dict = DictType(dict)
+Mapping = DictType(abc.Mapping)
 Tuple = GenericProductType()
 Int = DataType(int)
 Str = DataType(str)
@@ -231,6 +243,7 @@ Float = DataType(float)
 Bytes = DataType(bytes)
 NoneType = DataType(type(None))
 Callable = GenericType(abc.Callable)
+Literal = OneOf
 
 
 _type_cast_mapping = {
@@ -283,6 +296,11 @@ def _cast_to_type(t):
         if t.__origin__ is abc.Callable or t is typing.Callable:
             # return Callable[ProductType(cast_to_type(x) for x in t.__args__)]
             return Callable # TODO
+        if t.__origin__ is typing.Literal:
+            return OneOf(t.__args__)
+        if t.__origin__ is abc.Mapping:
+            k, v = t.__args__
+            return Dict[cast_to_type(k), cast_to_type(v)]
 
         assert False, t
 

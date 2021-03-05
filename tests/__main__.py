@@ -1,7 +1,9 @@
 import unittest
 from unittest import TestCase
+from collections import abc
 
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable
+import typing
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Literal
 from dataclasses import FrozenInstanceError
 
 import logging
@@ -53,6 +55,21 @@ class TestIsa(TestCase):
         assert issubclass(Any, Any)
         assert not issubclass(Any, int)
         assert issubclass(List[int], Any)
+
+        assert isa('a', Literal['a', 'b'])
+        assert not isa('c', Literal['a', 'b'])
+
+        # Mappings
+        assert issubclass(dict, abc.Mapping)
+        assert issubclass(dict, typing.Mapping)
+        assert isa({'a': 'b'}, typing.Mapping)
+        assert isa({'a': 'b'}, typing.Mapping)
+
+        assert isa({'a': 'b'}, Dict[str, str])
+        assert not isa({'a': 1}, Dict[str, str])
+        assert not isa({2: 'a'}, Dict[str, str])
+        assert isa({2: 'a'}, Dict[int, str])
+
 
 class TestDispatch(TestCase):
     def setUp(self):
