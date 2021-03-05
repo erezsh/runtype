@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "runtype"
+version = "0.1.7"
+description = "Type dispatch and validation for run-time Python"
+authors = ["Erez Shinan <erezshin@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/erezsh/runtype"
+keywords = ["types", "typing", "dispatch", "multimethods", "dataclass", "runtime"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+]
+packages = [{ include = "runtype" }]
+
+
+[tool.poetry.dependencies]
+python = "^3.6"
+dataclasses = {version = "*", python = "~3.6"}
+dacite = "^1.5.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
