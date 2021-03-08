@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "runtype"
-version = "0.1.8"
+version = "0.1.9"
 description = "Type dispatch and validation for run-time Python"
 authors = ["Erez Shinan <erezshin@gmail.com>"]
 license = "MIT"
@@ -22,7 +22,6 @@ packages = [{ include = "runtype" }]
 [tool.poetry.dependencies]
 python = "^3.6"
 dataclasses = {version = "*", python = "~3.6"}
-dacite = "^1.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
