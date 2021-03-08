@@ -45,6 +45,19 @@ Requires Python 3.7 or up (or Python 3.6 with the dataclasses backport)
 
 ## Examples
 
+### Isa & Subclass
+
+```python
+from typing import Dict
+from runtype import isa, issubclass
+
+isa({'a': 1}, Dict[str, int])      # True
+isa({'a': 'b'}, Dict[str, int])    #  False
+
+issubclass(Dict[str, int], Mapping[str, int])   # True
+issubclass(Dict[str, int], Mapping[int, str])   # False
+```
+
 ### Multiple Dispatch
 
 ```python
