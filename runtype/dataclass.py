@@ -10,7 +10,7 @@ def _post_init(self, ensure_isa):
         try:
             ensure_isa(value, field.type)
         except TypeMistmatchError as e:
-            item_value, item_type = e.args
+            item_type, item_value = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}"
             if item_value is not value:
                 msg += f'\n\n    Failed on item: {item_value}, expected type {item_type}'
