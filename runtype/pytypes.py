@@ -81,11 +81,14 @@ class OneOf(Type):
         self.values = values
 
     def __le__(self, other):
-        breakpoint()
+        raise NotImplementedError()
 
     def validate_instance(self, obj):
         if obj not in self.values:
             raise TypeMistmatchError(self, obj)
+
+    def __repr__(self):
+        return 'Literal[%s]' % ', '.join(map(repr, self.values))
 
 
 class SumType(Type):
@@ -236,6 +239,7 @@ class DictType(GenericType):
 Object = DataType(object)
 List = SequenceType(list)
 Set = SequenceType(set)
+FrozenSet = SequenceType(frozenset)
 Dict = DictType(dict)
 Mapping = DictType(abc.Mapping)
 Tuple = GenericProductType()
@@ -251,6 +255,7 @@ Literal = OneOf
 _type_cast_mapping = {
     list: List,
     set: Set,
+    frozenset: FrozenSet,
     dict: Dict,
     tuple: Tuple,
     int: Int,
@@ -268,10 +273,14 @@ if sys.version_info >= (3,7):
     origin_list = list
     origin_dict = dict
     origin_tuple = tuple
+    origin_set = set
+    origin_frozenset = frozenset
 else:
     origin_list = typing.List
     origin_dict = typing.Dict
     origin_tuple = typing.Tuple
+    origin_set = typing.Set
+    origin_frozenset = typing.FrozenSet
 
 def _cast_to_type(t):
     if isinstance(t, Type):
@@ -288,6 +297,12 @@ def _cast_to_type(t):
         if t.__origin__ is origin_list:
             x ,= t.__args__
             return List[cast_to_type(x)]
+        if t.__origin__ is origin_set:
+            x ,= t.__args__
+            return Set[cast_to_type(x)]
+        if t.__origin__ is origin_frozenset:
+            x ,= t.__args__
+            return FrozenSet[cast_to_type(x)]
         if t.__origin__ is origin_dict:
             k, v = t.__args__
             return Dict[cast_to_type(k), cast_to_type(v)]
@@ -306,8 +321,7 @@ def _cast_to_type(t):
             k, v = t.__args__
             return Mapping[cast_to_type(k), cast_to_type(v)]
 
-        import pdb; pdb.set_trace()
-        assert False, t
+        raise NotImplementedError("No support for type:", t)
 
     if isinstance(t, typing.TypeVar):
         return Any  # XXX is this correct?

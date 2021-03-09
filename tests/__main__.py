@@ -4,7 +4,7 @@ from collections import abc
 import sys
 
 import typing
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
 from dataclasses import FrozenInstanceError
 
 import logging
@@ -68,6 +68,16 @@ class TestIsa(TestCase):
         assert not isa({'a': 1}, Dict[str, str])
         assert not isa({2: 'a'}, Dict[str, str])
         assert isa({2: 'a'}, Dict[int, str])
+
+        # Sets
+        assert isa({'a'}, Set[str])
+        assert not isa({'a'}, Set[int])
+        assert not isa({'a'}, FrozenSet[str])
+
+        assert isa(frozenset({'a'}), FrozenSet[str])
+        assert not isa(frozenset({'a'}), FrozenSet[int])
+        assert not isa(frozenset({'a'}), Set[int])
+
 
     @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
     def test_py38(self):
