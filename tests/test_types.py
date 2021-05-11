@@ -23,6 +23,7 @@ class TestTypes(TestCase):
         assert Dict == Dict[Any*Any]
 
         assert repr(List[int]) == repr(List[int])
+        assert repr(Any) == 'Any'
 
         assert List <= List + Dict
         assert List + Dict >= List
@@ -30,6 +31,7 @@ class TestTypes(TestCase):
         assert {List+Dict: True}[Dict+List]		# test hashing
 
         assert Dict*List <= Dict*List
+
 
 if __name__ == '__main__':
     unittest.main()
