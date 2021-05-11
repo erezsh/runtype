@@ -10,7 +10,8 @@ from dataclasses import FrozenInstanceError
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, TypeMistmatchError
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass
+
 
 class TestIsa(TestCase):
     def setUp(self):

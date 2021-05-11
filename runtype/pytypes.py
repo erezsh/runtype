@@ -45,11 +45,6 @@ class AnyType(Type):
 Any = AnyType()
 
 
-def _get_supertypes(t):
-    yield t
-    for st in t.supertypes:
-        yield from _get_supertypes(st)
-
 class RuntypeError(TypeError):
     pass
 
