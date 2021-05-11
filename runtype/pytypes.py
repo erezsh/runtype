@@ -41,6 +41,9 @@ class AnyType(Type):
     def validate_instance(self, obj):
         return True
 
+    def __repr__(self):
+        return 'Any'
+
 
 Any = AnyType()
 
@@ -76,7 +79,7 @@ class OneOf(Type):
         self.values = values
 
     def __le__(self, other):
-        raise NotImplementedError()
+        return NotImplemented
 
     def validate_instance(self, obj):
         if obj not in self.values:
@@ -111,13 +114,13 @@ class SumType(Type):
 
     def __ge__(self, other):
         if not isinstance(other, Type):
-            return False
+            return NotImplemented
 
         return any(other <= t for t in self.types)
 
     def __eq__(self, other):
         if not isinstance(other, SumType):
-            return False
+            return NotImplemented
         return self.types == other.types
 
     def __hash__(self):
@@ -201,6 +204,7 @@ class GenericType(DataType):
 
 
 class SequenceType(GenericType):
+
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
             raise TypeMistmatchError(self, obj)
