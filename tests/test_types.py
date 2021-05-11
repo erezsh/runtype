@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 
-from runtype.pytypes import List, Dict, Any
+from runtype.pytypes import List, Dict, Int, Any
 from runtype.typesystem import TypeSystem
 
 
@@ -9,6 +9,10 @@ class TestTypes(TestCase):
     def test_basic(self):
         assert List + Dict == Dict + List
         assert Any + ((Any + Any) + Any) is Any
+
+        assert (List+Dict) + Int == List + (Dict+Int)
+        assert (List+Dict) != 1
+        assert List + List == List
 
         self.assertRaises(TypeError, lambda: 1 <= List)
         self.assertRaises(TypeError, lambda: 1 >= List)
