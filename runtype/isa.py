@@ -1,9 +1,8 @@
-from typing import Any, Union, Callable, List, Dict, Tuple
+from typing import Any, Union, List, Dict, Tuple
 from contextlib import suppress
 
 from .common import CHECK_TYPES
-from .typesystem import TypeSystem, PythonBasic
-from .dispatch import MultiDispatch
+from .typesystem import TypeSystem
 from .pytypes import cast_to_type, TypeMistmatchError
 
 
