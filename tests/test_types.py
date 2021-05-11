@@ -1,7 +1,8 @@
 import unittest
 from unittest import TestCase
 
-from runtype.pytypes import List, Dict, Any, OneOf
+from runtype.pytypes import List, Dict, Any
+from runtype.typesystem import TypeSystem
 
 
 class TestTypes(TestCase):
@@ -31,6 +32,25 @@ class TestTypes(TestCase):
         assert {List+Dict: True}[Dict+List]		# test hashing
 
         assert Dict*List <= Dict*List
+
+    def test_typesystem(self):
+    	t = TypeSystem()
+    	o = object()
+    	assert t.canonize_type(o) is o
+
+    	class IntOrder(TypeSystem):
+    		def issubclass(self, a, b):
+    			return a <= b 
+
+    		def get_type(self, a):
+    			return a
+
+    	i = IntOrder()
+    	assert i.isinstance(3, 3)
+    	assert i.isinstance(3, 4)
+    	assert not i.isinstance(4, 3)
+
+
 
 
 if __name__ == '__main__':

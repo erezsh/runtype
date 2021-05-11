@@ -10,7 +10,7 @@ from dataclasses import FrozenInstanceError
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa
 
 
 class TestIsa(TestCase):
@@ -78,6 +78,13 @@ class TestIsa(TestCase):
         assert isa(frozenset({'a'}), FrozenSet[str])
         assert not isa(frozenset({'a'}), FrozenSet[int])
         assert not isa(frozenset({'a'}), Set[int])
+
+    def test_assert(self):
+        assert_isa(1, int)
+        assert_isa("a", str)
+        self.assertRaises(TypeError, assert_isa, 1, str)
+        assert_isa([1,2], List[int])
+        self.assertRaises(TypeError, assert_isa, [1,"2"], List[int])
 
 
     @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
