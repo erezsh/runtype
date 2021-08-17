@@ -49,12 +49,11 @@ def canonize_type(t):
             Tuple[Any]: tuple,
         }[t]
     except KeyError:
-        with suppress(AttributeError):
-            if t.__origin__ is Union:
-                return t.__args__
         return t
 
 def issubclass(t1, t2):
+    if isinstance(t2, tuple):
+        return any(issubclass(t1, i) for i in t2)
     return is_subtype(t1, t2)
 
 

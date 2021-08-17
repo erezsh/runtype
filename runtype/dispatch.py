@@ -2,6 +2,9 @@ from collections import defaultdict
 import inspect
 from functools import wraps
 
+from .typesystem import TypeSystem
+
+
 class DispatchError(Exception):
     pass
 
@@ -36,14 +39,20 @@ class MultiDispatch:
 
 
     """
-    def __init__(self, typesystem):
+    def __init__(self, typesystem: TypeSystem, test_subtypes: set = set()):
+        """Parameters:
+            typesystem - instance for interfacing with the typesystem
+            test_subtypes: indices of params that should be matched by subclass instead of isinstance.
+        """
         self.roots = defaultdict(TypeTree)
         self.typesystem = typesystem
+        self.test_subtypes = test_subtypes
 
     def __call__(self, f):
         root = self.roots[f.__name__]
         root.name = f.__name__
         root.typesystem = self.typesystem
+        root.test_subtypes = self.test_subtypes
 
         root.define_function(f)
 
@@ -55,26 +64,33 @@ class MultiDispatch:
         return dispatched_f
 
 
+
 class TypeTree:
     def __init__(self):
         self.root = TypeNode()
         self._cache = {}
         self.name = None
         self.typesystem = None
+        self.test_subtypes = ()
 
-    def get_args_simple_signature(self, args):
+    def get_arg_types(self, args):
         get_type = self.typesystem.get_type
-        return tuple(get_type(a) for a in args)
+        if self.test_subtypes:
+            # TODO can be made more efficient
+            return tuple((a if i in self.test_subtypes else get_type(a))
+                         for i, a in enumerate(args))
+
+        return tuple(map(get_type, args))
 
     def find_function(self, args):
         nodes = [self.root]
-        for a in args:
-            nodes = [n for node in nodes for n in node.follow_arg(a, self.typesystem)]
+        for i, a in enumerate(args):
+            nodes = [n for node in nodes for n in node.follow_arg(a, self.typesystem, test_subtype=i in self.test_subtypes)]
 
         funcs = [node.func for node in nodes if node.func]
 
         if len(funcs) == 0:
-            raise DispatchError(f"Function '{self.name}' not found for signature {self.get_args_simple_signature(args)}")
+            raise DispatchError(f"Function '{self.name}' not found for signature {self.get_arg_types(args)}")
         elif len(funcs) > 1:
             f, _sig = self.choose_most_specific_function(*funcs)
         else:
@@ -84,7 +100,7 @@ class TypeTree:
 
     def find_function_cached(self, args):
         "Memoized version of find_function"
-        sig = self.get_args_simple_signature(args)
+        sig = self.get_arg_types(args)
         try:
             return self._cache[sig]
         except KeyError:
@@ -119,8 +135,6 @@ class TypeTree:
             else:
                 # Canonize to detect more collisions on construction, instead of during dispatch
                 t = self.typesystem.canonize_type(t)
-            # elif not isinstance(t, type):
-            #     raise TypeError("Annotation isn't a type")
 
             if p.default is not p.empty:
                 # From now on, everything is optional
@@ -155,7 +169,13 @@ class TypeTree:
                 elif issubclass(t, ms_t) or not issubclass(ms_t, t):
                     # Cannot resolve ordering of these two types
                     n = funcs[0][0].__name__
-                    msg = f"Ambiguous dispatch in '{n}', argument #{arg_idx+1}: Unable to resolve the specificity of the types: \n\t- {t}\n\t- {ms_t}"
+                    msg = f"Ambiguous dispatch in '{n}', argument #{arg_idx+1}: Unable to resolve the specificity of the types: \n\t- {t}\n\t- {ms_t}\n"
+                    msg += '\nThis error occured because neither is a subclass of the other.'
+                    msg += '\nRelevant functions:\n'
+                    for f, sig in funcs:
+                        c = f.__code__
+                        msg += f'\t- {c.co_filename}:{c.co_firstlineno} :: {sig}\n'
+
                     raise DispatchError(msg)
 
             most_specific_per_param.append(ms_set)
@@ -183,8 +203,12 @@ class TypeNode:
         self.follow_type = defaultdict(TypeNode)
         self.func = None
 
-    def follow_arg(self, arg, ts):
+    def follow_arg(self, arg, ts, test_subtype=False):
         for type_, tree in self.follow_type.items():
-            if ts.isinstance(arg, type_):
+            if test_subtype:
+                if ts.issubclass(arg, type_):
+                    yield tree
+            elif ts.isinstance(arg, type_):
                 yield tree
+
 

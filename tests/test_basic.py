@@ -412,6 +412,7 @@ class TestDispatch(TestCase):
         assert issubclass(int, Union[int, str])
         assert issubclass(Union[int, str], Union[int, str])
         assert issubclass(Union[int, str], Union[int, str, dict])
+        assert not issubclass(Union[int, str, dict], Union[int, str])
 
         dp = Dispatch()
 

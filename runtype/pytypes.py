@@ -1,4 +1,5 @@
 import sys
+import collections
 from collections import abc
 import typing
 
@@ -72,7 +73,7 @@ class DataType(Type):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(self, obj)
+            raise TypeMistmatchError(obj, self)
 
 class OneOf(Type):
     def __init__(self, values):
@@ -83,7 +84,7 @@ class OneOf(Type):
 
     def validate_instance(self, obj):
         if obj not in self.values:
-            raise TypeMistmatchError(self, obj)
+            raise TypeMistmatchError(obj, self)
 
     def __repr__(self):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
@@ -128,15 +129,25 @@ class SumType(Type):
 
     def validate_instance(self, obj):
         if not any(t.test_instance(obj) for t in self.types):
-            raise TypeMistmatchError(self, obj)
+            raise TypeMistmatchError(obj, self)
 
 
-class GenericProductType(Type):
+class TupleType(Type):
     def __le__(self, other):
-        return isinstance(other, GenericProductType)
+        # No superclasses or subclasses
+        return isinstance(other, TupleType)
+
+    def __ge__(self, other):
+        if isinstance(other, TupleType):
+            return True
+        elif isinstance(other, DataType):
+            return False
+
+        return NotImplemented
 
     def validate_instance(self, obj):
-        return isinstance(obj, tuple)
+        if not isinstance(obj, tuple):
+            raise TypeMistmatchError(obj, self)
 
 class ProductType(Type):
     def __init__(self, types):
@@ -154,7 +165,8 @@ class ProductType(Type):
         return self.types == other.types
 
     def __le__(self, other):
-        if isinstance(other, GenericProductType):
+        if isinstance(other, TupleType):
+            # Products are a tuple, but with length and types
             return True
         elif isinstance(other, ProductType):
             if len(self.types) != len(other.types):
@@ -196,6 +208,8 @@ class GenericType(DataType):
             return issubclass(self.pytype, other.pytype) and self.item <= other.item
         elif isinstance(other, DataType):
             return issubclass(self.pytype, other.pytype)
+        elif isinstance(other, TupleType):
+            return False    # tuples are generics, not the other way around
 
         return NotImplemented
 
@@ -207,7 +221,7 @@ class SequenceType(GenericType):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(self, obj)
+            raise TypeMistmatchError(obj, self)
         if self.item is not Any:
             for item in obj:
                 self.item.validate_instance(item)
@@ -222,7 +236,7 @@ class DictType(GenericType):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(self, obj)
+            raise TypeMistmatchError(obj, self)
         if self.item is not Any:
             kt, vt = self.item.types
             for k, v in obj.items():
@@ -236,12 +250,13 @@ class DictType(GenericType):
 
 
 Object = DataType(object)
+Iter = SequenceType(collections.Iterable)
 List = SequenceType(list)
 Set = SequenceType(set)
 FrozenSet = SequenceType(frozenset)
 Dict = DictType(dict)
 Mapping = DictType(abc.Mapping)
-Tuple = GenericProductType()
+Tuple = TupleType()
 Int = DataType(int)
 Str = DataType(str)
 Float = DataType(float)
@@ -252,6 +267,7 @@ Literal = OneOf
 
 
 _type_cast_mapping = {
+    iter: Iter,
     list: List,
     set: Set,
     frozenset: FrozenSet,
