@@ -18,7 +18,7 @@ class Type:
         try:
             self.validate_instance(obj)
             return True
-        except TypeMistmatchError as _e:
+        except TypeMismatchError as _e:
             return False
 
 class AnyType(Type):
@@ -52,10 +52,10 @@ Any = AnyType()
 class RuntypeError(TypeError):
     pass
 
-class TypeMistmatchError(RuntypeError):
+class TypeMismatchError(RuntypeError):
     pass
 
-class TupleLengthError(TypeMistmatchError):
+class TupleLengthError(TypeMismatchError):
     pass
 
 class DataType(Type):
@@ -73,7 +73,7 @@ class DataType(Type):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
 
 class OneOf(Type):
     def __init__(self, values):
@@ -84,7 +84,7 @@ class OneOf(Type):
 
     def validate_instance(self, obj):
         if obj not in self.values:
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
 
     def __repr__(self):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
@@ -129,7 +129,7 @@ class SumType(Type):
 
     def validate_instance(self, obj):
         if not any(t.test_instance(obj) for t in self.types):
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
 
 
 class TupleType(Type):
@@ -147,7 +147,7 @@ class TupleType(Type):
 
     def validate_instance(self, obj):
         if not isinstance(obj, tuple):
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
 
 class ProductType(Type):
     def __init__(self, types):
@@ -221,7 +221,7 @@ class SequenceType(GenericType):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
         if self.item is not Any:
             for item in obj:
                 self.item.validate_instance(item)
@@ -236,7 +236,7 @@ class DictType(GenericType):
 
     def validate_instance(self, obj):
         if not isinstance(obj, self.pytype):
-            raise TypeMistmatchError(obj, self)
+            raise TypeMismatchError(obj, self)
         if self.item is not Any:
             kt, vt = self.item.types
             for k, v in obj.items():

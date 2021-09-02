@@ -548,6 +548,27 @@ class TestDataclass(TestCase):
         a = A(6)
         a.a = 4
 
+    def test_cast_dict(self):
+        @dataclass
+        class Point:
+            x: float
+            y: float
+
+        @dataclass(check_types='cast')
+        class Rect:
+            start: Point
+            end: Point
+
+        start = {'x': 10.0, 'y': 10.0}
+        end = {'x': 3.14, 'y': 234.3}
+        rect = {'start': start, 'end': end}
+
+        r = Rect(**rect)
+        assert r.json() == rect, (dict(r), rect)
+
+        self.assertRaises(TypeError, Rect, start={'x': 10.0, 'y': 10.0, 'z': 42.2}, end=end)
+        self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
+
 
 
 

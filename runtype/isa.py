@@ -3,7 +3,7 @@ from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .typesystem import TypeSystem
-from .pytypes import cast_to_type, TypeMistmatchError
+from .pytypes import cast_to_type, TypeMismatchError
 
 
 def ensure_isa(obj, t):
@@ -19,7 +19,7 @@ def isa(obj, t):
     try:
         ensure_isa(obj, t)
         return True
-    except TypeMistmatchError as e:
+    except TypeMismatchError as e:
         return False
 
 
@@ -27,7 +27,7 @@ def assert_isa(obj, t):
     if CHECK_TYPES:
         try:
             ensure_isa(obj, t)
-        except TypeMistmatchError as e:
+        except TypeMismatchError as e:
             item_value, item_type = e.args
             msg = f"Expected value of type {t}, instead got {obj!r}"
             if item_value is not obj:

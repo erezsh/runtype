@@ -2,14 +2,21 @@ from copy import copy
 import dataclasses
 
 from .common import CHECK_TYPES
-from .isa import ensure_isa as default_ensure_isa, TypeMistmatchError
+from .isa import ensure_isa as default_ensure_isa, TypeMismatchError
 
-def _post_init(self, ensure_isa):
+def _post_init(self, ensure_isa, cast_dicts):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
+
+        if cast_dicts:    # Basic cast
+            if isinstance(value, dict):
+                inst = field.type(**value)
+                object.__setattr__(self, name, inst)
+                value = inst
+
         try:
             ensure_isa(value, field.type)
-        except TypeMistmatchError as e:
+        except TypeMismatchError as e:
             item_type, item_value = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}"
             if item_value is not value:
@@ -62,6 +69,13 @@ def astuple(self):
     """
     return tuple(getattr(self, name) for name in self.__dataclass_fields__)
 
+def json(self):
+    """Returns a JSON of values, going recursively into other objects (if possible)"""
+    return {
+        k: json(v) if dataclasses.is_dataclass(v) else v
+        for k, v in self
+    }
+
 
 def _set_if_not_exists(cls, d):
     for attr, value in d.items():
@@ -77,7 +91,7 @@ def _process_class(cls, ensure_isa, check_types, **kw):
 
         orig_post_init = getattr(cls, '__post_init__', None)
         def __post_init__(self):
-            _post_init(self, ensure_isa=ensure_isa)
+            _post_init(self, ensure_isa=ensure_isa, cast_dicts=check_types == 'cast')
             if orig_post_init is not None:
                 orig_post_init(self)
         c.__post_init__ = __post_init__
@@ -95,6 +109,7 @@ def _process_class(cls, ensure_isa, check_types, **kw):
         'replace': replace,
         'aslist': aslist,
         'astuple': astuple,
+        'json': json,
         '__iter__': __iter__,
     })
     return dataclasses.dataclass(c, **kw)
