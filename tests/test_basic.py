@@ -500,6 +500,14 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, A, [1,2,3], 3)
         self.assertRaises(TypeError, A, None, None)
 
+        @dataclass
+        class B:
+            a: Tuple
+            b: FrozenSet
+
+        b = B((1,2), frozenset({3}))
+
+
     def test_unfrozen(self):
         @dataclass(frozen=False)
         class A:
@@ -574,12 +582,17 @@ class TestDataclass(TestCase):
         class A:
             a: List = []
             b: Dict = {}
+            c: Set = {1}
 
         a = A()
         assert a.a == []
         assert a.b == {}
 
         assert a.a is not A().a
+
+        assert a.c == {1}
+        assert a.c is not A().c
+
 
 
 

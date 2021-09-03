@@ -179,7 +179,7 @@ class ProductType(Type):
         return NotImplemented
 
     def validate_instance(self, obj):
-        if len(obj) != len(self.types):
+        if self.types and len(obj) != len(self.types):
             raise TupleLengthError(self, obj)
         for type_, item in zip(self.types, obj):
             type_.validate_instance(item)
@@ -312,25 +312,37 @@ def _cast_to_type(t):
         if t.__origin__ is origin_list:
             x ,= t.__args__
             return List[cast_to_type(x)]
-        if t.__origin__ is origin_set:
+        elif t.__origin__ is origin_set:
             x ,= t.__args__
             return Set[cast_to_type(x)]
-        if t.__origin__ is origin_frozenset:
+        elif t.__origin__ is origin_frozenset:
             x ,= t.__args__
             return FrozenSet[cast_to_type(x)]
-        if t.__origin__ is origin_dict:
+        elif t.__origin__ is origin_dict:
             k, v = t.__args__
             return Dict[cast_to_type(k), cast_to_type(v)]
-        if t.__origin__ is origin_tuple:
+        elif t.__origin__ is origin_tuple:
             return ProductType([cast_to_type(x) for x in t.__args__])
-        if t.__origin__ is typing.Union:
+
+        elif t is typing.List:
+            return List
+        elif t is typing.Dict:
+            return Dict
+        elif t is typing.Set:
+            return Set
+        elif t is typing.FrozenSet:
+            return FrozenSet
+        elif t is typing.Tuple:
+            return Tuple
+
+        elif t.__origin__ is typing.Union:
             return SumType([cast_to_type(x) for x in t.__args__])
-        if t.__origin__ is abc.Callable or t is typing.Callable:
+        elif t.__origin__ is abc.Callable or t is typing.Callable:
             # return Callable[ProductType(cast_to_type(x) for x in t.__args__)]
             return Callable # TODO
-        if py38 and t.__origin__ is typing.Literal:
+        elif py38 and t.__origin__ is typing.Literal:
             return OneOf(t.__args__)
-        if t is typing.Mapping: # 3.6
+        elif t is typing.Mapping: # 3.6
             return Mapping
         elif t.__origin__ is abc.Mapping:
             k, v = t.__args__
