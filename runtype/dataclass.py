@@ -86,7 +86,7 @@ def _set_if_not_exists(cls, d):
 
 
 def _process_class(cls, ensure_isa, check_types, **kw):
-    for name, type_ in cls.__annotations__.items():
+    for name, type_ in getattr(cls, '__annotations__', {}).items():
         default = getattr(cls, name, dataclasses.MISSING)
         if isinstance(default, (list, dict, set)):
             def f(_=default):
