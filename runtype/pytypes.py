@@ -309,41 +309,34 @@ def _cast_to_type(t):
     except AttributeError:
         pass
     else:
-        if t.__origin__ is origin_list:
-            if t.__args__:
-                x ,= t.__args__
-                return List[cast_to_type(x)]
-            return List
-        elif t.__origin__ is origin_set:
-            if t.__args__:
-                x ,= t.__args__
-                return Set[cast_to_type(x)]
-            return Set
-        elif t.__origin__ is origin_frozenset:
-            if t.__args__:
-                x ,= t.__args__
-                return FrozenSet[cast_to_type(x)]
-            return FrozenSet
-        elif t.__origin__ is origin_dict:
-            if t.__args__:
-                k, v = t.__args__
-                return Dict[cast_to_type(k), cast_to_type(v)]
-            return Dict
-        elif t.__origin__ is origin_tuple:
-            if t.__args__:
-                return ProductType([cast_to_type(x) for x in t.__args__])
-            return Tuple
+        if getattr(t, '__args__', None) is None:
+            if t is typing.List:
+                return List
+            elif t is typing.Dict:
+                return Dict
+            elif t is typing.Set:
+                return Set
+            elif t is typing.FrozenSet:
+                return FrozenSet
+            elif t is typing.Tuple:
+                return Tuple
+            elif t is typing.Mapping: # 3.6
+                return Mapping
 
-        elif t is typing.List:
-            return List
-        elif t is typing.Dict:
-            return Dict
-        elif t is typing.Set:
-            return Set
-        elif t is typing.FrozenSet:
-            return FrozenSet
-        elif t is typing.Tuple:
-            return Tuple
+        if t.__origin__ is origin_list:
+            x ,= t.__args__
+            return List[cast_to_type(x)]
+        elif t.__origin__ is origin_set:
+            x ,= t.__args__
+            return Set[cast_to_type(x)]
+        elif t.__origin__ is origin_frozenset:
+            x ,= t.__args__
+            return FrozenSet[cast_to_type(x)]
+        elif t.__origin__ is origin_dict:
+            k, v = t.__args__
+            return Dict[cast_to_type(k), cast_to_type(v)]
+        elif t.__origin__ is origin_tuple:
+            return ProductType([cast_to_type(x) for x in t.__args__])
 
         elif t.__origin__ is typing.Union:
             return SumType([cast_to_type(x) for x in t.__args__])
@@ -352,8 +345,6 @@ def _cast_to_type(t):
             return Callable # TODO
         elif py38 and t.__origin__ is typing.Literal:
             return OneOf(t.__args__)
-        elif t is typing.Mapping: # 3.6
-            return Mapping
         elif t.__origin__ is abc.Mapping:
             k, v = t.__args__
             return Mapping[cast_to_type(k), cast_to_type(v)]
