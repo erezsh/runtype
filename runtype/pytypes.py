@@ -310,19 +310,29 @@ def _cast_to_type(t):
         pass
     else:
         if t.__origin__ is origin_list:
-            x ,= t.__args__
-            return List[cast_to_type(x)]
+            if t.__args__:
+                x ,= t.__args__
+                return List[cast_to_type(x)]
+            return List
         elif t.__origin__ is origin_set:
-            x ,= t.__args__
-            return Set[cast_to_type(x)]
+            if t.__args__:
+                x ,= t.__args__
+                return Set[cast_to_type(x)]
+            return Set
         elif t.__origin__ is origin_frozenset:
-            x ,= t.__args__
-            return FrozenSet[cast_to_type(x)]
+            if t.__args__:
+                x ,= t.__args__
+                return FrozenSet[cast_to_type(x)]
+            return FrozenSet
         elif t.__origin__ is origin_dict:
-            k, v = t.__args__
-            return Dict[cast_to_type(k), cast_to_type(v)]
+            if t.__args__:
+                k, v = t.__args__
+                return Dict[cast_to_type(k), cast_to_type(v)]
+            return Dict
         elif t.__origin__ is origin_tuple:
-            return ProductType([cast_to_type(x) for x in t.__args__])
+            if t.__args__:
+                return ProductType([cast_to_type(x) for x in t.__args__])
+            return Tuple
 
         elif t is typing.List:
             return List
