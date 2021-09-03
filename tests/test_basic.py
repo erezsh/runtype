@@ -569,6 +569,18 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, Rect, start={'x': 10.0, 'y': 10.0, 'z': 42.2}, end=end)
         self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
 
+    def test_default_mutables(self):
+        @dataclass
+        class A:
+            a: List = []
+            b: Dict = {}
+
+        a = A()
+        assert a.a == []
+        assert a.b == {}
+
+        assert a.a is not A().a
+
 
 
 
