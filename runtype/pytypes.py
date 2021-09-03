@@ -250,7 +250,7 @@ class DictType(GenericType):
 
 
 Object = DataType(object)
-Iter = SequenceType(collections.Iterable)
+Iter = SequenceType(collections.abc.Iterable)
 List = SequenceType(list)
 Set = SequenceType(set)
 FrozenSet = SequenceType(frozenset)

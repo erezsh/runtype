@@ -5,6 +5,7 @@ import sys
 
 import typing
 from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
+from collections.abc import Iterable
 from dataclasses import FrozenInstanceError
 
 import logging
@@ -504,8 +505,9 @@ class TestDataclass(TestCase):
         class B:
             a: Tuple
             b: FrozenSet
+            i: Iterable
 
-        b = B((1,2), frozenset({3}))
+        b = B((1,2), frozenset({3}), iter([]))
 
 
     def test_unfrozen(self):
