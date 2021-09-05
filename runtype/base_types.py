@@ -2,13 +2,6 @@
 Base Types - contains the basic building blocks of a generic type system
 """
 
-class RuntypeError(TypeError):
-    pass
-
-class TypeMismatchError(RuntypeError):
-    pass
-
-
 class Type:
     def __add__(self, other):
         return SumType.create((self, other))

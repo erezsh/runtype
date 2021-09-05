@@ -9,8 +9,13 @@ import typing
 
 py38 = sys.version_info >= (3,8)
 
-from .base_types import Type, DataType, GenericType, SumType, ProductType, AnyType, TypeMismatchError
+from .base_types import Type, DataType, GenericType, SumType, ProductType, AnyType
 
+class RuntypeError(TypeError):
+    pass
+
+class TypeMismatchError(RuntypeError):
+    pass
 
 class LengthMismatchError(TypeMismatchError):
     pass
