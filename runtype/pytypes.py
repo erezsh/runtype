@@ -59,21 +59,25 @@ class TupleLengthError(TypeMismatchError):
     pass
 
 class DataType(Type):
-    def __init__(self, pytype, supertypes={Any}):
-        self.pytype = pytype
+    def __init__(self, kernel, supertypes={Any}):
+        self.kernel = kernel
 
     def __repr__(self):
-        return self.pytype.__name__
+        return str(self.kernel)  #.__name__
 
+class PythonDataType(DataType):
     def __le__(self, other):
-        if isinstance(other, DataType):
-            return issubclass(self.pytype, other.pytype)
+        if isinstance(other, PythonDataType):
+            return issubclass(self.kernel, other.kernel)
 
         return NotImplemented
 
     def validate_instance(self, obj):
-        if not isinstance(obj, self.pytype):
+        if not isinstance(obj, self.kernel):
             raise TypeMismatchError(obj, self)
+
+    def __repr__(self):
+        return str(self.kernel.__name__)
 
 class OneOf(Type):
     def __init__(self, values):
@@ -185,58 +189,62 @@ class ProductType(Type):
             type_.validate_instance(item)
 
 
-class GenericType(DataType):
-    def __init__(self, pytype, item=Any):
-        super().__init__(pytype)
+class GenericType(Type):
+    def __init__(self, base, item=Any):
         assert isinstance(item, (Type, type)), item
+        self.base = base
         self.item = item
 
     def __repr__(self):
-        return '%s[%s]' % (self.pytype.__name__, self.item)
+        return '%r[%r]' % (self.base, self.item)
 
     def __getitem__(self, item):
         assert self.item is Any, self.item
-        return type(self)(self.pytype, item)
+        return type(self)(self.base, item)
 
     def __eq__(self, other):
         if not isinstance(other, GenericType):
             return False
-        return self.pytype == other.pytype and self.item == other.item
+        return self.base == other.base and self.item == other.item
 
     def __le__(self, other):
         if isinstance(other, GenericType):
-            return issubclass(self.pytype, other.pytype) and self.item <= other.item
+            return self.base <= other.base and self.item <= other.item
         elif isinstance(other, DataType):
-            return issubclass(self.pytype, other.pytype)
+            return self.base <= other
         elif isinstance(other, TupleType):
             return False    # tuples are generics, not the other way around
 
         return NotImplemented
 
+    def __ge__(self, other):
+        return not self <= other
+
     def __hash__(self):
-        return hash((self.pytype, self.item))
+        return hash((self.base, self.item))
+
+    def validate_instance(self, obj):
+        raise NotImplementedError()
 
 
 class SequenceType(GenericType):
 
     def validate_instance(self, obj):
-        if not isinstance(obj, self.pytype):
-            raise TypeMismatchError(obj, self)
+        self.base.validate_instance(obj)
         if self.item is not Any:
             for item in obj:
                 self.item.validate_instance(item)
 
 class DictType(GenericType):
-    def __init__(self, pytype, item=Any*Any):
-        super().__init__(pytype)
+    def __init__(self, base, item=Any*Any):
+        super().__init__(base)
         if isinstance(item, tuple):
             assert len(item) == 2
             item = ProductType([cast_to_type(x) for x in item])
         self.item = item
 
     def validate_instance(self, obj):
-        if not isinstance(obj, self.pytype):
-            raise TypeMismatchError(obj, self)
+        self.base.validate_instance(obj)
         if self.item is not Any:
             kt, vt = self.item.types
             for k, v in obj.items():
@@ -245,24 +253,24 @@ class DictType(GenericType):
 
     def __getitem__(self, item):
         assert self.item == Any*Any
-        return type(self)(self.pytype, item)
+        return type(self)(self.base, item)
 
 
 
-Object = DataType(object)
+Object = PythonDataType(object)
 Iter = SequenceType(collections.abc.Iterable)
-List = SequenceType(list)
-Set = SequenceType(set)
-FrozenSet = SequenceType(frozenset)
-Dict = DictType(dict)
-Mapping = DictType(abc.Mapping)
+List = SequenceType(PythonDataType(list))
+Set = SequenceType(PythonDataType(set))
+FrozenSet = SequenceType(PythonDataType(frozenset))
+Dict = DictType(PythonDataType(dict))
+Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
-Int = DataType(int)
-Str = DataType(str)
-Float = DataType(float)
-Bytes = DataType(bytes)
-NoneType = DataType(type(None))
-Callable = GenericType(abc.Callable)
+Int = PythonDataType(int)
+Str = PythonDataType(str)
+Float = PythonDataType(float)
+Bytes = PythonDataType(bytes)
+NoneType = PythonDataType(type(None))
+Callable = PythonDataType(abc.Callable) # TODO: Generic
 Literal = OneOf
 
 
@@ -354,7 +362,7 @@ def _cast_to_type(t):
     if isinstance(t, typing.TypeVar):
         return Any  # XXX is this correct?
 
-    return DataType(t)
+    return PythonDataType(t)
 
 def cast_to_type(t):
     try:
