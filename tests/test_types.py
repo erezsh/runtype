@@ -37,6 +37,8 @@ class TestTypes(TestCase):
 
         assert Dict*List <= Dict*List
 
+        assert ((Int * Dict) * List) == (Int * (Dict * List))
+
     def test_typesystem(self):
     	t = TypeSystem()
     	o = object()

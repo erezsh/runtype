@@ -13,7 +13,7 @@ class Type:
     def __add__(self, other):
         return SumType.create((self, other))
     def __mul__(self, other):
-        return ProductType((self, other))
+        return ProductType.create((self, other))
 
 
 class AnyType(Type):
@@ -89,8 +89,20 @@ class SumType(Type):
 
 
 class ProductType(Type):
+
     def __init__(self, types):
         self.types = tuple(types)
+
+    @classmethod
+    def create(cls, types):
+        x = []
+        for t in types:
+            if isinstance(t, ProductType):
+                x += t.types
+            else:
+                x.append(t)
+
+        return cls(x)
 
     def __repr__(self):
         return '(%s)' % '*'.join(map(repr, self.types))
