@@ -9,10 +9,46 @@ import typing
 
 py38 = sys.version_info >= (3,8)
 
-from .base_types import Type, DataType, GenericType, SequenceType, SumType, ProductType, Any, TypeMismatchError
+from .base_types import Type, DataType, GenericType, SumType, ProductType, AnyType, TypeMismatchError
 
 
-class PythonDataType(DataType):
+class LengthMismatchError(TypeMismatchError):
+    pass
+
+
+class PythonType(Type):
+    def validate_instance(self, obj):
+        raise NotImplementedError(self)
+
+    def test_instance(self, obj):
+        try:
+            self.validate_instance(obj)
+            return True
+        except TypeMismatchError as _e:
+            return False
+
+class AnyType(AnyType, PythonType):
+    def validate_instance(self, obj):
+        return True
+
+Any = AnyType()
+
+
+class ProductType(ProductType, PythonType):
+    def validate_instance(self, obj):
+        if self.types and len(obj) != len(self.types):
+            raise LengthMismatchError(self, obj)
+        for type_, item in zip(self.types, obj):
+            type_.validate_instance(item)
+
+
+class SumType(SumType, PythonType):
+    def validate_instance(self, obj):
+        if not any(t.test_instance(obj) for t in self.types):
+            raise TypeMismatchError(obj, self)
+
+
+class PythonDataType(DataType, PythonType):
     def __le__(self, other):
         if isinstance(other, PythonDataType):
             return issubclass(self.kernel, other.kernel)
@@ -28,7 +64,7 @@ class PythonDataType(DataType):
 
 
 
-class TupleType(Type):
+class TupleType(PythonType):
     def __le__(self, other):
         # No superclasses or subclasses
         return isinstance(other, TupleType)
@@ -50,7 +86,7 @@ class TupleType(Type):
 
 
 
-class OneOf(Type):
+class OneOf(PythonType):
     def __init__(self, values):
         self.values = values
 
@@ -66,7 +102,21 @@ class OneOf(Type):
 
 
 
+class GenericType(GenericType, PythonType):
+    def __init__(self, base, item=Any):
+        return super().__init__(base, item)
+
+
+class SequenceType(GenericType):
+
+    def validate_instance(self, obj):
+        self.base.validate_instance(obj)
+        if self.item is not Any:
+            for item in obj:
+                self.item.validate_instance(item)
+
 class DictType(GenericType):
+
     def __init__(self, base, item=Any*Any):
         super().__init__(base)
         if isinstance(item, tuple):

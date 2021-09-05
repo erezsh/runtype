@@ -8,8 +8,6 @@ class RuntypeError(TypeError):
 class TypeMismatchError(RuntypeError):
     pass
 
-class LengthMismatchError(TypeMismatchError):
-    pass
 
 class Type:
     def __add__(self, other):
@@ -17,15 +15,6 @@ class Type:
     def __mul__(self, other):
         return ProductType((self, other))
 
-    def validate_instance(self, obj):
-        raise NotImplementedError(self)
-
-    def test_instance(self, obj):
-        try:
-            self.validate_instance(obj)
-            return True
-        except TypeMismatchError as _e:
-            return False
 
 class AnyType(Type):
     supertypes = ()
@@ -45,9 +34,6 @@ class AnyType(Type):
 
         return NotImplemented
 
-    def validate_instance(self, obj):
-        return True
-
     def __repr__(self):
         return 'Any'
 
@@ -61,6 +47,7 @@ class DataType(Type):
 
     def __repr__(self):
         return str(self.kernel)  #.__name__
+
 
 class SumType(Type):
     def __init__(self, types):
@@ -99,9 +86,6 @@ class SumType(Type):
     def __hash__(self):
         return hash(frozenset(self.types))
 
-    def validate_instance(self, obj):
-        if not any(t.test_instance(obj) for t in self.types):
-            raise TypeMismatchError(obj, self)
 
 
 class ProductType(Type):
@@ -130,12 +114,6 @@ class ProductType(Type):
 
         return NotImplemented
 
-    def validate_instance(self, obj):
-        if self.types and len(obj) != len(self.types):
-            raise LengthMismatchError(self, obj)
-        for type_, item in zip(self.types, obj):
-            type_.validate_instance(item)
-
 
 class GenericType(Type):
     def __init__(self, base, item=Any):
@@ -147,7 +125,7 @@ class GenericType(Type):
         return '%r[%r]' % (self.base, self.item)
 
     def __getitem__(self, item):
-        assert self.item is Any, self.item
+        assert isinstance(self.item, AnyType), self.item
         return type(self)(self.base, item)
 
     def __eq__(self, other):
@@ -169,11 +147,3 @@ class GenericType(Type):
     def __hash__(self):
         return hash((self.base, self.item))
 
-
-class SequenceType(GenericType):
-
-    def validate_instance(self, obj):
-        self.base.validate_instance(obj)
-        if self.item is not Any:
-            for item in obj:
-                self.item.validate_instance(item)
