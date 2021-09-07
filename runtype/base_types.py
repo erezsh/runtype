@@ -138,7 +138,7 @@ class GenericType(ContainerType):
 
     def __repr__(self):
         if self.item is Any:
-            return self.base
+            return str(self.base)
         return '%r[%r]' % (self.base, self.item)
 
     def __getitem__(self, item):
