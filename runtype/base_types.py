@@ -41,10 +41,6 @@ class DataType(Type):
 
         return NotImplemented
 
-class ContainerType(DataType):
-    def __getitem__(self, other):
-        return GenericType(self, other)
-
 
 class SumType(Type):
     def __init__(self, types):
@@ -119,12 +115,17 @@ class ProductType(Type):
 
             return all(t1<=t2 for t1, t2 in zip(self.types, other.types))
         elif isinstance(other, DataType):
-            return NotImplemented
+            return False
 
         return NotImplemented
 
 
-class GenericType(Type):
+class ContainerType(DataType):
+    def __getitem__(self, other):
+        return GenericType(self, other)
+
+
+class GenericType(ContainerType):
     def __init__(self, base, item=Any):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
