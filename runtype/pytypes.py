@@ -54,6 +54,9 @@ class SumType(SumType, PythonType):
 
 
 class PythonDataType(DataType, PythonType):
+    def __init__(self, kernel, supertypes={Any}):
+        self.kernel = kernel
+
     def __le__(self, other):
         if isinstance(other, PythonDataType):
             return issubclass(self.kernel, other.kernel)

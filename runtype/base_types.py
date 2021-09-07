@@ -35,16 +35,20 @@ Any = AnyType()
 
 
 class DataType(Type):
-    def __init__(self, kernel, supertypes={Any}):
-        self.kernel = kernel
+    def __le__(self, other):
+        if isinstance(other, DataType):
+            return self == other
 
-    def __repr__(self):
-        return str(self.kernel)  #.__name__
+        return NotImplemented
+
+class ContainerType(DataType):
+    def __getitem__(self, other):
+        return GenericType(self, other)
 
 
 class SumType(Type):
     def __init__(self, types):
-        self.types = set(types)
+        self.types = frozenset(types)
 
     @classmethod
     def create(cls, types):
@@ -105,7 +109,7 @@ class ProductType(Type):
 
     def __eq__(self, other):
         if not isinstance(other, ProductType):
-            return False
+            return NotImplemented
         return self.types == other.types
 
     def __le__(self, other):
@@ -115,7 +119,7 @@ class ProductType(Type):
 
             return all(t1<=t2 for t1, t2 in zip(self.types, other.types))
         elif isinstance(other, DataType):
-            return False
+            return NotImplemented
 
         return NotImplemented
 
@@ -123,20 +127,29 @@ class ProductType(Type):
 class GenericType(Type):
     def __init__(self, base, item=Any):
         assert isinstance(item, (Type, type)), item
+        if isinstance(base, GenericType):
+            if not item <= base.item:
+                raise TypeError(f"Expecting new generic to be a subtype of base, but {item} </= {base.item}")
+            base = base.base
+
         self.base = base
         self.item = item
 
     def __repr__(self):
+        if self.item is Any:
+            return self.base
         return '%r[%r]' % (self.base, self.item)
 
     def __getitem__(self, item):
-        assert isinstance(self.item, AnyType), self.item
-        return type(self)(self.base, item)
+        return type(self)(self, item)
 
     def __eq__(self, other):
-        if not isinstance(other, GenericType):
-            return False
-        return self.base == other.base and self.item == other.item
+        if isinstance(other, GenericType):
+            return self.base == other.base and self.item == other.item
+        elif isinstance(other, Type):
+            return self.base <= other
+        return NotImplemented
+
 
     def __le__(self, other):
         if isinstance(other, GenericType):
