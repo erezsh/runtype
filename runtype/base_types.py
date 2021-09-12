@@ -2,9 +2,11 @@
 Base Types - contains the basic building blocks of a generic type system
 """
 
+
 class Type:
     def __add__(self, other):
         return SumType.create((self, other))
+
     def __mul__(self, other):
         return ProductType.create((self, other))
 
@@ -182,6 +184,7 @@ class PhantomType(Type):
         elif isinstance(other, PhantomGenericType):
             return NotImplemented
         return False
+
 
 class PhantomGenericType(GenericType):
     def __le__(self, other):

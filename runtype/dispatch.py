@@ -1,12 +1,13 @@
 from collections import defaultdict
-import inspect
 from functools import wraps
+import inspect
 
 from .typesystem import TypeSystem
 
 
 class DispatchError(Exception):
     pass
+
 
 class MultiDispatch:
     """Create a decorator attached to a dispatch group,

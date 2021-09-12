@@ -2,20 +2,23 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
-import sys
 import collections
 from collections import abc
+import sys
 import typing
 
-py38 = sys.version_info >= (3,8)
+from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type
 
-from .base_types import Type, DataType, GenericType, SumType, ProductType, AnyType
+py38 = sys.version_info >= (3, 8)
+
 
 class RuntypeError(TypeError):
     pass
 
+
 class TypeMismatchError(RuntypeError):
     pass
+
 
 class LengthMismatchError(TypeMismatchError):
     pass
@@ -32,9 +35,11 @@ class PythonType(Type):
         except TypeMismatchError as _e:
             return False
 
+
 class AnyType(AnyType, PythonType):
     def validate_instance(self, obj):
         return True
+
 
 Any = AnyType()
 
@@ -71,7 +76,6 @@ class PythonDataType(DataType, PythonType):
         return str(self.kernel.__name__)
 
 
-
 class TupleType(PythonType):
     def __le__(self, other):
         # No superclasses or subclasses
@@ -93,7 +97,6 @@ class TupleType(PythonType):
             raise TypeMismatchError(obj, self)
 
 
-
 class OneOf(PythonType):
     def __init__(self, values):
         self.values = values
@@ -109,7 +112,6 @@ class OneOf(PythonType):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
 
 
-
 class GenericType(GenericType, PythonType):
     def __init__(self, base, item=Any):
         return super().__init__(base, item)
@@ -122,6 +124,7 @@ class SequenceType(GenericType):
         if self.item is not Any:
             for item in obj:
                 self.item.validate_instance(item)
+
 
 class DictType(GenericType):
 
@@ -145,7 +148,6 @@ class DictType(GenericType):
         return type(self)(self.base, item)
 
 
-
 Object = PythonDataType(object)
 Iter = SequenceType(collections.abc.Iterable)
 List = SequenceType(PythonDataType(list))
@@ -159,7 +161,7 @@ Str = PythonDataType(str)
 Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 NoneType = PythonDataType(type(None))
-Callable = PythonDataType(abc.Callable) # TODO: Generic
+Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
 
 
@@ -181,7 +183,7 @@ _type_cast_mapping = {
 }
 
 
-if sys.version_info >= (3,7):
+if sys.version_info >= (3, 7):
     origin_list = list
     origin_dict = dict
     origin_tuple = tuple
@@ -193,6 +195,7 @@ else:
     origin_tuple = typing.Tuple
     origin_set = typing.Set
     origin_frozenset = typing.FrozenSet
+
 
 def _cast_to_type(t):
     if isinstance(t, Type):
@@ -217,7 +220,7 @@ def _cast_to_type(t):
                 return FrozenSet
             elif t is typing.Tuple:
                 return Tuple
-            elif t is typing.Mapping: # 3.6
+            elif t is typing.Mapping:  # 3.6
                 return Mapping
 
         if t.__origin__ is origin_list:
@@ -239,7 +242,7 @@ def _cast_to_type(t):
             return SumType([cast_to_type(x) for x in t.__args__])
         elif t.__origin__ is abc.Callable or t is typing.Callable:
             # return Callable[ProductType(cast_to_type(x) for x in t.__args__)]
-            return Callable # TODO
+            return Callable  # TODO
         elif py38 and t.__origin__ is typing.Literal:
             return OneOf(t.__args__)
         elif t.__origin__ is abc.Mapping:
@@ -252,6 +255,7 @@ def _cast_to_type(t):
         return Any  # XXX is this correct?
 
     return PythonDataType(t)
+
 
 def cast_to_type(t):
     try:

@@ -1,19 +1,20 @@
-from typing import Any, Union, List, Dict, Tuple
-from contextlib import suppress
+from typing import Any, Dict, List, Tuple
 
 from .common import CHECK_TYPES
+from .pytypes import TypeMismatchError, cast_to_type
 from .typesystem import TypeSystem
-from .pytypes import cast_to_type, TypeMismatchError
 
 
 def ensure_isa(obj, t):
     t = cast_to_type(t)
     t.validate_instance(obj)
 
+
 def is_subtype(t1, t2):
     t1 = cast_to_type(t1)
     t2 = cast_to_type(t2)
     return t1 <= t2
+
 
 def isa(obj, t):
     try:
@@ -35,7 +36,6 @@ def assert_isa(obj, t):
             raise TypeError(msg)
 
 
-
 def canonize_type(t):
     "Turns List -> list, Dict -> dict, etc."
     try:
@@ -51,6 +51,7 @@ def canonize_type(t):
     except KeyError:
         return t
 
+
 def issubclass(t1, t2):
     if isinstance(t2, tuple):
         return any(issubclass(t1, i) for i in t2)
@@ -63,3 +64,4 @@ class PythonTyping(TypeSystem):
     canonize_type = staticmethod(canonize_type)
     get_type = type
     default_type = object
+
