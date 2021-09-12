@@ -10,8 +10,6 @@ class Type:
 
 
 class AnyType(Type):
-    supertypes = ()
-
     def __add__(self, other):
         return self
 
@@ -39,7 +37,7 @@ class DataType(Type):
         if isinstance(other, DataType):
             return self == other
 
-        return NotImplemented
+        return super().__le__(other)
 
 
 class SumType(Type):
@@ -148,7 +146,7 @@ class GenericType(ContainerType):
         if isinstance(other, GenericType):
             return self.base == other.base and self.item == other.item
         elif isinstance(other, Type):
-            return self.base <= other
+            return Any <= self.item and self.base == other
         return NotImplemented
 
 
@@ -166,3 +164,41 @@ class GenericType(ContainerType):
     def __hash__(self):
         return hash((self.base, self.item))
 
+
+class PhantomType(Type):
+    def __getitem__(self, other):
+        return PhantomGenericType(self, other)
+
+    def __le__(self, other):
+        if isinstance(other, PhantomType):
+            return self == other
+        elif isinstance(other, PhantomGenericType):
+            return NotImplemented
+        return False
+
+    def __ge__(self, other):
+        if isinstance(other, PhantomType):
+            return self == other
+        elif isinstance(other, PhantomGenericType):
+            return NotImplemented
+        return False
+
+class PhantomGenericType(GenericType):
+    def __le__(self, other):
+        if isinstance(other, PhantomType):
+            return self.base <= other or self.item <= other
+        elif isinstance(other, PhantomGenericType):
+            return (self.base <= other.base and self.item <= other.item) or self.item <= other
+        elif isinstance(other, DataType):
+            return self.item <= other
+        return NotImplemented
+
+    def __eq__(self, other):
+        return self.base == other and self.item == other
+
+    def __ge__(self, other):
+        if isinstance(other, PhantomType):
+            return False
+        elif isinstance(other, DataType):
+            return other <= self.item
+        return NotImplemented

@@ -1,7 +1,7 @@
 import unittest
 from unittest import TestCase
 
-from runtype.base_types import DataType, ContainerType
+from runtype.base_types import DataType, ContainerType, PhantomType
 from runtype.pytypes import List, Dict, Int, Any
 from runtype.typesystem import TypeSystem
 
@@ -29,6 +29,32 @@ class TestTypes(TestCase):
 
         assert Int <= Int + Array
         assert Int * Array == Int * Array
+
+    def test_phantom(self):
+        Int = DataType()
+        P = PhantomType()
+        Q = PhantomType()
+
+        assert P == P
+        assert P <= P
+        assert P != Q
+        assert not P <= Q
+        assert not Q <= P
+
+
+        assert Int <= P[Int]
+        assert P[Int] <= Int
+        assert P[Int] <= P[Int]
+
+        assert P[Int] <= P
+        assert not P <= P[Int]
+        assert Q[P] <= Q
+
+        assert P[Q[Int]] <= P[Q]
+        assert P[Q[Int]] <= P[Int]
+        assert P[Q[Int]] <= Q[Int]
+        assert P[Q[Int]] <= Int
+
 
 
     def test_pytypes(self):
