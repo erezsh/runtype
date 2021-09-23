@@ -2,7 +2,8 @@ from copy import copy
 import dataclasses
 
 from .common import CHECK_TYPES
-from .isa import ensure_isa as default_ensure_isa, TypeMismatchError
+from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
+
 
 def _post_init(self, ensure_isa, cast_dicts):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
@@ -18,7 +19,8 @@ def _post_init(self, ensure_isa, cast_dicts):
             ensure_isa(value, field.type)
         except TypeMismatchError as e:
             item_type, item_value = e.args
-            msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}, instead got {value!r}"
+            msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."
+            msg += f" Instead got {value!r}"
             if item_value is not value:
                 msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
             raise TypeError(msg)
@@ -51,9 +53,11 @@ def replace(self, **kwargs):
     """
     return dataclasses.replace(self, **kwargs)
 
+
 def __iter__(self):
     "Yields a list of tuples [(name, value), ...]"
     return ((name, getattr(self, name)) for name in self.__dataclass_fields__)
+
 
 def aslist(self):
     """Returns a list of values
@@ -62,12 +66,14 @@ def aslist(self):
     """
     return [getattr(self, name) for name in self.__dataclass_fields__]
 
+
 def astuple(self):
     """Returns a tuple of values
 
     Equivalent to: tuple(dict(this).values())
     """
     return tuple(getattr(self, name) for name in self.__dataclass_fields__)
+
 
 def json(self):
     """Returns a JSON of values, going recursively into other objects (if possible)"""
@@ -97,17 +103,21 @@ def _process_class(cls, ensure_isa, check_types, **kw):
         c = copy(cls)
 
         orig_post_init = getattr(cls, '__post_init__', None)
+
         def __post_init__(self):
             _post_init(self, ensure_isa=ensure_isa, cast_dicts=check_types == 'cast')
             if orig_post_init is not None:
                 orig_post_init(self)
+
         c.__post_init__ = __post_init__
 
         if not kw['frozen']:
             orig_set_attr = getattr(cls, '__setattr__')
+
             def __setattr__(self, name, value):
                 _setattr(self, name, value, ensure_isa=ensure_isa)
                 orig_set_attr(self, name, value)
+
             c.__setattr__ = __setattr__
     else:
         c = cls
@@ -122,7 +132,8 @@ def _process_class(cls, ensure_isa, check_types, **kw):
     return dataclasses.dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPES, init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPES,
+                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
     * Adds run-time type validation
@@ -153,7 +164,8 @@ def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPE
     """
 
     def wrap(cls):
-        return _process_class(cls, ensure_isa, check_types, init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
+        return _process_class(cls, ensure_isa, check_types,
+                              init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:
