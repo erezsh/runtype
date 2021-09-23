@@ -188,8 +188,10 @@ Literal = OneOf
 
 
 class _String(PythonDataType):
-    def __call__(self, max_length=None):
+    def __call__(self, min_length=None, max_length=None):
         predicates = []
+        if min_length:
+            predicates += [lambda s: len(s) >= min_length]
         if max_length:
             predicates += [lambda s: len(s) <= max_length]
 
