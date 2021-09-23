@@ -7,7 +7,7 @@ from collections import abc
 import sys
 import typing
 
-from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type
+from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, PhantomType
 
 py38 = sys.version_info >= (3, 8)
 
@@ -40,7 +40,7 @@ class PythonType(Type, Validator):
     pass
 
 
-class Constraint(Validator):
+class Constraint(Validator, PhantomType):
     def __init__(self, for_type, predicates):
         self.type = cast_to_type(for_type)
         self.predicates = predicates
@@ -179,7 +179,6 @@ FrozenSet = SequenceType(PythonDataType(frozenset))
 Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
-Int = PythonDataType(int)
 Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 NoneType = PythonDataType(type(None))
@@ -187,17 +186,28 @@ Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
 
 
+class _Int(PythonDataType):
+    def __call__(self, min=None, max=None):
+        predicates = []
+        if min is not None:
+            predicates += [lambda i: i >= min]
+        if max is not None:
+            predicates += [lambda i: i <= max]
+
+        return Constraint(self, predicates)
+
 class _String(PythonDataType):
     def __call__(self, min_length=None, max_length=None):
         predicates = []
-        if min_length:
+        if min_length is not None:
             predicates += [lambda s: len(s) >= min_length]
-        if max_length:
+        if max_length is not None:
             predicates += [lambda s: len(s) <= max_length]
 
         return Constraint(self, predicates)
 
 String = _String(str)
+Int = _Int(int)
 
 
 _type_cast_mapping = {

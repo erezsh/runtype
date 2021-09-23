@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType
+from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint
 
 
 class Configuration:
@@ -20,7 +20,7 @@ class Configuration:
     def ensure_isa(self, a, b):
         raise NotImplementedError()
 
-    def cast_dict(self, d, to_type):
+    def cast(self, d, to_type):
         raise NotImplementedError()
 
 
@@ -42,28 +42,34 @@ class PythonConfiguration(Configuration):
         return default_ensure_isa(a, b)
 
 
-    def cast_dict(self, d, to_type):
-        types = list(_flatten_types(to_type))
-        for t in types:
-            # TODO if to_type is dict just return it?
-            with suppress(TypeError):
-                return t(**d)
+    def cast(self, obj, to_type):
+        if isinstance(obj, dict):
+            types = list(_flatten_types(to_type))
+            for t in types:
+                # TODO if to_type is dict just return it?
+                with suppress(TypeError):
+                    return t(**obj)
 
-        raise TypeMismatchError("Could not cast dict to one of: %r", types)
+            raise TypeMismatchError("Could not cast dict to one of: %r", types)
+
+        elif isinstance(obj, str):
+            if Int <= to_type:
+                return int(obj)
+
+        return obj
 
     def on_assign_none(self, type_):
         return SumType([type_, NoneType])
 
 
 
-def _post_init(self, config, cast_dicts):
+def _post_init(self, config, should_cast):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
-        if cast_dicts:    # Basic cast
-            if isinstance(value, dict):
-                value = config.cast_dict(value, field.type)
-                object.__setattr__(self, name, value)
+        if should_cast:    # Basic cast
+            value = config.cast(value, field.type)
+            object.__setattr__(self, name, value)
 
         try:
             config.ensure_isa(value, field.type)
@@ -162,7 +168,7 @@ def _process_class(cls, config, check_types, **kw):
         orig_post_init = getattr(cls, '__post_init__', None)
 
         def __post_init__(self):
-            _post_init(self, config=config, cast_dicts=check_types == 'cast')
+            _post_init(self, config=config, should_cast=check_types == 'cast')
             if orig_post_init is not None:
                 orig_post_init(self)
 

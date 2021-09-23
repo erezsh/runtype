@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String, Int
 from runtype.dataclass import Configuration
 
 
@@ -518,6 +518,14 @@ class TestDataclass(TestCase):
         C("hello", "a")
         self.assertRaises(TypeError, C, 3)
         self.assertRaises(TypeError, C, "hello", "abcdef")
+
+        @dataclass
+        class P:
+            a: Int(min=0)
+
+        P(10)
+        P(0)
+        self.assertRaises(TypeError, P, -3)
 
     def test_typing_optional(self):
         @dataclass
