@@ -77,7 +77,7 @@ class SumType(SumType, PythonType):
 
 
 class PythonDataType(DataType, PythonType):
-    def __init__(self, kernel, supertypes={Any}):
+    def __init__(self, kernel: type, supertypes={Any}):
         self.kernel = kernel
 
     def __le__(self, other):
@@ -92,6 +92,11 @@ class PythonDataType(DataType, PythonType):
 
     def __repr__(self):
         return str(self.kernel.__name__)
+
+    def __call__(self,*args, **kwargs):
+        """Instanciate the kernel type
+        """
+        return self.kernel(*args, **kwargs)
 
 
 class TupleType(PythonType):

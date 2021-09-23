@@ -1,36 +1,72 @@
 from typing import Optional, Union
 from copy import copy
 import dataclasses
+from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
+from .pytypes import cast_to_type, SumType, NoneType
 
 
-def _post_init(self, ensure_isa, cast_dicts):
+class Configuration:
+    """Generic configuration template"""
+
+    def canonize_type(self, t):
+        return t
+
+    def on_assign_none(self, t):
+        return t
+
+    def ensure_isa(self, a, b):
+        raise NotImplementedError()
+
+    def cast_dict(self, d, to_type):
+        raise NotImplementedError()
+
+
+def _flatten_types(t):
+    if isinstance(t, SumType):
+        for t in t.types:
+            yield from _flatten_types(t)
+    else:
+        yield t
+
+
+class PythonConfiguration(Configuration):
+    """Configuration to support Mypy-like and Pydantic-like features
+    """
+    def canonize_type(self, t):
+        return cast_to_type(t)
+
+    def ensure_isa(self, a, b):
+        return default_ensure_isa(a, b)
+
+
+    def cast_dict(self, d, to_type):
+        types = list(_flatten_types(to_type))
+        for t in types:
+            # TODO if to_type is dict just return it?
+            with suppress(TypeError):
+                return t(**d)
+
+        raise TypeMismatchError("Could not cast dict to one of: %r", types)
+
+    def on_assign_none(self, type_):
+        return SumType([type_, NoneType])
+
+
+
+def _post_init(self, config, cast_dicts):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
         if cast_dicts:    # Basic cast
             if isinstance(value, dict):
-                t = field.type
-                if getattr(t, '__origin__', None) is Union:
-                    types = t.__args__
-                else:
-                    types = (t,)
-
-                for t in types: 
-                    try:
-                        inst = t(**value)
-                    except TypeError:
-                        continue
-                    object.__setattr__(self, name, inst)
-                    value = inst
-                    break
-                else:
-                    raise TypeMismatchError("Could not cast dict to one of: %r", types)
+                value = config.cast_dict(value, field.type)
+                object.__setattr__(self, name, value)
 
         try:
-            ensure_isa(value, field.type)
+            config.ensure_isa(value, field.type)
         except TypeMismatchError as e:
             item_value, item_type = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."
@@ -105,15 +141,20 @@ def _set_if_not_exists(cls, d):
             setattr(cls, attr, value)
 
 
-def _process_class(cls, ensure_isa, check_types, **kw):
+def _process_class(cls, config, check_types, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
+        type_ = config.canonize_type(type_)
+
         default = getattr(cls, name, dataclasses.MISSING)
         if isinstance(default, (list, dict, set)):
             def f(_=default):
                 return copy(_)
             setattr(cls, name, dataclasses.field(default_factory=f))
+
         elif default is None:
-            cls.__annotations__[name] = Optional[type_]
+            type_ = config.on_assign_none(type_)
+
+        cls.__annotations__[name] = type_
 
     if check_types:
         c = copy(cls)
@@ -121,7 +162,7 @@ def _process_class(cls, ensure_isa, check_types, **kw):
         orig_post_init = getattr(cls, '__post_init__', None)
 
         def __post_init__(self):
-            _post_init(self, ensure_isa=ensure_isa, cast_dicts=check_types == 'cast')
+            _post_init(self, config=config, cast_dicts=check_types == 'cast')
             if orig_post_init is not None:
                 orig_post_init(self)
 
@@ -131,7 +172,7 @@ def _process_class(cls, ensure_isa, check_types, **kw):
             orig_set_attr = getattr(cls, '__setattr__')
 
             def __setattr__(self, name, value):
-                _setattr(self, name, value, ensure_isa=ensure_isa)
+                _setattr(self, name, value, ensure_isa=config.ensure_isa)
                 orig_set_attr(self, name, value)
 
             c.__setattr__ = __setattr__
@@ -148,7 +189,8 @@ def _process_class(cls, ensure_isa, check_types, **kw):
     return dataclasses.dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPES,
+def dataclass(cls=None, *, config: Configuration = PythonConfiguration(),
+                           check_types: bool = CHECK_TYPES,
                            init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
 
@@ -178,9 +220,10 @@ def dataclass(cls=None, *, ensure_isa=default_ensure_isa, check_types=CHECK_TYPE
         >>> p.replace(x=30)  # New instance
         Point(x=30, y=3)
     """
+    assert isinstance(config, Configuration)
 
     def wrap(cls):
-        return _process_class(cls, ensure_isa, check_types,
+        return _process_class(cls, config, check_types,
                               init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
 
     # See if we're being called as @dataclass or @dataclass().

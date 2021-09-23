@@ -12,6 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String
+from runtype.dataclass import Configuration
 
 
 class TestIsa(TestCase):
@@ -566,6 +567,15 @@ class TestDataclass(TestCase):
         E({'b': [1,2]})
         self.assertRaises(TypeError, D, {'c': [1,2]})
 
+        @dataclass
+        class F:
+            a: String = None
+            b: String(max_length=4) = None
+
+        F("hello", "a")
+        self.assertRaises(TypeError, C, 3)
+        self.assertRaises(TypeError, C, "hello", "abcdef")
+
 
 
     def test_unfrozen(self):
@@ -594,11 +604,12 @@ class TestDataclass(TestCase):
         assert a != x
 
     def test_custom_isinstance(self):
-        def ensure_contains(item, container):
-            if item not in container:
-                raise TypeError(item)
+        class EnsureContains(Configuration):
+            def ensure_isa(self, item, container):
+                if item not in container:
+                    raise TypeError(item)
 
-        @dataclass(ensure_isa=ensure_contains)
+        @dataclass(config=EnsureContains())
         class A:
             a: range(10)
             b: ("a", "b")
