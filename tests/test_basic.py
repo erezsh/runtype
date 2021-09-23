@@ -509,7 +509,6 @@ class TestDataclass(TestCase):
 
         b = B((1,2), frozenset({3}), iter([]))
 
-
         @dataclass
         class C:
             a: String
@@ -518,6 +517,55 @@ class TestDataclass(TestCase):
         C("hello", "a")
         self.assertRaises(TypeError, C, 3)
         self.assertRaises(TypeError, C, "hello", "abcdef")
+
+    def test_typing_optional(self):
+        @dataclass
+        class A:
+            a: list = None
+
+        A([1,2])
+        A()
+        A(None)
+        self.assertRaises(TypeError, A, 'a')
+
+        @dataclass
+        class B:
+            b: Optional[list] = None
+
+        B([1,2])
+        B()
+        B(None)
+        self.assertRaises(TypeError, B, 'a')
+
+        @dataclass
+        class C:
+            a: Optional[list]
+
+        C([1,2])
+        C(None)
+        self.assertRaises(TypeError, C)
+        self.assertRaises(TypeError, C, 'a')
+
+
+        @dataclass(check_types='cast')
+        class D:
+            a: Optional[A]
+
+        D(A())
+        D({'a': [1,2]})
+        D({'a': None})
+        self.assertRaises(TypeError, D, {'b': [1,2]})
+        self.assertRaises(TypeError, D)
+
+        @dataclass(check_types='cast')
+        class E:
+            a: Union[A, B] = None
+
+        E()
+        E({'a': [1,2]})
+        E({'b': [1,2]})
+        self.assertRaises(TypeError, D, {'c': [1,2]})
+
 
 
     def test_unfrozen(self):

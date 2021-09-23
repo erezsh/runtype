@@ -1,3 +1,4 @@
+from typing import Optional, Union
 from copy import copy
 import dataclasses
 
@@ -11,9 +12,22 @@ def _post_init(self, ensure_isa, cast_dicts):
 
         if cast_dicts:    # Basic cast
             if isinstance(value, dict):
-                inst = field.type(**value)
-                object.__setattr__(self, name, inst)
-                value = inst
+                t = field.type
+                if getattr(t, '__origin__', None) is Union:
+                    types = t.__args__
+                else:
+                    types = (t,)
+
+                for t in types: 
+                    try:
+                        inst = t(**value)
+                    except TypeError:
+                        continue
+                    object.__setattr__(self, name, inst)
+                    value = inst
+                    break
+                else:
+                    raise TypeMismatchError("Could not cast dict to one of: %r", types)
 
         try:
             ensure_isa(value, field.type)
@@ -98,6 +112,8 @@ def _process_class(cls, ensure_isa, check_types, **kw):
             def f(_=default):
                 return copy(_)
             setattr(cls, name, dataclasses.field(default_factory=f))
+        elif default is None:
+            cls.__annotations__[name] = Optional[type_]
 
     if check_types:
         c = copy(cls)
