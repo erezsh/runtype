@@ -1,8 +1,9 @@
 import unittest
 from unittest import TestCase
+import typing
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import List, Dict, Int, Any
+from runtype.pytypes import List, Dict, Int, Any, Constraint, String
 from runtype.typesystem import TypeSystem
 
 
@@ -91,6 +92,20 @@ class TestTypes(TestCase):
         assert ((Int * Dict) * List) == (Int * (Dict * List))
 
         assert List[Any] == List
+
+    def test_constraint(self):
+        int_pair = Constraint(typing.List[int], [lambda a: len(a) == 2])
+        assert int_pair.test_instance([1,2])
+        assert not int_pair.test_instance([1,2,3])
+        assert not int_pair.test_instance([1,'a'])
+
+        assert String.test_instance('a')
+        assert not String.test_instance(3)
+
+        assert String(max_length=5).test_instance('abc')
+        assert not String(max_length=5).test_instance('abcdef')
+
+
 
     def test_typesystem(self):
     	t = TypeSystem()

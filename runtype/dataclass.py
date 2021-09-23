@@ -18,7 +18,7 @@ def _post_init(self, ensure_isa, cast_dicts):
         try:
             ensure_isa(value, field.type)
         except TypeMismatchError as e:
-            item_type, item_value = e.args
+            item_value, item_type = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."
             msg += f" Instead got {value!r}"
             if item_value is not value:

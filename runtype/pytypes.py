@@ -24,7 +24,7 @@ class LengthMismatchError(TypeMismatchError):
     pass
 
 
-class PythonType(Type):
+class Validator:
     def validate_instance(self, obj):
         raise NotImplementedError(self)
 
@@ -34,6 +34,24 @@ class PythonType(Type):
             return True
         except TypeMismatchError as _e:
             return False
+
+
+class PythonType(Type, Validator):
+    pass
+
+
+class Constraint(Validator):
+    def __init__(self, for_type, predicates):
+        self.type = cast_to_type(for_type)
+        self.predicates = predicates
+
+    def validate_instance(self, inst):
+        self.type.validate_instance(inst)
+
+        for p in self.predicates:
+            if not p(inst):
+                raise TypeMismatchError(inst, self)
+
 
 
 class AnyType(AnyType, PythonType):
@@ -94,7 +112,7 @@ class TupleType(PythonType):
 
     def validate_instance(self, obj):
         if not isinstance(obj, tuple):
-            raise TypeMismatchError(obj, self)
+                raise TypeMismatchError(obj, self)
 
 
 class OneOf(PythonType):
@@ -157,12 +175,22 @@ Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
 Int = PythonDataType(int)
-Str = PythonDataType(str)
 Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 NoneType = PythonDataType(type(None))
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
+
+
+class _String(PythonDataType):
+    def __call__(self, max_length=None):
+        predicates = []
+        if max_length:
+            predicates += [lambda s: len(s) <= max_length]
+
+        return Constraint(self, predicates)
+
+String = _String(str)
 
 
 _type_cast_mapping = {
@@ -173,7 +201,7 @@ _type_cast_mapping = {
     dict: Dict,
     tuple: Tuple,
     int: Int,
-    str: Str,
+    str: String,
     float: Float,
     bytes: Bytes,
     type(None): NoneType,
@@ -198,7 +226,7 @@ else:
 
 
 def _cast_to_type(t):
-    if isinstance(t, Type):
+    if isinstance(t, Validator):
         return t
 
     if isinstance(t, tuple):

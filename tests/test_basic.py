@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String
 
 
 class TestIsa(TestCase):
@@ -508,6 +508,16 @@ class TestDataclass(TestCase):
             i: Iterable
 
         b = B((1,2), frozenset({3}), iter([]))
+
+
+        @dataclass
+        class C:
+            a: String
+            b: String(max_length=4)
+
+        C("hello", "a")
+        self.assertRaises(TypeError, C, 3)
+        self.assertRaises(TypeError, C, "hello", "abcdef")
 
 
     def test_unfrozen(self):
