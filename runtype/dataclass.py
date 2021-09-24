@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List, Float
+from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List, Float, PythonType, Dict, PythonDataType
 
 
 class Configuration:
@@ -49,9 +49,17 @@ class PythonConfiguration(Configuration):
         elif isinstance(obj, dict):
             types = list(_flatten_types(to_type))
             for t in types:
-                # TODO if to_type is dict just return it?
+                assert isinstance(t, PythonType)
+                if t == Dict:   # Optimize for Any: Any
+                    return obj
+                elif t <= Dict:
+                    kt, vt = t.item.types
+                    return {self.cast(k, kt): self.cast(v, vt)
+                            for k, v in obj.items()}
+
+                assert isinstance(t, PythonDataType)
                 with suppress(TypeError):
-                    return t(**obj)
+                    return t.create_instance(**obj)
 
             raise TypeMismatchError("Could not cast dict to one of: %r", types)
 

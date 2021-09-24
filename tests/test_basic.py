@@ -673,6 +673,20 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, Rect, start={'x': 10.0, 'y': 10.0, 'z': 42.2}, end=end)
         self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
 
+        @dataclass(check_types='cast')
+        class A:
+            a: dict
+            b: Dict[float, String] = None
+
+        A({})
+        A({1: 2})
+        A({1: 2}, {1.1: 'a'})
+        A({1: 2}, {1: 'a'})
+        A({1: 2}, None)
+        self.assertRaises(TypeError, A, [1])
+        self.assertRaises(TypeError, A, {}, {'b': 'c'})
+        self.assertRaises(TypeError, A, {}, {3: 2})
+
     def test_cast_generic(self):
         @dataclass(check_types='cast')
         class Point:

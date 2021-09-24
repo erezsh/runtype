@@ -98,7 +98,7 @@ class PythonDataType(DataType, PythonType):
     def __repr__(self):
         return str(self.kernel.__name__)
 
-    def __call__(self,*args, **kwargs):
+    def create_instance(self, *args, **kwargs):
         """Instanciate the kernel type
         """
         return self.kernel(*args, **kwargs)
@@ -174,6 +174,9 @@ class DictType(GenericType):
     def __getitem__(self, item):
         assert self.item == Any*Any
         return type(self)(self.base, item)
+
+    def create_instance(self, *args, **kwargs):
+        return self.base.create_instance(*args, **kwargs)
 
 
 Object = PythonDataType(object)
