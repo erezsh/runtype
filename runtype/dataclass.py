@@ -50,24 +50,26 @@ class PythonConfiguration(Configuration):
             if t == NoneType:
                 continue
             elif t == Dict:   # Optimize for Any: Any
-                return obj
+                return False, obj
             elif t <= Dict:
                 kt, vt = t.item.types
-                return {self.cast(k, kt): self.cast(v, vt)
+                return True, {self.cast(k, kt): self.cast(v, vt)
                         for k, v in obj.items()}
 
             assert isinstance(t, PythonDataType)
             with suppress(TypeError):
-                return t.create_instance((), obj)
+                return False, t.create_instance((), obj)
 
         raise TypeMismatchError("Could not cast dict to one of: %r", types)
 
     def _cast_list(self, obj, to_type):
-        return [self.cast(item, to_type.item) for item in obj]
+        return True, [self.cast(item, to_type.item) for item in obj]
 
     def _cast(self, obj, to_type):
         if isinstance(obj, list):
-            if to_type <= List:
+            if to_type == List: 
+                return False, obj
+            elif to_type <= List:
                 return self._cast_list(obj, to_type)
 
         elif isinstance(obj, dict):
@@ -75,17 +77,18 @@ class PythonConfiguration(Configuration):
 
         elif isinstance(obj, str):
             if Int <= to_type:
-                return int(obj)
+                return False, int(obj)
 
         elif isinstance(obj, int) and to_type <= Float:
-            return float(obj)
+            return False, float(obj)
 
-        return obj
+        return False, obj
 
     def cast(self, obj, to_type):
-        obj = self._cast(obj, to_type)
+        verified, obj = self._cast(obj, to_type)
         # TODO only ensure when necessary (i.e. after int() we can be sure it's int)
-        self.ensure_isa(obj, to_type)
+        if not verified:
+            self.ensure_isa(obj, to_type)
         return obj
 
     def on_assign_none(self, type_):
