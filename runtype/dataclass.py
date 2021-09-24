@@ -42,26 +42,36 @@ class PythonConfiguration(Configuration):
         return default_ensure_isa(a, b)
 
 
+
+    def _cast_dict(self, obj, to_type):
+        types = list(_flatten_types(to_type))
+        for t in types:
+            assert isinstance(t, PythonType)
+            if t == NoneType:
+                continue
+            elif t == Dict:   # Optimize for Any: Any
+                return obj
+            elif t <= Dict:
+                kt, vt = t.item.types
+                return {self.cast(k, kt): self.cast(v, vt)
+                        for k, v in obj.items()}
+
+            assert isinstance(t, PythonDataType)
+            with suppress(TypeError):
+                return t.create_instance((), obj)
+
+        raise TypeMismatchError("Could not cast dict to one of: %r", types)
+
+    def _cast_list(self, obj, to_type):
+        return [self.cast(item, to_type.item) for item in obj]
+
     def _cast(self, obj, to_type):
-        if isinstance(obj, list) and to_type <= List:
-            return [self.cast(item, to_type.item) for item in obj]
+        if isinstance(obj, list):
+            if to_type <= List:
+                return self._cast_list(obj, to_type)
 
         elif isinstance(obj, dict):
-            types = list(_flatten_types(to_type))
-            for t in types:
-                assert isinstance(t, PythonType)
-                if t == Dict:   # Optimize for Any: Any
-                    return obj
-                elif t <= Dict:
-                    kt, vt = t.item.types
-                    return {self.cast(k, kt): self.cast(v, vt)
-                            for k, v in obj.items()}
-
-                assert isinstance(t, PythonDataType)
-                with suppress(TypeError):
-                    return t.create_instance(**obj)
-
-            raise TypeMismatchError("Could not cast dict to one of: %r", types)
+            return self._cast_dict(obj, to_type)
 
         elif isinstance(obj, str):
             if Int <= to_type:
