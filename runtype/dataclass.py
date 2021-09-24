@@ -1,7 +1,6 @@
 from typing import Optional, Union
 from copy import copy
 import dataclasses
-from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
@@ -24,14 +23,6 @@ class Configuration:
         raise NotImplementedError()
 
 
-def _flatten_types(t):
-    if isinstance(t, SumType):
-        for t in t.types:
-            yield from _flatten_types(t)
-    else:
-        yield t
-
-
 class PythonConfiguration(Configuration):
     """Configuration to support Mypy-like and Pydantic-like features
     """
@@ -41,55 +32,8 @@ class PythonConfiguration(Configuration):
     def ensure_isa(self, a, b):
         return default_ensure_isa(a, b)
 
-
-
-    def _cast_dict(self, obj, to_type):
-        types = list(_flatten_types(to_type))
-        for t in types:
-            assert isinstance(t, PythonType)
-            if t == NoneType:
-                continue
-            elif t == Dict:   # Optimize for Any: Any
-                return False, obj
-            elif t <= Dict:
-                kt, vt = t.item.types
-                return True, {self.cast(k, kt): self.cast(v, vt)
-                        for k, v in obj.items()}
-
-            assert isinstance(t, PythonDataType)
-            with suppress(TypeError):
-                return False, t.create_instance((), obj)
-
-        raise TypeMismatchError("Could not cast dict to one of: %r", types)
-
-    def _cast_list(self, obj, to_type):
-        return True, [self.cast(item, to_type.item) for item in obj]
-
-    def _cast(self, obj, to_type):
-        if isinstance(obj, list):
-            if to_type == List: 
-                return False, obj
-            elif to_type <= List:
-                return self._cast_list(obj, to_type)
-
-        elif isinstance(obj, dict):
-            return self._cast_dict(obj, to_type)
-
-        elif isinstance(obj, str):
-            if Int <= to_type:
-                return False, int(obj)
-
-        elif isinstance(obj, int) and to_type <= Float:
-            return False, float(obj)
-
-        return False, obj
-
     def cast(self, obj, to_type):
-        verified, obj = self._cast(obj, to_type)
-        # TODO only ensure when necessary (i.e. after int() we can be sure it's int)
-        if not verified:
-            self.ensure_isa(obj, to_type)
-        return obj
+        return to_type.cast_from(obj)
 
     def on_assign_none(self, type_):
         return SumType([type_, NoneType])

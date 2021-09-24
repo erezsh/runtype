@@ -528,10 +528,13 @@ class TestDataclass(TestCase):
         assert P().a == None
         self.assertRaises(TypeError, P, -3)
 
+    def test_typing_cast(self):
+
         @dataclass(check_types='cast')
         class P:
             a: Int(min=0) = None
 
+        assert P(10)
         assert P(10).a == 10
         assert P(0).a == 0
         assert P().a == None

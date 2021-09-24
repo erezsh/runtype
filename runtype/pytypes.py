@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+from contextlib import suppress
 import collections
 from collections import abc
 import sys
@@ -57,11 +58,24 @@ class Constraint(Validator, PhantomType):
     def __le__(self, other):
         return self.type <= other
 
+    def cast_from(self, obj):
+        obj = self.type.cast_from(obj)
+
+        for p in self.predicates:
+            if not p(obj):
+                raise TypeMismatchError(obj, self)
+
+        return obj
+
+
 
 
 class AnyType(AnyType, PythonType):
     def validate_instance(self, obj):
         return True
+
+    def cast_from(self, obj):
+        return obj
 
 
 Any = AnyType()
@@ -79,6 +93,22 @@ class SumType(SumType, PythonType):
     def validate_instance(self, obj):
         if not any(t.test_instance(obj) for t in self.types):
             raise TypeMismatchError(obj, self)
+
+    def cast_from(self, obj):
+        for t in self.types:
+            with suppress(TypeError):
+               return t.cast_from(obj)
+
+        raise TypeMismatchError(obj, self)
+
+
+def _flatten_types(t):
+    if isinstance(t, SumType):
+        for t in t.types:
+            yield from _flatten_types(t)
+    else:
+        yield t
+
 
 
 class PythonDataType(DataType, PythonType):
@@ -98,10 +128,24 @@ class PythonDataType(DataType, PythonType):
     def __repr__(self):
         return str(self.kernel.__name__)
 
-    def create_instance(self, args, kwargs):
-        """Instanciate the kernel type
-        """
-        return self.kernel(*args, **kwargs)
+    def cast_from(self, obj):
+        if self.kernel is type(None):
+            if obj is None:
+                return
+            raise TypeMismatchError(obj, self)
+        elif isinstance(obj, dict):
+            return self.kernel(**obj)
+
+        elif isinstance(obj, int):
+            if self <= Float:
+                return float(obj)
+
+        elif isinstance(obj, str):
+            if self <= Int:
+                return int(obj)
+
+        self.validate_instance(obj)
+        return obj
 
 
 class TupleType(PythonType):
@@ -153,6 +197,13 @@ class SequenceType(GenericType):
             for item in obj:
                 self.item.validate_instance(item)
 
+    def cast_from(self, obj):
+        if self.item is Any or not obj:
+            if self.base.test_instance(obj):
+                return obj
+            return list(obj)
+        return [self.item.cast_from(item) for item in obj]
+
 
 class DictType(GenericType):
 
@@ -175,8 +226,13 @@ class DictType(GenericType):
         assert self.item == Any*Any
         return type(self)(self.base, item)
 
-    def create_instance(self, args, kwargs):
-        return self.base.create_instance(args, kwargs)
+    def cast_from(self, obj):
+        self.base.validate_instance(obj)
+        if self.item is Any or not obj:
+            return obj
+
+        kt, vt = self.item.types
+        return {kt.cast_from(k): vt.cast_from(v) for k, v in obj.items()}
 
 
 Object = PythonDataType(object)
