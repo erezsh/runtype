@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List
+from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List, Float
 
 
 class Configuration:
@@ -43,7 +43,10 @@ class PythonConfiguration(Configuration):
 
 
     def _cast(self, obj, to_type):
-        if isinstance(obj, dict):
+        if isinstance(obj, list) and to_type <= List:
+            return [self.cast(item, to_type.item) for item in obj]
+
+        elif isinstance(obj, dict):
             types = list(_flatten_types(to_type))
             for t in types:
                 # TODO if to_type is dict just return it?
@@ -55,6 +58,9 @@ class PythonConfiguration(Configuration):
         elif isinstance(obj, str):
             if Int <= to_type:
                 return int(obj)
+
+        elif isinstance(obj, int) and to_type <= Float:
+            return float(obj)
 
         return obj
 

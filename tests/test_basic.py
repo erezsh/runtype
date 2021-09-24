@@ -674,7 +674,7 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
 
     def test_cast_generic(self):
-        @dataclass
+        @dataclass(check_types='cast')
         class Point:
             x: float
             y: float
@@ -685,7 +685,7 @@ class TestDataclass(TestCase):
 
         p1 = {'x': 1, 'y': 2}
         p2 = {'x': 2, 'y': 3}
-        # Polygon([p1, p2])
+        Polygon([p1, p2])
 
 
     def test_default_mutables(self):
