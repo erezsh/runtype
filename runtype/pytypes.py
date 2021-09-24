@@ -133,14 +133,6 @@ class PythonDataType(DataType, PythonType):
             # kernel is probably a class. Cast the dict into the class.
             return self.kernel(**obj)
 
-        elif isinstance(obj, int):
-            if self <= Float:
-                return float(obj)
-
-        elif isinstance(obj, str):
-            if self <= Int:
-                return int(obj)
-
         self.validate_instance(obj)
         return obj
 
@@ -240,7 +232,7 @@ FrozenSet = SequenceType(PythonDataType(frozenset))
 Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
-Float = PythonDataType(float)
+# Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
@@ -251,7 +243,7 @@ class _NoneType(PythonDataType):
         if obj is not None:
             raise TypeMismatchError(obj, self)
 
-class _Int(PythonDataType):
+class _Number(PythonDataType):
     def __call__(self, min=None, max=None):
         predicates = []
         if min is not None:
@@ -260,6 +252,18 @@ class _Int(PythonDataType):
             predicates += [lambda i: i <= max]
 
         return Constraint(self, predicates)
+
+class _Int(_Number):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            return int(obj)
+        return super().cast_from(obj)
+
+class _Float(_Number):
+    def cast_from(self, obj):
+        if isinstance(obj, int):
+            return float(obj)
+        return super().cast_from(obj)
 
 class _String(PythonDataType):
     def __call__(self, min_length=None, max_length=None):
@@ -273,6 +277,7 @@ class _String(PythonDataType):
 
 String = _String(str)
 Int = _Int(int)
+Float = _Float(float)
 NoneType = _NoneType(type(None))
 
 
