@@ -673,6 +673,21 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, Rect, start={'x': 10.0, 'y': 10.0, 'z': 42.2}, end=end)
         self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
 
+    def test_cast_generic(self):
+        @dataclass
+        class Point:
+            x: float
+            y: float
+
+        @dataclass(check_types='cast')
+        class Polygon:
+            points: List[Point]
+
+        p1 = {'x': 1, 'y': 2}
+        p2 = {'x': 2, 'y': 3}
+        # Polygon([p1, p2])
+
+
     def test_default_mutables(self):
         @dataclass
         class A:

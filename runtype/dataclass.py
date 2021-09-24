@@ -5,7 +5,7 @@ from contextlib import suppress
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint
+from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List
 
 
 class Configuration:
@@ -42,7 +42,7 @@ class PythonConfiguration(Configuration):
         return default_ensure_isa(a, b)
 
 
-    def cast(self, obj, to_type):
+    def _cast(self, obj, to_type):
         if isinstance(obj, dict):
             types = list(_flatten_types(to_type))
             for t in types:
@@ -58,6 +58,12 @@ class PythonConfiguration(Configuration):
 
         return obj
 
+    def cast(self, obj, to_type):
+        obj = self._cast(obj, to_type)
+        # TODO only ensure when necessary (i.e. after int() we can be sure it's int)
+        self.ensure_isa(obj, to_type)
+        return obj
+
     def on_assign_none(self, type_):
         return SumType([type_, NoneType])
 
@@ -67,12 +73,13 @@ def _post_init(self, config, should_cast):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
-        if should_cast:    # Basic cast
-            value = config.cast(value, field.type)
-            object.__setattr__(self, name, value)
 
         try:
-            config.ensure_isa(value, field.type)
+            if should_cast:    # Basic cast
+                value = config.cast(value, field.type)
+                object.__setattr__(self, name, value)
+            else:
+                config.ensure_isa(value, field.type)
         except TypeMismatchError as e:
             item_value, item_type = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."

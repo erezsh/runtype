@@ -161,7 +161,12 @@ class GenericType(ContainerType):
         return NotImplemented
 
     def __ge__(self, other):
-        return not self <= other
+        if isinstance(other, GenericType):
+            return self.base >= other.base and self.item >= other.item
+        elif isinstance(other, DataType):
+            return self.base >= other
+
+        return NotImplemented
 
     def __hash__(self):
         return hash((self.base, self.item))
