@@ -52,6 +52,11 @@ class Constraint(Validator, PhantomType):
             if not p(inst):
                 raise TypeMismatchError(inst, self)
 
+    def __ge__(self, other):
+        return self.type >= other
+    def __le__(self, other):
+        return self.type <= other
+
 
 
 class AnyType(AnyType, PythonType):
