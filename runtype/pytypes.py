@@ -129,11 +129,8 @@ class PythonDataType(DataType, PythonType):
         return str(self.kernel.__name__)
 
     def cast_from(self, obj):
-        if self.kernel is type(None):
-            if obj is None:
-                return
-            raise TypeMismatchError(obj, self)
-        elif isinstance(obj, dict):
+        if isinstance(obj, dict):
+            # kernel is probably a class. Cast the dict into the class.
             return self.kernel(**obj)
 
         elif isinstance(obj, int):
@@ -245,10 +242,14 @@ Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
 Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
-NoneType = PythonDataType(type(None))
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
 
+
+class _NoneType(PythonDataType):
+    def cast_from(self, obj):
+        if obj is not None:
+            raise TypeMismatchError(obj, self)
 
 class _Int(PythonDataType):
     def __call__(self, min=None, max=None):
@@ -272,6 +273,7 @@ class _String(PythonDataType):
 
 String = _String(str)
 Int = _Int(int)
+NoneType = _NoneType(type(None))
 
 
 _type_cast_mapping = {
