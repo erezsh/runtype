@@ -1,8 +1,47 @@
 # Runtype
 
-Runtype offers fast run-time type validation for Python, by providing utilities for multiple-dispatch and type-safe dataclasses.
+Runtype is a collection of run-time type utilities for Python.
 
-Runtype's integration with the `typing` module allows users to invoke type signatures such as `List[int]`, `Dict[str, Optional[str]]`, or `Union[str, Callable]`.
+Main modules:
+
+- dataclass - Adds run-time type validation to the built-in dataclass.
+
+    - Supports types with constraints (e.g. `String(max_length=10)`)
+
+    - Automatic casting of values, Pydantic-style (Optional, off by default)
+
+    - Improvements to the dataclass ergonomics
+
+
+- dispatch - Provides fast multiple-dispatch for functions and methods, via a decorator.
+
+- base_types - Provides a set of classes to implement your own type-system. Used by runtype itself, to emulate the Python type-system.
+
+General features:
+
+- Fast!  (benchmarks coming soon)
+
+- Supports the `typing` module, generics, and so on.
+
+- Very customizable. You can use dataclass and dispatch with your own typesystem!
+
+## Docs
+
+Read the docs here: https://runtype.readthedocs.io/
+
+## Install
+
+```bash
+$ pip install runtype
+```
+
+No dependencies.
+
+Requires Python 3.6 or up.
+
+[![Build Status](https://travis-ci.org/erezsh/runtype.svg?branch=master)](https://travis-ci.org/erezsh/runtype)
+[![codecov](https://codecov.io/gh/erezsh/runtype/branch/master/graph/badge.svg)](https://codecov.io/gh/erezsh/runtype)
+
 
 ## Multiple Dispatch
 
@@ -26,22 +65,6 @@ Runtype provides a `dataclass` drop-in replacement to Python's native dataclass,
 
 While Runtype's validation can add a small runtime overhead, it's relatively light. And because it's a drop-in replacement, you can always just switch the import back once you're done debugging.
 
-## Docs
-
-Read the docs here: https://runtype.readthedocs.io/
-
-## Install
-
-```bash
-$ pip install runtype
-```
-
-No dependencies.
-
-Requires Python 3.6 or up.
-
-[![Build Status](https://travis-ci.org/erezsh/runtype.svg?branch=master)](https://travis-ci.org/erezsh/runtype)
-[![codecov](https://codecov.io/gh/erezsh/runtype/branch/master/graph/badge.svg)](https://codecov.io/gh/erezsh/runtype)
 
 ## Examples
 
