@@ -7,6 +7,7 @@ import collections
 from collections import abc
 import sys
 import typing
+from datetime import datetime
 
 from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, PhantomType
 
@@ -275,10 +276,24 @@ class _String(PythonDataType):
 
         return Constraint(self, predicates)
 
+
+from . import datetime_parse
+
+class _DateTime(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_datetime(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
+
 String = _String(str)
 Int = _Int(int)
 Float = _Float(float)
 NoneType = _NoneType(type(None))
+DateTime = _DateTime(datetime)
 
 
 _type_cast_mapping = {
@@ -295,6 +310,7 @@ _type_cast_mapping = {
     type(None): NoneType,
     object: Any,
     typing.Any: Any,
+    datetime: DateTime,
 
 }
 

@@ -2,6 +2,7 @@ import unittest
 from unittest import TestCase
 from collections import abc
 import sys
+from datetime import datetime
 
 import typing
 from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
@@ -614,6 +615,17 @@ class TestDataclass(TestCase):
         assert A(b=10) == A(None, 10)
         self.assertRaises(TypeError, A)
         self.assertRaises(TypeError, A, 2)
+
+
+    def test_dates(self):
+        @dataclass(check_types='cast')
+        class A:
+            a: datetime
+
+        d = datetime.now()
+        assert A(d).a.toordinal() == d.toordinal()
+        assert A(d.isoformat()).a.toordinal() == d.toordinal()
+        self.assertRaises(TypeError, A, 'bla')
 
 
 
