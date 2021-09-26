@@ -605,6 +605,17 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, C, "hello", "abcdef")
 
 
+    def test_required_keyword(self):
+        @dataclass
+        class A:
+            a: int = None
+            b: int
+
+        assert A(b=10) == A(None, 10)
+        self.assertRaises(TypeError, A)
+        self.assertRaises(TypeError, A, 2)
+
+
 
     def test_unfrozen(self):
         @dataclass(frozen=False)

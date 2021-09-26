@@ -1,10 +1,11 @@
-from typing import Optional, Union
 from copy import copy
 import dataclasses
 
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType, Int, Constraint, List, Float, PythonType, Dict, PythonDataType
+from .pytypes import cast_to_type, SumType, NoneType
+
+Required = object()
 
 
 class Configuration:
@@ -44,6 +45,8 @@ def _post_init(self, config, should_cast):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
+        if value is Required:
+            raise TypeError(f"Field {name} requires a value")
 
         try:
             if should_cast:    # Basic cast
@@ -129,11 +132,14 @@ def _process_class(cls, config, check_types, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         type_ = config.canonize_type(type_)
 
-        default = getattr(cls, name, dataclasses.MISSING)
+        default = getattr(cls, name, Required)
         if isinstance(default, (list, dict, set)):
             def f(_=default):
                 return copy(_)
             setattr(cls, name, dataclasses.field(default_factory=f))
+
+        elif default is Required:
+            setattr(cls, name, Required)
 
         elif default is None:
             type_ = config.on_assign_none(type_)
