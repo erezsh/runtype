@@ -1,6 +1,12 @@
+"""
+Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
+"""
+
 from copy import copy
 import dataclasses
+from typing import Union
 
+from .utils import staticclass
 from .common import CHECK_TYPES
 from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import cast_to_type, SumType, NoneType
@@ -8,36 +14,85 @@ from .pytypes import cast_to_type, SumType, NoneType
 Required = object()
 
 
+
+@staticclass
 class Configuration:
-    """Generic configuration template"""
+    """Generic configuration template for dataclass. Mainly for type-checking.
 
-    def canonize_type(self, t):
-        return t
+    To modify dataclass behavior, inherit and extend this class,
+    and pass it to the `dataclass()` function as the ``config`` parameter.
+    (parameter ``check_types`` must be nonzero)
 
-    def on_assign_none(self, t):
-        return t
+    Example:
+        ::
 
-    def ensure_isa(self, a, b):
-        raise NotImplementedError()
+            class IsMember(Configuration):
+                @staticmethod
+                def ensure_isa(a, b):
+                    if a not in b:
+                        raise TypeError(f"{a} is not in {b}")
 
-    def cast(self, d, to_type):
-        raise NotImplementedError()
+            @dataclass(config=IsMember())
+            class Form:
+                answer1: ("yes", "no")
+                score: range(1, 11)
 
+            ...
 
-class PythonConfiguration(Configuration):
-    """Configuration to support Mypy-like and Pydantic-like features
+            >>> Form("no", 3)
+            Form(answer1='no', score=3)
+
+            >>> Form("no", 12)
+            Traceback (most recent call last):
+                ...
+            TypeError: 12 is not in range(1, 11)
+
     """
-    def canonize_type(self, t):
-        return cast_to_type(t)
 
-    def ensure_isa(self, a, b):
-        return default_ensure_isa(a, b)
+    def canonize_type(t):
+        """Given a type, return its canonical form.
+        """
+        return t
 
-    def cast(self, obj, to_type):
+    def on_default(t, default):
+        """Called whenever a dataclass member is assigned a default value.
+        """
+        return t, default
+
+    def ensure_isa(a, b):
+        """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
+        """
+        raise NotImplementedError()
+
+    def cast(obj, t):
+        """Attempt to cast 'obj' to type 't'. If such a cast is not possible, raise a TypeError.
+
+        The result is expected to pass `self.ensure_isa(res, t)` without an error,
+        however this assertion is not validated, for performance reasons.
+        """
+        raise NotImplementedError()
+
+
+@staticclass
+class PythonConfig(Configuration):
+    """Configuration to support Mypy-like and Pydantic-like features
+
+    This is the default class given to the ``dataclass()`` function.
+    """
+    canonize_type = cast_to_type
+    ensure_isa = default_ensure_isa
+
+    def cast(obj, to_type):
         return to_type.cast_from(obj)
 
-    def on_assign_none(self, type_):
-        return SumType([type_, NoneType])
+    def on_default(type_, default):
+        if default is None:
+            type_ = SumType([type_, NoneType])
+        elif isinstance(default, (list, dict, set)):
+            def f(_=default):
+                return copy(_)
+            default = dataclasses.field(default_factory=f)
+        return type_, default
 
 
 
@@ -72,7 +127,7 @@ def _setattr(self, name, value, ensure_isa):
         ensure_isa(value, field.type)
 
 
-def replace(self, **kwargs):
+def replace(inst, **kwargs):
     """Returns a new instance, with the given attibutes and values overwriting the existing ones.
 
     Useful for making copies with small updates.
@@ -88,35 +143,35 @@ def replace(self, **kwargs):
         >>> some_instance.replace() == copy(some_instance)   # Equivalent operations
         True
     """
-    return dataclasses.replace(self, **kwargs)
+    return dataclasses.replace(inst, **kwargs)
 
 
-def __iter__(self):
+def __iter__(inst):
     "Yields a list of tuples [(name, value), ...]"
-    return ((name, getattr(self, name)) for name in self.__dataclass_fields__)
+    return ((name, getattr(inst, name)) for name in inst.__dataclass_fields__)
 
 
-def aslist(self):
+def aslist(inst):
     """Returns a list of values
 
-    Equivalent to: list(dict(this).values())
+    Equivalent to: ``list(dict(inst).values())``
     """
-    return [getattr(self, name) for name in self.__dataclass_fields__]
+    return [getattr(inst, name) for name in inst.__dataclass_fields__]
 
 
-def astuple(self):
+def astuple(inst):
     """Returns a tuple of values
 
-    Equivalent to: tuple(dict(this).values())
+    Equivalent to: ``tuple(dict(inst).values())``
     """
-    return tuple(getattr(self, name) for name in self.__dataclass_fields__)
+    return tuple(getattr(inst, name) for name in inst.__dataclass_fields__)
 
 
-def json(self):
+def json(inst):
     """Returns a JSON of values, going recursively into other objects (if possible)"""
     return {
         k: json(v) if dataclasses.is_dataclass(v) else v
-        for k, v in self
+        for k, v in inst
     }
 
 
@@ -132,17 +187,15 @@ def _process_class(cls, config, check_types, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         type_ = config.canonize_type(type_)
 
+        # If default not specified, assign Required, for a later check
+        # We don't assign MISSING; we want to bypass dataclass which is too strict for this
         default = getattr(cls, name, Required)
-        if isinstance(default, (list, dict, set)):
-            def f(_=default):
-                return copy(_)
-            setattr(cls, name, dataclasses.field(default_factory=f))
-
-        elif default is Required:
+        if default is Required:
             setattr(cls, name, Required)
-
-        elif default is None:
-            type_ = config.on_assign_none(type_)
+        elif default is not dataclasses.MISSING:
+            type_, new_default = config.on_default(type_, default)
+            if new_default is not default:
+                setattr(cls, name, new_default)
 
         cls.__annotations__[name] = type_
 
@@ -179,36 +232,43 @@ def _process_class(cls, config, check_types, **kw):
     return dataclasses.dataclass(c, **kw)
 
 
-def dataclass(cls=None, *, config: Configuration = PythonConfiguration(),
-                           check_types: bool = CHECK_TYPES,
+def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
+                           config: Configuration = PythonConfig(),
                            init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
-    """runtype.dataclass is a drop-in replacement, that adds functionality on top of Python's built-in dataclass.
+    """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
-    * Adds run-time type validation
-    * Adds convenience methods:
-        * replace - create a new instance, with updated attributes
-        * aslist - returns the dataclass values as a list
-        * astuple - returns the dataclass values as a tuple
-        * dict(this) - returns a dict of the dataclass attributes and values
-    * Frozen by default. Can be disabled (not recommended)
+    Difference from builtin dataclass:
 
-    Note: Changes to an existing instance (i.e. by setting attributes) are not validated!
-          Use `frozen=False` at your own risk.
+        - Adds run-time type validation (if check_types is nonzero)
+            - Performs automatic casting if check_types == 'cast'
+
+        - Frozen by default. Can be disabled (not recommended)
+        - Supports assigning mutable literals (i.e. list, set and dict).
+
+        - Adds convenience methods: replace(), aslist(), astuple(), and iterator for dict(this).
+        These methods won't override existing ones. They will be added only if the names aren't used.
+
+    Parameters:
+        check_types (Union[bool, str]): Whether or not to validate the values, according to the given type annotations.
+            Possible values: False, True, or 'cast'
+        config (Configuration): Configuration to modify dataclass behavior, mostly regarding type validation.
 
     Example:
-        >>> @dataclass
-        >>> class Point:
-        ...     x: int
-        ...     y: int
+        ::
 
-        >>> p = Point(2, 3)
-        >>> p
-        Point(x=2, y=3)
-        >>> dict(p)         # Maintains order
-        {'x': 2, 'y': 3}
+            >>> @dataclass
+            >>> class Point:
+            ...     x: int
+            ...     y: int
 
-        >>> p.replace(x=30)  # New instance
-        Point(x=30, y=3)
+            >>> p = Point(2, 3)
+            >>> p
+            Point(x=2, y=3)
+            >>> dict(p)         # Maintains order
+            {'x': 2, 'y': 3}
+
+            >>> p.replace(x=30)  # New instance
+            Point(x=30, y=3)
     """
     assert isinstance(config, Configuration)
 
