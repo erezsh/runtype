@@ -2,32 +2,37 @@
 
 Runtype is a collection of run-time type utilities for Python.
 
-Main modules:
+It is:
 
-- dataclass - Adds run-time type validation to the built-in dataclass.
+:runner: Fast!  (benchmarks coming soon)
 
-    - Supports types with constraints (e.g. `String(max_length=10)`)
+:brain: Smart! Supports `typing`, constraints, auto-casting, and much more.
 
-    - Automatic casting of values, Pydantic-style (Optional, off by default)
+:gear: Very customizable. You can use dataclass and dispatch with your own typesystem!
 
-    - Improvements to the dataclass ergonomics
+------
 
+### Modules
 
-- dispatch - Provides fast multiple-dispatch for functions and methods, via a decorator.
+- :star: [**dataclass**](https://runtype.readthedocs.io/en/latest/dataclass/) - Adds run-time type validation to the built-in dataclass.
 
-- base_types - Provides a set of classes to implement your own type-system. Used by runtype itself, to emulate the Python type-system.
+    - Improves dataclass ergonomics.
+    - Supports automatic value casting, Pydantic-style. (Optional, off by default)
+    - Supports types with constraints. (e.g. `String(max_length=10)`)
 
-General features:
+- :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch/) - Provides fast multiple-dispatch for functions and methods, via a decorator.
 
-- Fast!  (benchmarks coming soon)
+    - Inspired by Julia.
 
-- Supports the `typing` module, generics, and so on.
+- **base_types** - Provides a set of classes to implement your own type-system.
+   
+    - Used by runtype itself, to emulate the Python type-system.
 
-- Very customizable. You can use dataclass and dispatch with your own typesystem!
+- **isa** - Provides a smarter alternative to `isinstance` and `issubclass`.
 
 ## Docs
 
-Read the docs here: https://runtype.readthedocs.io/
+Read the docs here: https://runtype.readthedocs.io/ (A little outdated. Will fix soon)
 
 ## Install
 
