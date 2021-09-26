@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "runtype"
-version = "0.1.16"
+version = "0.2.0"
 description = "Type dispatch and validation for run-time Python"
 authors = ["Erez Shinan <erezshin@gmail.com>"]
 license = "MIT"
@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/erezsh/runtype"
 keywords = ["types", "typing", "dispatch", "multimethods", "dataclass", "runtime"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development :: Libraries :: Python Modules",
