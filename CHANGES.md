@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.2.1
+
+- Fix for 0.2.0
+
 ## 0.2.0
 
 - Rewrote `isa` to use our own PythonType hierarchy instead of Python's typing classes, for a huge performance boost
