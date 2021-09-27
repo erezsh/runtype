@@ -10,41 +10,14 @@ class DispatchError(Exception):
 
 
 class MultiDispatch:
-    """Create a decorator attached to a dispatch group,
-    that when applied to a function, enables multiple-dispatch for it.
+    """Creates a dispatch group for multiple dispatch
 
-    Example:
-        >>> from runtype import Dispatch
-        >>> dp = Dispatch()
-
-        >>> @dp
-        ... def add1(i: Optional[int]):
-        ...     return i + 1
-
-        >>> @dp
-        ... def add1(s: Optional[str]):
-        ...     return s + "1"
-
-        >>> @dp
-        ... def add1(a):  # Any, which is the least-specific
-        ...     return (a, 1)
-
-        >>> add1(1)
-        2
-
-        >>> add1("1")
-        11
-
-        >>> add1(1.0)
-        (1.0, 1)
-
-
+    Parameters:
+        typesystem - instance for interfacing with the typesystem
+        test_subtypes: indices of params that should be matched by subclass instead of isinstance.
     """
+
     def __init__(self, typesystem: TypeSystem, test_subtypes: set = set()):
-        """Parameters:
-            typesystem - instance for interfacing with the typesystem
-            test_subtypes: indices of params that should be matched by subclass instead of isinstance.
-        """
         self.roots = defaultdict(TypeTree)
         self.typesystem = typesystem
         self.test_subtypes = test_subtypes

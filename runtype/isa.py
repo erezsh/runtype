@@ -6,17 +6,26 @@ from .typesystem import TypeSystem
 
 
 def ensure_isa(obj, t):
+    """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
+    """
     t = cast_to_type(t)
     t.validate_instance(obj)
 
 
 def is_subtype(t1, t2):
+    """Test if t1 is a subtype of t2
+    """
+
     t1 = cast_to_type(t1)
     t2 = cast_to_type(t2)
     return t1 <= t2
 
 
 def isa(obj, t):
+    """Tests if 'obj' is of type 't'
+
+    Behaves like Python's isinstance, but supports the ``typing`` module and constraints.
+    """
     try:
         ensure_isa(obj, t)
         return True
@@ -25,6 +34,10 @@ def isa(obj, t):
 
 
 def assert_isa(obj, t):
+    """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
+
+    Does nothing if Python is run with -O. (like the assert statement)
+    """
     if CHECK_TYPES:
         try:
             ensure_isa(obj, t)
@@ -53,6 +66,14 @@ def canonize_type(t):
 
 
 def issubclass(t1, t2):
+    """Test if t1 is a subclass of t2
+
+    Parameters:
+        t1 - a type
+        t2 - a type or a tuple of types
+
+    Behaves like Python's issubclass, but supports the ``typing`` module.
+    """
     if isinstance(t2, tuple):
         return any(issubclass(t1, i) for i in t2)
     return is_subtype(t1, t2)

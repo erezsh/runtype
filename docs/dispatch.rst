@@ -1,8 +1,20 @@
-# dispatch.py
+Dispatch
+========
 
-The `dispatch` module provides a decorator that enables multiple-dispatch for functions.
+Provides a decorator that enables multiple-dispatch for functions.
 
-### What is multiple-dispatch?
+
+Decorator
+---------
+
+.. autofunction:: runtype.Dispatch
+
+.. autoclass:: runtype.dispatch.MultiDispatch
+    :members: choices, feed_token, copy, pretty, resume_parse, exhaust_lexer, accepts, as_immutable
+
+
+What is multiple-dispatch?
+--------------------------
 
 Multiple-dispatch is an advanced technique for structuring code, that complements object-oriented programming.
 
@@ -18,7 +30,8 @@ Multiple-dispatch allows you to:
 
 You can think of multiple-dispatch as function overloading on steroids.
 
-### Runtype's dispatcher
+Runtype's dispatcher
+--------------------
 
 Runtype's dispatcher is fast, and will never make an arbitrary choice: in ambiguous situations it will always throw an error.
 
@@ -41,42 +54,45 @@ Ideally, every project will instanciate Dispatch only once, in a module such as 
 ## Basic Use
 
 First, users must instanciate the `Dispatch` object, to create a dispatch group:
-```python
-from runtype import Dispatch
-dp = Dispatch()
-```
+
+::
+
+    from runtype import Dispatch
+    dp = Dispatch()
 
 Then, the group can be used as a decorator for any number of functions.
 
 Dispatch maintains the original name of every function. So, functions of different names will never collide with each other.
 
 Example:
-```python
-@dp
-def f(a: int):
-    print("Got int:", a)
+::
 
-@dp
-def f(a):   # No type means Any type
-    print("Got:", a)
+    @dp
+    def f(a: int):
+        print("Got int:", a)
 
-@dp
-def g(a: str):
-    print("Got string in g:", a)
+    @dp
+    def f(a):   # No type means Any type
+        print("Got:", a)
 
-...
+    @dp
+    def g(a: str):
+        print("Got string in g:", a)
 
->>> f(1)
-Got int: 1
->>> f("a")
-Got: a
->>> g("a")
-Got string in g: a
-```
+    ...
+
+    >>> f(1)
+    Got int: 1
+    >>> f("a")
+    Got: a
+    >>> g("a")
+    Got string in g: a
+
 
 The order in which you define functions doesn't matter.
 
-## Specificity
+Specificity
+-----------
 
 When the user calls a dispatched function group, the dispatcher will always choose the most specific function.
 
@@ -85,30 +101,30 @@ If specificity is ambiguous, it will throw a `DispatchError`. Read more in the "
 Dispatch always chooses the most specific function, across all arguments:
 
 Example:
+::
 
-```python
-from typing import Union
+    from typing import Union
 
-@dp
-def f(a: int, b: int):
-    return a + b
+    @dp
+    def f(a: int, b: int):
+        return a + b
 
-@dp
-def f(a: Union[int, str], b: int):
-    return (a, b)
+    @dp
+    def f(a: Union[int, str], b: int):
+        return (a, b)
 
-...
+    ...
 
->>> f(1, 2)
-3
->>> f("a", 2)
-('a', 2)
-```
+    >>> f(1, 2)
+    3
+    >>> f("a", 2)
+    ('a', 2)
 
 Although both functions "match" with `f(1, 2)`, the first definition is unambiguously more specific.
 
 
-## Ambiguity in Dispatch
+Ambiguity in Dispatch
+---------------------
 
 Ambiguity can result from two situations:
 
@@ -117,59 +133,60 @@ Ambiguity can result from two situations:
 2. Specificity isn't consistent in one function - each argument "wins" in a different function.
 
 Example:
-```python
->>> @dp
-... def f(a, b: int): pass
->>> @dp
-... def f(a: int, b): pass
->>> f(1, 1)
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-runtype.dispatch.DispatchError: Ambiguous dispatch
-```
+::
+
+    >>> @dp
+    ... def f(a, b: int): pass
+    >>> @dp
+    ... def f(a: int, b): pass
+    >>> f(1, 1)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    runtype.dispatch.DispatchError: Ambiguous dispatch
 
 Dispatch is designed to always throw an error when the right choice isn't obvious.
 
-## Another example
+Another example:
+::
 
-```python
-from runtype import Dispatch
-dp = Dispatch()
+    from runtype import Dispatch
+    dp = Dispatch()
 
-@dp
-def join(seq, sep: str = ''):
-    return sep.join(str(s) for s in seq)
+    @dp
+    def join(seq, sep: str = ''):
+        return sep.join(str(s) for s in seq)
 
-@dp
-def join(seq, sep: list):
-    return join(join(sep, str(s)) for s in seq)
-...
+    @dp
+    def join(seq, sep: list):
+        return join(join(sep, str(s)) for s in seq)
+    ...
 
->>> join([0, 0, 7])                 # -> 1st definition
-'007'
+    >>> join([0, 0, 7])                 # -> 1st definition
+    '007'
 
->>> join([1, 2, 3], ', ')           # -> 1st definition
-'1, 2, 3'
+    >>> join([1, 2, 3], ', ')           # -> 1st definition
+    '1, 2, 3'
 
->>> join([0, 0, 7], ['(', ')'])     # -> 2nd definition
-'(0)(0)(7)'
+    >>> join([0, 0, 7], ['(', ')'])     # -> 2nd definition
+    '(0)(0)(7)'
 
->>> join([1, 2, 3], 0)              # -> no definition
-Traceback (most recent call last):
-  File "<stdin>", line 1, in <module>
-  ...
-runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 'list'>, <class 'int'>)
+    >>> join([1, 2, 3], 0)              # -> no definition
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      ...
+    runtype.dispatch.DispatchError: Function 'join' not found for signature (<class 'list'>, <class 'int'>)
 
-```
 
 Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
 
 
-## Performance
+Performance
+-----------
 
 Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py)), which is negligable for most use-cases.
 
-## Limitations
+Limitations
+-----------
 
 Dispatch currently doesn't support, and will simply ignore:
 
@@ -183,6 +200,6 @@ These may be implemented in future releases.
 
 Dispatch uses the `isa` module as the basis for its type matching, and so it inherits `isa`'s limitations as well.
 
-Dispatch does not support generics. Avoid using `List[T]`, `Tuple[T]` or `Dict[T1, T2]` in the function signature. (this is due to conflict with caching, and might be implemented in the future)
+Dispatch does not support generics or constraints. Avoid using `List[T]`, `Tuple[T]` or `Dict[T1, T2]` in the function signature. (this is due to conflict with caching, and might be implemented in the future)
 
 `Union` and `Optional` are supported.

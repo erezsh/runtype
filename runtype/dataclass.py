@@ -74,7 +74,7 @@ class Configuration:
 
 
 @staticclass
-class PythonConfig(Configuration):
+class PythonConfiguration(Configuration):
     """Configuration to support Mypy-like and Pydantic-like features
 
     This is the default class given to the ``dataclass()`` function.
@@ -233,20 +233,28 @@ def _process_class(cls, config, check_types, **kw):
 
 
 def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
-                           config: Configuration = PythonConfig(),
+                           config: Configuration = PythonConfiguration(),
                            init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
     """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
-    Difference from builtin dataclass:
+    **Differences from builtin dataclass:**
 
-        - Adds run-time type validation (if check_types is nonzero)
-            - Performs automatic casting if check_types == 'cast'
+    1. Type validation
+      - Adds run-time type validation (when check_types is nonzero)
+      - Performs automatic casting (when check_types == 'cast')
 
-        - Frozen by default. Can be disabled (not recommended)
-        - Supports assigning mutable literals (i.e. list, set and dict).
-
-        - Adds convenience methods: replace(), aslist(), astuple(), and iterator for dict(this).
+    2. Ergonomics
+      - Supports assigning mutable literals (i.e. list, set, and dict).
+      - Adds convenience methods: replace(), aslist(), astuple(), and iterator for dict(this).
         These methods won't override existing ones. They will be added only if the names aren't used.
+      - Setting the default as ``None`` automatically makes the type into ``Optional``, if it isn't already.
+      - Members without a default are allowed after members with a default (but they are required to create the instance)
+
+    3. Misc
+      - Frozen by default
+
+    All of the above differences are configurable and extendable.
+
 
     Parameters:
         check_types (Union[bool, str]): Whether or not to validate the values, according to the given type annotations.
