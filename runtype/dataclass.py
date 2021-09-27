@@ -2,7 +2,6 @@
 Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 """
 
-import inspect
 from copy import copy
 import dataclasses
 from typing import Union
@@ -14,14 +13,6 @@ from .pytypes import cast_to_type, SumType, NoneType
 Required = object()
 
 
-def staticclass(c):
-    for name, f in inspect.getmembers(c):
-        if inspect.isfunction(f):
-            setattr(c, name, staticmethod(f))
-    return c
-
-
-@staticclass
 class Configuration:
     """Generic configuration template for dataclass. Mainly for type-checking.
 
@@ -55,22 +46,22 @@ class Configuration:
 
     """
 
-    def canonize_type(t):
+    def canonize_type(self, t):
         """Given a type, return its canonical form.
         """
         return t
 
-    def on_default(t, default):
+    def on_default(self, t, default):
         """Called whenever a dataclass member is assigned a default value.
         """
         return t, default
 
-    def ensure_isa(a, b):
+    def ensure_isa(self, a, b):
         """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
         """
         raise NotImplementedError()
 
-    def cast(obj, t):
+    def cast(self, obj, t):
         """Attempt to cast 'obj' to type 't'. If such a cast is not possible, raise a TypeError.
 
         The result is expected to pass `self.ensure_isa(res, t)` without an error,
@@ -79,19 +70,18 @@ class Configuration:
         raise NotImplementedError()
 
 
-@staticclass
 class PythonConfiguration(Configuration):
     """Configuration to support Mypy-like and Pydantic-like features
 
     This is the default class given to the ``dataclass()`` function.
     """
-    canonize_type = cast_to_type
-    ensure_isa = default_ensure_isa
+    canonize_type = staticmethod(cast_to_type)
+    ensure_isa = staticmethod(default_ensure_isa)
 
-    def cast(obj, to_type):
+    def cast(self, obj, to_type):
         return to_type.cast_from(obj)
 
-    def on_default(type_, default):
+    def on_default(self, type_, default):
         if default is None:
             type_ = SumType([type_, NoneType])
         elif isinstance(default, (list, dict, set)):
