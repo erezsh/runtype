@@ -126,14 +126,14 @@ class TestTypes(TestCase):
 
     def test_pytypes(self):
         assert Tuple <= Tuple
-        assert Tuple[int] <= Tuple
+        # assert Tuple[int] <= Tuple
         assert not List <= Tuple
         assert not Tuple <= List
         assert not Tuple <= Int
         assert not Int <= Tuple
 
         Tuple.validate_instance((1, 2))
-        self.assertRaises(Tuple.validate_instance, 1)
+        self.assertRaises(TypeError, Tuple.validate_instance, 1)
 
 
 
