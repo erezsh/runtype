@@ -38,7 +38,7 @@ Read the docs here: https://runtype.readthedocs.io/ (A little outdated. Will fix
 ## Install
 
 ```bash
-$ pip install runtype
+pip install runtype
 ```
 
 No dependencies.

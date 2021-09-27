@@ -67,6 +67,8 @@ class TestIsa(TestCase):
         assert issubclass(dict, typing.Mapping)
         assert isa({'a': 'b'}, typing.Mapping)
         assert isa({'a': 'b'}, typing.Mapping)
+        assert isa({'a': 'b'}, typing.Mapping[str, str])
+        assert not isa({'a': 'b'}, typing.Mapping[str, int])
 
         assert isa({'a': 'b'}, Dict[str, str])
         assert not isa({'a': 1}, Dict[str, str])
@@ -416,6 +418,7 @@ class TestDispatch(TestCase):
         assert issubclass(Union[int, str], Union[int, str])
         assert issubclass(Union[int, str], Union[int, str, dict])
         assert not issubclass(Union[int, str, dict], Union[int, str])
+        assert issubclass(int, (str, int))
 
         dp = Dispatch()
 
@@ -743,6 +746,7 @@ class TestDataclass(TestCase):
 
         assert a.c == {1}
         assert a.c is not A().c
+
 
 
 

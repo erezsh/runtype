@@ -3,7 +3,7 @@ from unittest import TestCase
 import typing
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import List, Dict, Int, Any, Constraint, String
+from runtype.pytypes import List, Dict, Int, Any, Constraint, String, Tuple
 from runtype.typesystem import TypeSystem
 
 
@@ -124,6 +124,16 @@ class TestTypes(TestCase):
     	assert i.isinstance(3, 4)
     	assert not i.isinstance(4, 3)
 
+    def test_pytypes(self):
+        assert Tuple <= Tuple
+        assert Tuple[int] <= Tuple
+        assert not List <= Tuple
+        assert not Tuple <= List
+        assert not Tuple <= Int
+        assert not Int <= Tuple
+
+        Tuple.validate_instance((1, 2))
+        self.assertRaises(Tuple.validate_instance, 1)
 
 
 
