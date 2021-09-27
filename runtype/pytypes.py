@@ -377,7 +377,7 @@ def _cast_to_type(t):
             return Callable  # TODO
         elif py38 and t.__origin__ is typing.Literal:
             return OneOf(t.__args__)
-        elif t.__origin__ is abc.Mapping:
+        elif t.__origin__ is abc.Mapping or t.__origin__ is typing.Mapping:
             k, v = t.__args__
             return Mapping[cast_to_type(k), cast_to_type(v)]
 

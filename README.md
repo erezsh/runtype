@@ -33,7 +33,7 @@ It is:
 
 ## Docs
 
-Read the docs here: https://runtype.readthedocs.io/ (A little outdated. Will fix soon)
+Read the docs here: https://runtype.readthedocs.io/
 
 ## Install
 
