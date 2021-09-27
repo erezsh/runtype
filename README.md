@@ -14,21 +14,22 @@ It is:
 
 ### Modules
 
-- :star: [**dataclass**](https://runtype.readthedocs.io/en/latest/dataclass/) - Adds run-time type validation to the built-in dataclass.
+- :star: [**validation**](https://runtype.readthedocs.io/en/latest/validation.html) - Provides a smarter alternative to `isinstance` and `issubclass`, with support for the `typing` module, and type constraints.
+
+- :star: [**dataclass**](https://runtype.readthedocs.io/en/latest/dataclass.html) - Adds run-time type validation to the built-in dataclass.
 
     - Improves dataclass ergonomics.
     - Supports automatic value casting, Pydantic-style. (Optional, off by default)
     - Supports types with constraints. (e.g. `String(max_length=10)`)
 
-- :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch/) - Provides fast multiple-dispatch for functions and methods, via a decorator.
+- :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch.html) - Provides fast multiple-dispatch for functions and methods, via a decorator.
 
     - Inspired by Julia.
 
-- **base_types** - Provides a set of classes to implement your own type-system.
+- :star: [**type utilities**](https://runtype.readthedocs.io/en/latest/types.html) - Provides a set of classes to implement your own type-system.
    
     - Used by runtype itself, to emulate the Python type-system.
 
-- **validation** - Provides a smarter alternative to `isinstance` and `issubclass`.
 
 ## Docs
 

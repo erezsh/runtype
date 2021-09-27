@@ -4,6 +4,8 @@ Base Types - contains the basic building blocks of a generic type system
 
 
 class Type:
+    """Abstract Type class. All types inherit from it.
+    """
     def __add__(self, other):
         return SumType.create((self, other))
 
@@ -12,6 +14,10 @@ class Type:
 
 
 class AnyType(Type):
+    """Represents the Any type.
+
+    For any type 't' within the typesystem, t is a subset Any (or: t <= Any)
+    """
     def __add__(self, other):
         return self
 
@@ -35,6 +41,10 @@ Any = AnyType()
 
 
 class DataType(Type):
+    """Abstract class for a data type.
+
+    Example of possible data-types: int, float, text
+    """
     def __le__(self, other):
         if isinstance(other, DataType):
             return self == other
@@ -43,6 +53,10 @@ class DataType(Type):
 
 
 class SumType(Type):
+    """Implements a sum type, i.e. a disjoint union of a set of types.
+
+    Similar to Python's Union.
+    """
     def __init__(self, types):
         self.types = frozenset(types)
 
@@ -82,6 +96,8 @@ class SumType(Type):
 
 
 class ProductType(Type):
+    """Implements a product type, i.e. a tuple of types.
+    """
 
     def __init__(self, types):
         self.types = tuple(types)
@@ -121,11 +137,18 @@ class ProductType(Type):
 
 
 class ContainerType(DataType):
+    """Base class for containers, such as generics.
+    """
     def __getitem__(self, other):
         return GenericType(self, other)
 
 
 class GenericType(ContainerType):
+    """Implements a generic type. i.e. a container for items of a specific type.
+
+    For any two generic types a[i] and b[j], it's true that a[i] <= b[j] iff a <= b and i <= j.
+    """
+
     def __init__(self, base, item=Any):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
@@ -173,6 +196,8 @@ class GenericType(ContainerType):
 
 
 class PhantomType(Type):
+    """Implements a base for phantom types.
+    """
     def __getitem__(self, other):
         return PhantomGenericType(self, other)
 
@@ -192,6 +217,10 @@ class PhantomType(Type):
 
 
 class PhantomGenericType(GenericType):
+    """Implements a generic phantom type, for carrying metadata within the type signature.
+
+    For any phantom type p[i], it's true that p[i] <= p but also p[i] <= i and i <= p[i].
+    """
     def __le__(self, other):
         if isinstance(other, PhantomType):
             return self.base <= other or self.item <= other

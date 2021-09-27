@@ -24,15 +24,35 @@ setup(
     url = "https://github.com/erezsh/runtype",
     download_url = "https://github.com/erezsh/runtype/tarball/master",
     long_description='''
-runtype is composed of several utility modules:
+Runtype is a collection of run-time type utilities for Python.
 
-1. dispatch - Provides a decorator for fast multi-dispatch at run-time for functions, with sophisticated ambiguity resolution.
+It is:
 
-2. dataclass - Improves on Python's existing dataclass, by verifying the type-correctness of its attributes at run-time. Also provides a few useful methods for dataclasses.
+🏃 Fast! (benchmarks coming soon)
 
-3. isa - Provides alternative functions to `isinstance` and `issubclass`, that understand Python's `typing` module.
+🧠 Smart! Supports typing, constraints, auto-casting, and much more.
 
-Runtype's integration with the `typing` module allows to use type signatures such as `List[int]`, `Optional[str]`, or `Union[int, str, Callable]`.
+⚙️ Very customizable. You can use dataclass and dispatch with your own typesystem!
+
+Modules
+⭐ validation - Provides a smarter alternative to isinstance and issubclass
+
+    Supports typing module, and type constraints.
+
+⭐ dataclass - Adds run-time type validation to the built-in dataclass.
+
+    Improves dataclass ergonomics.
+    Supports automatic value casting, Pydantic-style. (Optional, off by default)
+    Supports types with constraints. (e.g. String(max_length=10))
+
+⭐ dispatch - Provides fast multiple-dispatch for functions and methods, via a decorator.
+
+    Inspired by Julia.
+
+⭐ base_types - Provides a set of classes to implement your own type-system.
+
+    Used by runtype itself, to emulate the Python type-system.
+
 ''',
 
     classifiers=[

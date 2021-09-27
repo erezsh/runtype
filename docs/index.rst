@@ -11,9 +11,10 @@ Welcome to Runtype's documentation!
    :caption: Reference
    :hidden:
 
+   validation
    dataclass
    dispatch
-   isa
+   types
 
 
 Runtype is a collection of run-time type utilities for Python.
@@ -33,7 +34,8 @@ Resources
 
 -  Reference
 
+   -  :doc:`validation`
    -  :doc:`dataclass`
    -  :doc:`dispatch`
-   -  :doc:`isa`
+   -  :doc:`types`
 
