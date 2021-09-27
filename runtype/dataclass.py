@@ -2,6 +2,7 @@
 Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 """
 
+import inspect
 from copy import copy
 import dataclasses
 from typing import Union
@@ -13,6 +14,12 @@ from .pytypes import cast_to_type, SumType, NoneType
 
 Required = object()
 
+
+def staticclass(c):
+    for name, f in inspect.getmembers(c):
+        if inspect.isfunction(f):
+            setattr(c, name, staticmethod(f))
+    return c
 
 
 @staticclass
