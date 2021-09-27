@@ -28,7 +28,7 @@ It is:
    
     - Used by runtype itself, to emulate the Python type-system.
 
-- **isa** - Provides a smarter alternative to `isinstance` and `issubclass`.
+- **validation** - Provides a smarter alternative to `isinstance` and `issubclass`.
 
 ## Docs
 
