@@ -1,9 +1,12 @@
-isa
-===
+Validation (isa & issubclass)
+=============================
 
 This module provides type validation function for Python with support for the ``typing`` module.
 
 You may use them to replace ``isinstance()`` and ``issubclass``.
+
+These methods are also used by 'dataclass' and 'dispatch' in order to resolve and validate types and values.
+
 
 Functions
 ---------
@@ -30,4 +33,3 @@ Example:
 	True
 	>>> isa([1,"a"], List[int])
 	False
-	

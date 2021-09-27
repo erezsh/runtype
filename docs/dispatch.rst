@@ -3,6 +3,8 @@ Dispatch
 
 Provides a decorator that enables multiple-dispatch for functions.
 
+(Inspired by Julia)
+
 
 Decorator
 ---------
