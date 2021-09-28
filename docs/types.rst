@@ -33,5 +33,6 @@ Note: These types are not specific to the Python type-system!
 .. autoclass:: runtype.base_types.PhantomGenericType
 
 .. autoclass:: runtype.base_types.Validator
+    :members: validate_instance, test_instance
 
 .. autoclass:: runtype.base_types.Constraint

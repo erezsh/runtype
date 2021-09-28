@@ -663,6 +663,9 @@ class TestDataclass(TestCase):
                 if item not in container:
                     raise TypeError(item)
 
+            def cast(self, obj, t):
+                raise NotImplementedError()
+
         @dataclass(config=EnsureContains())
         class A:
             a: range(10)

@@ -5,6 +5,7 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 from copy import copy
 import dataclasses
 from typing import Union
+from abc import ABC, abstractmethod
 
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
@@ -13,7 +14,7 @@ from .pytypes import cast_to_type, SumType, NoneType
 Required = object()
 
 
-class Configuration:
+class Configuration(ABC):
     """Generic configuration template for dataclass. Mainly for type-checking.
 
     To modify dataclass behavior, inherit and extend this class,
@@ -56,18 +57,20 @@ class Configuration:
         """
         return t, default
 
+    @abstractmethod
     def ensure_isa(self, a, b):
         """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
         """
-        raise NotImplementedError()
+        ...
 
+    @abstractmethod
     def cast(self, obj, t):
         """Attempt to cast 'obj' to type 't'. If such a cast is not possible, raise a TypeError.
 
         The result is expected to pass `self.ensure_isa(res, t)` without an error,
         however this assertion is not validated, for performance reasons.
         """
-        raise NotImplementedError()
+        ...
 
 
 class PythonConfiguration(Configuration):

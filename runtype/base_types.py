@@ -250,13 +250,18 @@ class PhantomGenericType(GenericType):
         return NotImplemented
 
 
-class Validator:
+from abc import ABC, abstractmethod
+class Validator(ABC):
     """Defines the validator interface.
     """
+    @abstractmethod
     def validate_instance(self, obj):
-        raise NotImplementedError(self)
+        """Validates obj, raising a TypeMismatchError if it does not conform."""
+        ...
 
     def test_instance(self, obj):
+        """Tests obj, returning a True/False for whether it conforms or not.
+        """
         try:
             self.validate_instance(obj)
             return True
@@ -273,6 +278,7 @@ class Constraint(Validator, PhantomType):
         self.predicates = predicates
 
     def validate_instance(self, inst):
+        """Makes sure the instance conforms by applying it to all the predicates."""
         self.type.validate_instance(inst)
 
         for p in self.predicates:
@@ -281,6 +287,6 @@ class Constraint(Validator, PhantomType):
 
     def __ge__(self, other):
         return self.type >= other
-        
+
     def __le__(self, other):
         return self.type <= other

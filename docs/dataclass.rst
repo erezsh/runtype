@@ -33,6 +33,8 @@ Configuration
 -------------
 
 .. autoclass:: runtype.dataclass.Configuration
+  :members: ensure_isa, cast, canonize_type, on_default
+
 
 .. autoclass:: runtype.dataclass.PythonConfiguration
 
