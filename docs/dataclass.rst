@@ -41,11 +41,7 @@ Configuration
 Performance
 -----------
 
-(debug vs production; optimize mode)
-
-Runtype's type-checking is fast and optimized, and yet, type-checking every instance may slow down your program considerably.
-
-If you're running in production, consider using Python's optimize flag (`python -O ...`), which will disable dataclass type-checking. (it also disables asserts)
+Type verification in classes introduces a slight run-time overhead. When running in production, it's recommended to use the `-O` switch for Python. It will skip all `assert`s, and also skip type verification on classes by default.
 
 Alternatively, you can use a shared dataclass decorator, and enable/disable type-checking with a single change.
 

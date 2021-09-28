@@ -34,8 +34,8 @@ Resources
 
 -  Reference
 
-   -  :doc:`validation`
-   -  :doc:`dataclass`
-   -  :doc:`dispatch`
-   -  :doc:`types`
+   -  :doc:`validation` - Alternatives to 'isinstance' and 'issubclass'
+   -  :doc:`dataclass` - Type-validation in dataclasses
+   -  :doc:`dispatch` - Multiple dispatch
+   -  :doc:`types` - Utilities for creating type-systems
 
