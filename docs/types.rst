@@ -31,3 +31,7 @@ Note: These types are not specific to the Python type-system!
 .. autoclass:: runtype.base_types.PhantomType
 
 .. autoclass:: runtype.base_types.PhantomGenericType
+
+.. autoclass:: runtype.base_types.Validator
+
+.. autoclass:: runtype.base_types.Constraint

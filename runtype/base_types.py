@@ -1,6 +1,15 @@
 """
-Base Types - contains the basic building blocks of a generic type system
+Base Type Classes - contains the basic building blocks of a generic type system
 """
+
+
+class RuntypeError(TypeError):
+    pass
+
+
+class TypeMismatchError(RuntypeError):
+    pass
+
 
 
 class Type:
@@ -239,3 +248,39 @@ class PhantomGenericType(GenericType):
         elif isinstance(other, DataType):
             return other <= self.item
         return NotImplemented
+
+
+class Validator:
+    """Defines the validator interface.
+    """
+    def validate_instance(self, obj):
+        raise NotImplementedError(self)
+
+    def test_instance(self, obj):
+        try:
+            self.validate_instance(obj)
+            return True
+        except TypeMismatchError:
+            return False
+
+            
+class Constraint(Validator, PhantomType):
+    """Defines a constraint, which activates during validation.
+    """
+
+    def __init__(self, for_type, predicates):
+        self.type = for_type
+        self.predicates = predicates
+
+    def validate_instance(self, inst):
+        self.type.validate_instance(inst)
+
+        for p in self.predicates:
+            if not p(inst):
+                raise TypeMismatchError(inst, self)
+
+    def __ge__(self, other):
+        return self.type >= other
+        
+    def __le__(self, other):
+        return self.type <= other

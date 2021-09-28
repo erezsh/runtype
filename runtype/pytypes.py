@@ -9,55 +9,23 @@ import sys
 import typing
 from datetime import datetime
 
-from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, PhantomType
+from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, Constraint, Validator, TypeMismatchError
 
 py38 = sys.version_info >= (3, 8)
-
-
-class RuntypeError(TypeError):
-    pass
-
-
-class TypeMismatchError(RuntypeError):
-    pass
 
 
 class LengthMismatchError(TypeMismatchError):
     pass
 
 
-class Validator:
-    def validate_instance(self, obj):
-        raise NotImplementedError(self)
-
-    def test_instance(self, obj):
-        try:
-            self.validate_instance(obj)
-            return True
-        except TypeMismatchError as _e:
-            return False
-
-
 class PythonType(Type, Validator):
     pass
 
 
-class Constraint(Validator, PhantomType):
+
+class Constraint(Constraint):
     def __init__(self, for_type, predicates):
-        self.type = cast_to_type(for_type)
-        self.predicates = predicates
-
-    def validate_instance(self, inst):
-        self.type.validate_instance(inst)
-
-        for p in self.predicates:
-            if not p(inst):
-                raise TypeMismatchError(inst, self)
-
-    def __ge__(self, other):
-        return self.type >= other
-    def __le__(self, other):
-        return self.type <= other
+        super().__init__(cast_to_type(for_type), predicates)
 
     def cast_from(self, obj):
         obj = self.type.cast_from(obj)
@@ -67,7 +35,6 @@ class Constraint(Validator, PhantomType):
                 raise TypeMismatchError(obj, self)
 
         return obj
-
 
 
 
