@@ -1,3 +1,5 @@
+"User-facing API for validation"
+
 from typing import Any, Dict, List, Tuple
 
 from .common import CHECK_TYPES

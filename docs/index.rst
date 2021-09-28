@@ -8,7 +8,7 @@ Welcome to Runtype's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Reference
+   :caption: Modules
    :hidden:
 
    validation
@@ -19,6 +19,14 @@ Welcome to Runtype's documentation!
 
 Runtype is a collection of run-time type utilities for Python.
 
+It contains the following user-facing modules:
+
+   -  :doc:`validation` - Alternatives to 'isinstance' and 'issubclass'
+   -  :doc:`dataclass` - Type-validation in dataclasses
+   -  :doc:`dispatch` - Multiple dispatch
+   -  :doc:`types` - Utilities for creating type-systems
+
+
 Install
 -------
 ::
@@ -28,14 +36,3 @@ Install
 No dependencies.
 
 Requires Python 3.6 or up.
-
-Resources
----------
-
--  Reference
-
-   -  :doc:`validation` - Alternatives to 'isinstance' and 'issubclass'
-   -  :doc:`dataclass` - Type-validation in dataclasses
-   -  :doc:`dispatch` - Multiple dispatch
-   -  :doc:`types` - Utilities for creating type-systems
-

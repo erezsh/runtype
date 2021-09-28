@@ -1,35 +1,42 @@
 Validation (isa & issubclass)
 =============================
 
-This module provides type validation function for Python with support for the ``typing`` module.
+This module provides type validation functions for Python with support for the ``typing`` module.
 
 You may use them to replace ``isinstance()`` and ``issubclass``.
 
-These methods are also used by 'dataclass' and 'dispatch' in order to resolve and validate types and values.
-
+It uses the same validation mechanism as used by 'dataclass' and 'dispatch' in order to resolve and validate types and values.
 
 Functions
 ---------
 
-.. autofunction:: runtype.isa.isa
+.. autofunction:: runtype.validation.isa
 
-.. autofunction:: runtype.isa.issubclass
+.. autofunction:: runtype.validation.ensure_isa
 
-.. autofunction:: runtype.isa.is_subtype
+.. autofunction:: runtype.validation.assert_isa
 
-.. autofunction:: runtype.isa.ensure_isa
+.. autofunction:: runtype.validation.issubclass
 
-.. autofunction:: runtype.isa.assert_isa
+.. autofunction:: runtype.validation.is_subtype
+
 
 Element-wise validation
 -----------------------
 
-Testing `isa` with `List[T]`, `Tuple[T1, T2, T3]` and `Dict[T1, T2]` will iterate over each element and call `isa(elem, T)` recursively.
+When called on generics such as `List`, `Tuple`, `Set` and `Dict`, runtype will iterate over each element and call `ensure_isa()` recursively.
 
 Example:
 ::
 
 	>>> isa([1,2], List[int])
 	True
+
 	>>> isa([1,"a"], List[int])
+	False
+
+	>>> isa([{1: 2}], List[Dict[int, int]])
+	True
+	
+	>>> isa([{1: 2}], List[Dict[int, str]])
 	False

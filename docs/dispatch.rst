@@ -37,13 +37,13 @@ Runtype's dispatcher
 
 Runtype's dispatcher is fast, and will never make an arbitrary choice: in ambiguous situations it will always throw an error.
 
-As a side-effect, it also provides type-validation to functions. Trying to dispatch with types that don't match, will result in a dispatch-error.
+As a side-effect, it also provides type validation to functions. Trying to dispatch with types that don't match, will result in a dispatch-error.
 
 Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on:
 
     MyStr(str) < str < Union[int, str] < object
 
-It uses the [`isa`](isa.md) module as the basis for its type matching, which means that it supports the use of `typing` classes such as `List` or `Union` (See "limitations" for more on that).
+It uses the :doc:`validation <validation>` module as the basis for its type matching, which means that it supports the use of `typing` classes such as `List` or `Union` (See "limitations" for more on that).
 
 Some classes cannot be compared, for example `Optional[int]` and `Optional[str]` are ambiguous for the value `None`. See "ambiguity" for more details.
 
@@ -53,9 +53,10 @@ Unlike Julia, Runtype asks to instanciate your own dispatch-group, to avoid coll
 
 Ideally, every project will instanciate Dispatch only once, in a module such as `utils.py` or `common.py`.
 
-## Basic Use
+Basic Use
+---------
 
-First, users must instanciate the `Dispatch` object, to create a dispatch group:
+First, users must instanciate the `Dispatch` class, to create a dispatch group:
 
 ::
 
@@ -185,7 +186,7 @@ Dispatch chooses the right function based on the idea specificity, which means t
 Performance
 -----------
 
-Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: [examples/benchmark\_dispatch](https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py)), which is negligable for most use-cases.
+Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: `examples/benchmark\_dispatch.py <https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py>`_), which is negligable for most use-cases.
 
 Dispatch is not recommended for use in functions that are called often in time-critical code.
 
@@ -202,8 +203,6 @@ Dispatch currently doesn't support, and will simply ignore:
 * `**kwargs`
 
 These may be implemented in future releases.
-
-Dispatch uses the `isa` module as the basis for its type matching, and so it inherits `isa`'s limitations as well.
 
 Dispatch does not support generics or constraints. Avoid using `List[T]`, `Tuple[T]` or `Dict[T1, T2]` in the function signature. (this is due to conflict with caching, and might be implemented in the future)
 

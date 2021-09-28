@@ -1,6 +1,6 @@
 from .dataclass import dataclass
 from .dispatch import DispatchError, MultiDispatch
-from .isa import PythonTyping, TypeSystem, TypeMismatchError, assert_isa, isa, issubclass
+from .validation import PythonTyping, TypeSystem, TypeMismatchError, assert_isa, isa, issubclass
 from .pytypes import Constraint, String, Int
 
 

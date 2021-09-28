@@ -7,7 +7,7 @@ import dataclasses
 from typing import Union
 
 from .common import CHECK_TYPES
-from .isa import TypeMismatchError, ensure_isa as default_ensure_isa
+from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import cast_to_type, SumType, NoneType
 
 Required = object()

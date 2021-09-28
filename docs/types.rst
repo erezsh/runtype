@@ -1,14 +1,13 @@
-Type Utilities
-==============
+Type Classes
+============
 
-Runtype includes building blocks for making your own type-system.
+A collection of classes that serve as building blocks for making your own type-system.
 
 You can use that type-system to:
 
 - reason about your program's logic
 
-- supply it for runtype to use in dispatch and validation.
-
+- use it with runtype for customized dispatch and validation.
 
 Types
 -----
