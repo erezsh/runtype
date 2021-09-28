@@ -56,11 +56,15 @@ Requires Python 3.6 or up.
 from typing import Dict, Mapping
 from runtype import isa, issubclass
 
-isa({'a': 1}, Dict[str, int])      # True
-isa({'a': 'b'}, Dict[str, int])    #  False
+print( isa({'a': 1}, Dict[str, int]) )
+#> True
+print( isa({'a': 'b'}, Dict[str, int])  )
+#> False
 
-issubclass(Dict[str, int], Mapping[str, int])   # True
-issubclass(Dict[str, int], Mapping[int, str])   # False
+print( issubclass(Dict[str, int], Mapping[str, int])  )
+#> True
+print( issubclass(Dict[str, int], Mapping[int, str])  )
+#> False
 ```
 
 ### Dataclasses
@@ -74,13 +78,13 @@ from runtype import dataclass
 class Person:
     name: str
     birthday: datetime = None   # Optional
-    interests: List[str] = []
+    interests: List[str] = []   # The list is copied for each instance
 
 
 print( Person("Beetlejuice") )
-#> Person(name='Beetlejuice', birthday=None)
+#> Person(name='Beetlejuice', birthday=None, interests=[])
 print( Person("Albert", "1955-04-18T00:00", ['physics']) )
-#> Person(name='Albert', birthday=datetime.datetime(1955, 4, 18, 0, 0))
+#> Person(name='Albert', birthday=datetime.datetime(1955, 4, 18, 0, 0), interests=['physics'])
 print( Person("Bad", interests=['a', 1]) )
 # Traceback (most recent call last):
 #   ...
