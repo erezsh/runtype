@@ -24,7 +24,7 @@ It contains the following user-facing modules:
    -  :doc:`validation` - Alternatives to 'isinstance' and 'issubclass'
    -  :doc:`dataclass` - Type-validation in dataclasses
    -  :doc:`dispatch` - Multiple dispatch
-   -  :doc:`types` - Utilities for creating type-systems
+   -  :doc:`types` - Utilities for creating type systems
 
 
 Install

@@ -1,9 +1,9 @@
 Type Classes
 ============
 
-A collection of classes that serve as building blocks for making your own type-system.
+A collection of classes that serve as building blocks for making your own type system.
 
-You can use that type-system to:
+You can use that type system to:
 
 - reason about your program's logic
 
@@ -12,7 +12,7 @@ You can use that type-system to:
 Types
 -----
 
-Note: These types are not specific to the Python type-system!
+Note: These types are not specific to the Python type system!
 
 .. autoclass:: runtype.base_types.Type
 

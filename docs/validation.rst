@@ -40,3 +40,21 @@ Example:
 	
 	>>> isa([{1: 2}], List[Dict[int, str]])
 	False
+
+
+How does it work?
+-----------------
+
+Runtype maps the given types onto an internal type system, that is capable of expressing the Python type system.
+
+In order to validate a value against a type, we do the following:
+
+1. Convert (cast) the given type into an instance of `PythonType`, that represents the given type within the internal type system. This operation is cached.
+
+2. Call the `PythonType.validate_instance()` method with the given value. Each subclass has its own implementation. For example:
+
+	- In `PythonDataType` (e.g. `Int` or `DateTime`), the method will simply call Python's `isinstance()` on the value.
+
+	- In `SequenceType` (e.g. `List` or `Iter`), after `isinstance()`, this method will call itself recursively for each item.
+
+The internal type system is implemented using the :doc:`types` module.

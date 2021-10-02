@@ -4,7 +4,7 @@ Runtype is a collection of run-time type utilities for Python.
 
 It is:
 
-:runner: Fast!  (benchmarks coming soon)
+:runner: Fast! Uses an internal typesystem for maximum performance.
 
 :brain: Smart! Supports `typing`, constraints, auto-casting, and much more.
 
@@ -21,6 +21,7 @@ It is:
     - Improves dataclass ergonomics.
     - Supports automatic value casting, Pydantic-style. (Optional, off by default)
     - Supports types with constraints. (e.g. `String(max_length=10)`)
+    - 40% faster than Pydantic (see :doc:`dataclass` for the benchmark)
 
 - :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch.html) - Provides fast multiple-dispatch for functions and methods, via a decorator.
 

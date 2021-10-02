@@ -43,7 +43,9 @@ Configuration
 Performance
 -----------
 
-Type verification in classes introduces a slight run-time overhead. When running in production, it's recommended to use the `-O` switch for Python. It will skip all `assert`s, and also skip type verification on classes by default.
+Type verification in classes introduces a small run-time overhead.
+
+When running in production, it's recommended to use the `-O` switch for Python. It will make Runtype skip type verification in dataclasses. (unless `check_types` is specified.)
 
 Alternatively, you can use a shared dataclass decorator, and enable/disable type-checking with a single change.
 
@@ -56,3 +58,18 @@ Example:
     from .settings import DEBUG   # Define DEBUG however you want
 
     dataclass = runtype.dataclass(check_types=DEBUG)
+
+
+Compared to Pydantic
+~~~~~~~~~~~~~~~~~~~~
+
+Using Pydantic's own benchmark, runtype performs 40% faster than Pydantic. (or, Pydantic 30% slower than Runtype)
+
+::
+
+          pydantic best=70.296μs/iter avg=79.918μs/iter stdev=11.326μs/iter version=1.8.1
+    attrs + cattrs best=75.502μs/iter avg=85.398μs/iter stdev=6.485μs/iter version=21.2.0
+           runtype best=49.468μs/iter avg=57.926μs/iter stdev=11.853μs/iter version=0.2.1
+
+
+See the code `here <https://github.com/samuelcolvin/pydantic/pull/3264>`_.
