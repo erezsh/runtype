@@ -1,5 +1,10 @@
 # CHANGES
 
+## 0.2.2
+
+- Various fixes
+- Added `check_types='sample'`
+
 ## 0.2.1
 
 - Fix for 0.2.0

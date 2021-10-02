@@ -3,7 +3,7 @@ from .dispatch import DispatchError, MultiDispatch
 from .validation import PythonTyping, TypeSystem, TypeMismatchError, assert_isa, isa, issubclass
 from .pytypes import Constraint, String, Int
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 
 def Dispatch(typesystem: TypeSystem = PythonTyping()):
