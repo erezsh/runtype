@@ -8,7 +8,7 @@ It is:
 
 :brain: Smart! Supports `typing`, constraints, auto-casting, and much more.
 
-:gear: Very customizable. You can use dataclass and dispatch with your own typesystem!
+:gear: Configurative! Write your own type system, and use it with *dataclass* and *dispatch*.
 
 ------
 
@@ -59,12 +59,12 @@ from runtype import isa, issubclass
 
 print( isa({'a': 1}, Dict[str, int]) )
 #> True
-print( isa({'a': 'b'}, Dict[str, int])  )
+print( isa({'a': 'b'}, Dict[str, int]) )
 #> False
 
-print( issubclass(Dict[str, int], Mapping[str, int])  )
+print( issubclass(Dict[str, int], Mapping[str, int]) )
 #> True
-print( issubclass(Dict[str, int], Mapping[int, str])  )
+print( issubclass(Dict[str, int], Mapping[int, str]) )
 #> False
 ```
 

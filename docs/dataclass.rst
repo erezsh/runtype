@@ -56,6 +56,7 @@ The following casts are currently implemented:
 
 If a cast fails, Runtype raises a `TypeError`. (same as when validation fails)
 
+More casts will be added in time.
 
 Performance
 -----------
