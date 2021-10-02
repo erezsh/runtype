@@ -255,15 +255,24 @@ class Validator(ABC):
     """Defines the validator interface.
     """
     @abstractmethod
-    def validate_instance(self, obj):
-        """Validates obj, raising a TypeMismatchError if it does not conform."""
+    def validate_instance(self, obj, sampler=None):
+        """Validates obj, raising a TypeMismatchError if it does not conform.
+
+        If sampler is provided, it will be applied to the instance in order to 
+        validate only a sample of the object. This approach may validate much faster,
+        but might miss anomalies in the data.
+        """
         ...
 
-    def test_instance(self, obj):
+
+    def test_instance(self, obj, sampler=None):
         """Tests obj, returning a True/False for whether it conforms or not.
+
+        If sampler is provided, it will be applied to the instance in order to 
+        validate only a sample of the object.
         """
         try:
-            self.validate_instance(obj)
+            self.validate_instance(obj, sampler)
             return True
         except TypeMismatchError:
             return False
@@ -277,9 +286,9 @@ class Constraint(Validator, PhantomType):
         self.type = for_type
         self.predicates = predicates
 
-    def validate_instance(self, inst):
+    def validate_instance(self, inst, sampler=None):
         """Makes sure the instance conforms by applying it to all the predicates."""
-        self.type.validate_instance(inst)
+        self.type.validate_instance(inst, sampler)
 
         for p in self.predicates:
             if not p(inst):

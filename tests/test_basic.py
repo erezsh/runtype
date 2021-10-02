@@ -659,7 +659,7 @@ class TestDataclass(TestCase):
 
     def test_custom_isinstance(self):
         class EnsureContains(Configuration):
-            def ensure_isa(self, item, container):
+            def ensure_isa(self, item, container, sampler=None):
                 if item not in container:
                     raise TypeError(item)
 
@@ -757,6 +757,17 @@ class TestDataclass(TestCase):
 
         a = A(iter([1,2,3]))
         assert list(a.a) == [1,2,3]
+
+    def test_sample(self):
+        @dataclass(check_types='sample')
+        class A:
+            a: List[int]
+
+
+        nums = list(range(1000))
+        a = A( nums )
+
+        self.assertRaises(TypeError, A, ['1', '2'] )
 
 
 

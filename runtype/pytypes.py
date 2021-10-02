@@ -39,7 +39,7 @@ class Constraint(Constraint):
 
 
 class AnyType(AnyType, PythonType):
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         return True
 
     def cast_from(self, obj):
@@ -50,15 +50,15 @@ Any = AnyType()
 
 
 class ProductType(ProductType, PythonType):
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         if self.types and len(obj) != len(self.types):
             raise LengthMismatchError(self, obj)
         for type_, item in zip(self.types, obj):
-            type_.validate_instance(item)
+            type_.validate_instance(item, sampler)
 
 
 class SumType(SumType, PythonType):
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         if not any(t.test_instance(obj) for t in self.types):
             raise TypeMismatchError(obj, self)
 
@@ -89,7 +89,7 @@ class PythonDataType(DataType, PythonType):
 
         return NotImplemented
 
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         if not isinstance(obj, self.kernel):
             raise TypeMismatchError(obj, self)
 
@@ -121,9 +121,9 @@ class TupleType(PythonType):
 
         return NotImplemented
 
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         if not isinstance(obj, tuple):
-                raise TypeMismatchError(obj, self)
+            raise TypeMismatchError(obj, self)
 
 
 class OneOf(PythonType):
@@ -133,7 +133,7 @@ class OneOf(PythonType):
     def __le__(self, other):
         return NotImplemented
 
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         if obj not in self.values:
             raise TypeMismatchError(obj, self)
 
@@ -148,11 +148,13 @@ class GenericType(GenericType, PythonType):
 
 class SequenceType(GenericType):
 
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         self.base.validate_instance(obj)
         if self.item is not Any:
+            if sampler:
+                obj = sampler(obj)
             for item in obj:
-                self.item.validate_instance(item)
+                self.item.validate_instance(item, sampler)
 
     def cast_from(self, obj):
         if self.item is Any or not obj:
@@ -171,13 +173,16 @@ class DictType(GenericType):
             item = ProductType([cast_to_type(x) for x in item])
         self.item = item
 
-    def validate_instance(self, obj):
+    def validate_instance(self, obj, sampler=None):
         self.base.validate_instance(obj)
         if self.item is not Any:
             kt, vt = self.item.types
-            for k, v in obj.items():
-                kt.validate_instance(k)
-                vt.validate_instance(v)
+            items = obj.items()
+            if sampler:
+                items = sampler(items)
+            for k, v in items:
+                kt.validate_instance(k, sampler)
+                vt.validate_instance(v, sampler)
 
     def __getitem__(self, item):
         assert self.item == Any*Any

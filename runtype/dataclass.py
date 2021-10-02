@@ -2,6 +2,7 @@
 Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 """
 
+import random
 from copy import copy
 import dataclasses
 from typing import Union
@@ -12,7 +13,7 @@ from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import cast_to_type, SumType, NoneType
 
 Required = object()
-
+MAX_SAMPLE_SIZE = 16
 
 class Configuration(ABC):
     """Generic configuration template for dataclass. Mainly for type-checking.
@@ -58,7 +59,7 @@ class Configuration(ABC):
         return t, default
 
     @abstractmethod
-    def ensure_isa(self, a, b):
+    def ensure_isa(self, a, b, sampler=None):
         """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
         """
         ...
@@ -95,7 +96,7 @@ class PythonConfiguration(Configuration):
 
 
 
-def _post_init(self, config, should_cast):
+def _post_init(self, config, should_cast, sampler):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
@@ -104,10 +105,11 @@ def _post_init(self, config, should_cast):
 
         try:
             if should_cast:    # Basic cast
+                assert not sampler
                 value = config.cast(value, field.type)
                 object.__setattr__(self, name, value)
             else:
-                config.ensure_isa(value, field.type)
+                config.ensure_isa(value, field.type, sampler)
         except TypeMismatchError as e:
             item_value, item_type = e.args
             msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."
@@ -182,6 +184,11 @@ def _set_if_not_exists(cls, d):
             setattr(cls, attr, value)
 
 
+def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
+    if len(seq) <= max_sample_size:
+        return seq
+    return random.sample(seq, max_sample_size)
+
 def _process_class(cls, config, check_types, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         type_ = config.canonize_type(type_)
@@ -202,9 +209,10 @@ def _process_class(cls, config, check_types, **kw):
         c = copy(cls)
 
         orig_post_init = getattr(cls, '__post_init__', None)
+        sampler = _sample if check_types=='sample' else None
 
         def __post_init__(self):
-            _post_init(self, config=config, should_cast=check_types == 'cast')
+            _post_init(self, config=config, should_cast=check_types == 'cast', sampler=sampler)
             if orig_post_init is not None:
                 orig_post_init(self)
 

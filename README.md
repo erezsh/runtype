@@ -21,6 +21,7 @@ It is:
     - Improves dataclass ergonomics.
     - Supports automatic value casting, Pydantic-style. (Optional, off by default)
     - Supports types with constraints. (e.g. `String(max_length=10)`)
+    - Supports optional sampling for faster validation of big lists and dicts.
     - 40% faster than Pydantic ([read here](https://runtype.readthedocs.io/en/latest/dataclass.html#compared-to-pydantic))
 
 - :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch.html) - Provides fast multiple-dispatch for functions and methods, via a decorator.

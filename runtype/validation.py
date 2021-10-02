@@ -7,11 +7,11 @@ from .pytypes import TypeMismatchError, cast_to_type
 from .typesystem import TypeSystem
 
 
-def ensure_isa(obj, t):
+def ensure_isa(obj, t, sampler=None):
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
     """
     t = cast_to_type(t)
-    t.validate_instance(obj)
+    t.validate_instance(obj, sampler)
 
 
 def is_subtype(t1, t2):

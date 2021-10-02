@@ -58,6 +58,15 @@ If a cast fails, Runtype raises a `TypeError`. (same as when validation fails)
 
 More casts will be added in time.
 
+
+Sampling
+---------
+
+When called with the option ``check_types="sample"``, lists and dictionaries will only have a sample of their items validated, instead of each item.
+
+This approach will validate big lists and dicts much faster, but at the cost of possibly missing anomalies in them.
+
+
 Performance
 -----------
 
