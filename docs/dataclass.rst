@@ -39,6 +39,23 @@ Configuration
 .. autoclass:: runtype.dataclass.PythonConfiguration
 
 
+Casting
+-------
+
+When called with the option ``check_types="cast"``, values that are provided to instanciate the dataclass will be cast instead of validated.
+
+Runtype will only attempt to cast in situations when no data is lost when converting the value.
+
+The following casts are currently implemented:
+
+- str -> int
+
+- str -> datetime
+
+- int -> float
+
+If a cast fails, Runtype raises a `TypeError`. (same as when validation fails)
+
 
 Performance
 -----------

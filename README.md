@@ -75,7 +75,7 @@ from typing import List
 from datetime import datetime
 from runtype import dataclass
 
-@dataclass(check_types='cast')
+@dataclass(check_types='cast')  # Cast values to the target type, when applicable
 class Person:
     name: str
     birthday: datetime = None   # Optional
