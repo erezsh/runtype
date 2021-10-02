@@ -193,7 +193,7 @@ class DictType(GenericType):
 
 
 Object = PythonDataType(object)
-Iter = SequenceType(collections.abc.Iterable)
+Iter = SequenceType(PythonDataType(collections.abc.Iterable))
 List = SequenceType(PythonDataType(list))
 Set = SequenceType(PythonDataType(set))
 FrozenSet = SequenceType(PythonDataType(frozenset))

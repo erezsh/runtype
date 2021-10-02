@@ -750,6 +750,14 @@ class TestDataclass(TestCase):
         assert a.c == {1}
         assert a.c is not A().c
 
+    def test_iter(self):
+        @dataclass
+        class A:
+            a: iter
+
+        a = A(iter([1,2,3]))
+        assert list(a.a) == [1,2,3]
+
 
 
 
