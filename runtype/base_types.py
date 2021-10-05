@@ -225,11 +225,15 @@ class PhantomType(Type):
         return False
 
 
-class PhantomGenericType(GenericType):
+class PhantomGenericType(Type):
     """Implements a generic phantom type, for carrying metadata within the type signature.
 
     For any phantom type p[i], it's true that p[i] <= p but also p[i] <= i and i <= p[i].
     """
+    def __init__(self, base, item=Any):
+        self.base = base
+        self.item = item
+
     def __le__(self, other):
         if isinstance(other, PhantomType):
             return self.base <= other or self.item <= other
@@ -240,7 +244,9 @@ class PhantomGenericType(GenericType):
         return NotImplemented
 
     def __eq__(self, other):
-        return self.base == other and self.item == other
+        if isinstance(other, PhantomGenericType):
+            return self.base == other.base and self.item == other.base
+        return False
 
     def __ge__(self, other):
         if isinstance(other, PhantomType):
