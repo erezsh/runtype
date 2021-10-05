@@ -36,3 +36,12 @@ Install
 No dependencies.
 
 Requires Python 3.6 or up.
+
+
+ArchLinux
+~~~~~~~~~
+
+ArchLinux users can install the package by running:
+::
+
+  yay -S python-runtype
