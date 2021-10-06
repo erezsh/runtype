@@ -1,5 +1,10 @@
 """
 Base Type Classes - contains the basic building blocks of a generic type system
+
+We use comparison operators to indicate whether a type is a subtype of another:
+ - t1 <= t2 means "t1 is a subtype of t2"
+ - t1 >= t2 means "t2 is a subtype of t1"
+This is consistent with the view that a type hierarchy can be expressed as a poset.
 """
 
 
@@ -25,9 +30,10 @@ class Type:
 class AnyType(Type):
     """Represents the Any type.
 
-    For any type 't' within the typesystem, t is a subset Any (or: t <= Any)
+    For any type 't' within the typesystem, t is a subtype of Any (or: t <= Any)
     """
     def __add__(self, other):
+        # SumType([Any, t1, t2]) == SumType([t1, t2])
         return self
 
     def __ge__(self, other):
@@ -64,7 +70,7 @@ class DataType(Type):
 class SumType(Type):
     """Implements a sum type, i.e. a disjoint union of a set of types.
 
-    Similar to Python's Union.
+    Similar to Python's `typing.Union`.
     """
     def __init__(self, types):
         self.types = frozenset(types)
@@ -74,11 +80,12 @@ class SumType(Type):
         x = set()
         for t in types:
             if isinstance(t, SumType):
+                # Optimization: Flatten recursive SumTypes
                 x |= set(t.types)
             else:
                 x.add(t)
 
-        if len(x) == 1:
+        if len(x) == 1:         # SumType([x]) is x
             return list(x)[0]
         return cls(x)
 
@@ -89,15 +96,13 @@ class SumType(Type):
         return all(t <= other for t in self.types)
 
     def __ge__(self, other):
-        if not isinstance(other, Type):
-            return NotImplemented
-
         return any(other <= t for t in self.types)
 
     def __eq__(self, other):
-        if not isinstance(other, SumType):
-            return NotImplemented
-        return self.types == other.types
+        if isinstance(other, SumType):
+            return self.types == other.types
+
+        return NotImplemented
 
     def __hash__(self):
         return hash(frozenset(self.types))
@@ -116,6 +121,7 @@ class ProductType(Type):
         x = []
         for t in types:
             if isinstance(t, ProductType):
+                # Flatten recursive ProductTypes, so that a*b*c == (a,b,c), instead of ((a,b), c)
                 x += t.types
             else:
                 x.append(t)
@@ -129,9 +135,10 @@ class ProductType(Type):
         return hash(self.types)
 
     def __eq__(self, other):
-        if not isinstance(other, ProductType):
-            return NotImplemented
-        return self.types == other.types
+        if isinstance(other, ProductType):
+            return self.types == other.types
+
+        return NotImplemented
 
     def __le__(self, other):
         if isinstance(other, ProductType):
@@ -139,8 +146,6 @@ class ProductType(Type):
                 return False
 
             return all(t1<=t2 for t1, t2 in zip(self.types, other.types))
-        elif isinstance(other, DataType):
-            return False
 
         return NotImplemented
 
@@ -179,14 +184,17 @@ class GenericType(ContainerType):
     def __eq__(self, other):
         if isinstance(other, GenericType):
             return self.base == other.base and self.item == other.item
+
         elif isinstance(other, Type):
             return Any <= self.item and self.base == other
+
         return NotImplemented
 
 
     def __le__(self, other):
         if isinstance(other, GenericType):
             return self.base <= other.base and self.item <= other.item
+
         elif isinstance(other, DataType):
             return self.base <= other
 
@@ -195,6 +203,7 @@ class GenericType(ContainerType):
     def __ge__(self, other):
         if isinstance(other, GenericType):
             return self.base >= other.base and self.item >= other.item
+
         elif isinstance(other, DataType):
             return self.base >= other
 
@@ -213,16 +222,21 @@ class PhantomType(Type):
     def __le__(self, other):
         if isinstance(other, PhantomType):
             return self == other
-        elif isinstance(other, PhantomGenericType):
-            return NotImplemented
-        return False
+
+        elif not isinstance(other, PhantomGenericType):
+            return False
+
+        return NotImplemented
+
 
     def __ge__(self, other):
         if isinstance(other, PhantomType):
             return self == other
-        elif isinstance(other, PhantomGenericType):
-            return NotImplemented
-        return False
+
+        elif not isinstance(other, PhantomGenericType):
+            return False
+
+        return NotImplemented
 
 
 class PhantomGenericType(Type):
@@ -237,22 +251,28 @@ class PhantomGenericType(Type):
     def __le__(self, other):
         if isinstance(other, PhantomType):
             return self.base <= other or self.item <= other
+
         elif isinstance(other, PhantomGenericType):
             return (self.base <= other.base and self.item <= other.item) or self.item <= other
+
         elif isinstance(other, DataType):
             return self.item <= other
+
         return NotImplemented
 
     def __eq__(self, other):
         if isinstance(other, PhantomGenericType):
             return self.base == other.base and self.item == other.base
-        return False
+
+        return NotImplemented
 
     def __ge__(self, other):
         if isinstance(other, PhantomType):
             return False
+
         elif isinstance(other, DataType):
             return other <= self.item
+
         return NotImplemented
 
 

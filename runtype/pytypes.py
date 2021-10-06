@@ -10,6 +10,7 @@ import typing
 from datetime import datetime
 
 from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, Constraint, Validator, TypeMismatchError
+from . import datetime_parse
 
 py38 = sys.version_info >= (3, 8)
 
@@ -248,8 +249,6 @@ class _String(PythonDataType):
 
         return Constraint(self, predicates)
 
-
-from . import datetime_parse
 
 class _DateTime(PythonDataType):
     def cast_from(self, obj):

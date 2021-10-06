@@ -45,3 +45,4 @@ ArchLinux users can install the package by running:
 ::
 
   yay -S python-runtype
+  
