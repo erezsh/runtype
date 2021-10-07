@@ -7,7 +7,7 @@ from datetime import datetime
 import typing
 from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
 from collections.abc import Iterable
-from dataclasses import FrozenInstanceError
+from dataclasses import FrozenInstanceError, field
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -768,6 +768,26 @@ class TestDataclass(TestCase):
         a = A( nums )
 
         self.assertRaises(TypeError, A, ['1', '2'] )
+
+    def test_field1(self):
+        @dataclass
+        class A:
+            a: str
+            b: List = field(compare=False, repr=False, hash=False)
+
+        a = A("hi", [1])
+        assert a.a == "hi"
+        assert a.b == [1]
+
+    def test_field2(self):
+        @dataclass
+        class A:
+            a: dict
+            b: Dict[str, int] = field(default_factory=dict)
+
+        a = A({})
+        assert a.a == {}
+        assert a.b == {}
 
 
 

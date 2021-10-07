@@ -199,6 +199,10 @@ def _process_class(cls, config, check_types, **kw):
         if default is Required:
             setattr(cls, name, Required)
         elif default is not dataclasses.MISSING:
+            if isinstance(default, dataclasses.Field):
+                if default.default is dataclasses.MISSING and default.default_factory is dataclasses.MISSING:
+                    default.default = Required
+
             type_, new_default = config.on_default(type_, default)
             if new_default is not default:
                 setattr(cls, name, new_default)
