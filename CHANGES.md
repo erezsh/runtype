@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.2.3
+
+- Bugfix for use of `dataclasses.field`
+
 ## 0.2.2
 
 - Various fixes
