@@ -58,6 +58,28 @@ If a cast fails, Runtype raises a `TypeError`. (same as when validation fails)
 
 More casts will be added in time.
 
+For non-builtin types, Runtype will attempt to call the `cast_from` class-method, if one exists.
+
+Example:
+::
+
+    @dataclass
+    class Name:
+        first: str
+        last: str = None
+
+        @classmethod
+        def cast_from(cls, s: str):
+            return cls(*s.split())
+
+    @dataclass(check_types='cast')
+    class Person:
+        name: Name
+
+    p = Person("Albert Einstein")
+    assert p.name.first == 'Albert'
+    assert p.name.last == 'Einstein'
+  
 
 Sampling
 ---------
