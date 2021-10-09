@@ -49,17 +49,18 @@ class TestIsa(TestCase):
         assert issubclass(Tuple[int, int], tuple)
         assert not issubclass(tuple, Tuple[int])
 
+        assert issubclass(Any, Any)
+        assert not issubclass(Any, int)
+        assert issubclass(List[int], Any)
+
+        # Tuples
         assert isa((3,), Tuple[int])
         assert isa((3, 5), Tuple[int, int])
         assert not isa((3, 5), Tuple[int, float])
         assert not isa((3, 5), Tuple[int])
 
         assert isa((3,), (Tuple[int], list))
-
-        assert issubclass(Any, Any)
-        assert not issubclass(Any, int)
-        assert issubclass(List[int], Any)
-
+        assert not isa([40, 2], Tuple[int, int])
 
         # Mappings
         assert issubclass(dict, abc.Mapping)
