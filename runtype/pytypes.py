@@ -102,7 +102,14 @@ class PythonDataType(DataType, PythonType):
             # kernel is probably a class. Cast the dict into the class.
             return self.kernel(**obj)
 
-        self.validate_instance(obj)
+        try:
+            self.validate_instance(obj)
+        except TypeMismatchError:
+            cast = getattr(self.kernel, 'cast_from', None)
+            if cast:
+                return cast(obj)
+            raise
+
         return obj
 
 
@@ -158,10 +165,15 @@ class SequenceType(GenericType):
                 self.item.validate_instance(item, sampler)
 
     def cast_from(self, obj):
+        # Optimize for List[Any] and empty sequences
         if self.item is Any or not obj:
+            # Already a list?
             if self.base.test_instance(obj):
                 return obj
+            # Make sure it's a list
             return list(obj)
+
+        # Recursively cast each item
         return [self.item.cast_from(item) for item in obj]
 
 
@@ -190,10 +202,14 @@ class DictType(GenericType):
         return type(self)(self.base, item)
 
     def cast_from(self, obj):
+        # Must already be a dict
         self.base.validate_instance(obj)
+
+        # Optimize for Dict[Any] and empty dicts
         if self.item is Any or not obj:
             return obj
 
+        # Recursively cast each item
         kt, vt = self.item.types
         return {kt.cast_from(k): vt.cast_from(v) for k, v in obj.items()}
 

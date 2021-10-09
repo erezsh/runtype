@@ -77,7 +77,7 @@ def issubclass(t1, t2):
     Behaves like Python's issubclass, but supports the ``typing`` module.
     """
     if isinstance(t2, tuple):
-        return any(issubclass(t1, i) for i in t2)
+        return any(is_subtype(t1, i) for i in t2)
     return is_subtype(t1, t2)
 
 

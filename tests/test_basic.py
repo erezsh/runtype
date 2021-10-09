@@ -2,7 +2,6 @@ import unittest
 from unittest import TestCase
 from collections import abc
 import sys
-from datetime import datetime
 
 import typing
 from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
@@ -532,25 +531,6 @@ class TestDataclass(TestCase):
         assert P().a == None
         self.assertRaises(TypeError, P, -3)
 
-    def test_typing_cast(self):
-
-        @dataclass(check_types='cast')
-        class P:
-            a: Int(min=0) = None
-
-        assert P(10)
-        assert P(10).a == 10
-        assert P(0).a == 0
-        assert P().a == None
-        self.assertRaises(TypeError, P, -3)
-
-        assert P('10').a == 10
-        assert P('0').a == 0
-        assert P('+3').a == 3
-        self.assertRaises(TypeError, P, '-3')
-
-
-
     def test_typing_optional(self):
         @dataclass
         class A:
@@ -620,17 +600,6 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, A, 2)
 
 
-    def test_dates(self):
-        @dataclass(check_types='cast')
-        class A:
-            a: datetime
-
-        d = datetime.now()
-        assert A(d).a.toordinal() == d.toordinal()
-        assert A(d.isoformat()).a.toordinal() == d.toordinal()
-        self.assertRaises(TypeError, A, 'bla')
-
-
 
     def test_unfrozen(self):
         @dataclass(frozen=False)
@@ -683,55 +652,6 @@ class TestDataclass(TestCase):
 
         a = A(6)
         a.a = 4
-
-    def test_cast_dict(self):
-        @dataclass
-        class Point:
-            x: float
-            y: float
-
-        @dataclass(check_types='cast')
-        class Rect:
-            start: Point
-            end: Point
-
-        start = {'x': 10.0, 'y': 10.0}
-        end = {'x': 3.14, 'y': 234.3}
-        rect = {'start': start, 'end': end}
-
-        r = Rect(**rect)
-        assert r.json() == rect, (dict(r), rect)
-
-        self.assertRaises(TypeError, Rect, start={'x': 10.0, 'y': 10.0, 'z': 42.2}, end=end)
-        self.assertRaises(TypeError, Rect, start={'x': 10.0}, end=end)
-
-        @dataclass(check_types='cast')
-        class A:
-            a: dict
-            b: Dict[float, String] = None
-
-        A({})
-        A({1: 2})
-        A({1: 2}, {1.1: 'a'})
-        A({1: 2}, {1: 'a'})
-        A({1: 2}, None)
-        self.assertRaises(TypeError, A, [1])
-        self.assertRaises(TypeError, A, {}, {'b': 'c'})
-        self.assertRaises(TypeError, A, {}, {3: 2})
-
-    def test_cast_generic(self):
-        @dataclass(check_types='cast')
-        class Point:
-            x: float
-            y: float
-
-        @dataclass(check_types='cast')
-        class Polygon:
-            points: List[Point]
-
-        p1 = {'x': 1, 'y': 2}
-        p2 = {'x': 2, 'y': 3}
-        Polygon([p1, p2])
 
 
     def test_default_mutables(self):
