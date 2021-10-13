@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError, field
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String, Int
+from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String, Int, validate_func
 from runtype.dataclass import Configuration
 
 
@@ -91,11 +91,32 @@ class TestIsa(TestCase):
         assert_isa([1,2], List[int])
         self.assertRaises(TypeError, assert_isa, [1,"2"], List[int])
 
+    def test_tuple_ellipsis(self):
+        assert_isa((1,2,3), Tuple[int, ...])
+        self.assertRaises(TypeError, assert_isa, (1, "2"), Tuple[int, ...])
 
     @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
     def test_py38(self):
         assert isa('a', typing.Literal['a', 'b'])
         assert not isa('c', typing.Literal['a', 'b'])
+
+    def test_validate_func(self):
+        @validate_func
+        def f(a: int, b: str, c: List[int] = []):
+            return a,b,c
+
+        f(1, "1", [1])
+        self.assertRaises(TypeError, f, "1", 1, [1])
+        self.assertRaises(TypeError, f, 1, "1", ["1"])
+
+        @validate_func
+        def f(a: List[int] = None):
+            return a
+
+        f([1, 2])
+        f()
+        self.assertRaises(TypeError, f, [1, None])
+
 
 
 class TestDispatch(TestCase):
@@ -709,6 +730,7 @@ class TestDataclass(TestCase):
         a = A({})
         assert a.a == {}
         assert a.b == {}
+
 
 
 

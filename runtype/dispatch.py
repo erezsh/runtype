@@ -1,7 +1,7 @@
 from collections import defaultdict
 from functools import wraps
-import inspect
 
+from .utils import get_func_signatures
 from .typesystem import TypeSystem
 
 
@@ -84,7 +84,7 @@ class TypeTree:
 
 
     def define_function(self, f):
-        for signature in self.get_func_signatures(f):
+        for signature in get_func_signatures(self.typesystem, f):
             node = self.root
             for t in signature:
                 node = node.follow_type[t]
@@ -94,30 +94,6 @@ class TypeTree:
                 raise ValueError(f"Function {f.__name__} at {code_obj.co_filename}:{code_obj.co_firstlineno} matches existing signature: {signature}!")
             node.func = f, signature
 
-
-    def get_func_signatures(self, f):
-        sig = inspect.signature(f)
-        typesigs = []
-        typesig = []
-        for p in sig.parameters.values():
-            # if p.kind is p.VAR_KEYWORD or p.kind is p.VAR_POSITIONAL:
-            #     raise TypeError("Dispatch doesn't support *args or **kwargs yet")
-
-            t = p.annotation
-            if t is sig.empty:
-                t = self.typesystem.default_type
-            else:
-                # Canonize to detect more collisions on construction, instead of during dispatch
-                t = self.typesystem.canonize_type(t)
-
-            if p.default is not p.empty:
-                # From now on, everything is optional
-                typesigs.append(list(typesig))
-
-            typesig.append(t)
-
-        typesigs.append(typesig)
-        return typesigs
 
     def choose_most_specific_function(self, *funcs):
         issubclass = self.typesystem.issubclass

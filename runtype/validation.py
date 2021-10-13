@@ -1,8 +1,10 @@
 "User-facing API for validation"
 
 from typing import Any, Dict, List, Tuple
+from functools import wraps
 
 from .common import CHECK_TYPES
+from .utils import get_func_signatures
 from .pytypes import TypeMismatchError, cast_to_type
 from .typesystem import TypeSystem
 
@@ -87,4 +89,26 @@ class PythonTyping(TypeSystem):
     canonize_type = staticmethod(canonize_type)
     get_type = type
     default_type = object
+
+
+def validate_func(f):
+    """Decorator to validate the argument types when calling the decorated function.
+
+    Parameters:
+        f - function to validate
+
+    Note: Keyword arguments currently will not be validated!
+          This might be added in the future.
+    """
+    sigs = {len(s): s for s in get_func_signatures(PythonTyping, f)}
+
+    @wraps(f)
+    def _inner(*args, **kwargs):
+        sig = sigs[len(args)]
+        assert len(sig) == len(args)
+        for a, s in zip(args, sig):
+            assert_isa(a, s)
+        return f(*args, **kwargs)
+
+    return _inner
 

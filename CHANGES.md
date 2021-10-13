@@ -1,5 +1,9 @@
 # CHANGES
 
+## 0.2.4
+- Added the validate_func decorator
+- Added support for Tuple[t, ...]
+
 ## 0.2.3
 
 - Bugfix for use of `dataclasses.field`

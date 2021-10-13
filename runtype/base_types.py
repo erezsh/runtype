@@ -146,6 +146,8 @@ class ProductType(Type):
                 return False
 
             return all(t1<=t2 for t1, t2 in zip(self.types, other.types))
+        elif isinstance(other, DataType):
+            return False
 
         return NotImplemented
 

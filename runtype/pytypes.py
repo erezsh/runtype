@@ -226,6 +226,7 @@ FrozenSet = SequenceType(PythonDataType(frozenset))
 Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
+TupleEllipsis = SequenceType(PythonDataType(tuple))
 # Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
@@ -359,6 +360,11 @@ def _cast_to_type(t):
             k, v = t.__args__
             return Dict[cast_to_type(k), cast_to_type(v)]
         elif t.__origin__ is origin_tuple:
+            if Ellipsis in t.__args__:
+                if len(t.__args__) != 2 or t.__args__[0] == Ellipsis:
+                    raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
+                return TupleEllipsis[cast_to_type(t.__args__[0])]
+
             return ProductType([cast_to_type(x) for x in t.__args__])
 
         elif t.__origin__ is typing.Union:
