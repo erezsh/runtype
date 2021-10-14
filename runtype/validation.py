@@ -106,8 +106,12 @@ def validate_func(f):
     def _inner(*args, **kwargs):
         sig = sigs[len(args)]
         assert len(sig) == len(args)
-        for a, s in zip(args, sig):
-            assert_isa(a, s)
+        try:
+            for a, s in zip(args, sig):
+                assert_isa(a, s)
+        except TypeError as e:
+            raise TypeError(f"Validation failed when calling {f} - {e}") from e
+
         return f(*args, **kwargs)
 
     return _inner
