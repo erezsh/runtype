@@ -99,7 +99,10 @@ class PythonDataType(DataType, PythonType):
             raise TypeMismatchError(obj, self)
 
     def __repr__(self):
-        return str(self.kernel.__name__)
+        try:
+            return str(self.kernel.__name__)
+        except AttributeError:      # Not a built-in type
+            return repr(self.kernel)
 
     def cast_from(self, obj):
         if isinstance(obj, dict):

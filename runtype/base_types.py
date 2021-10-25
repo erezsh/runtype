@@ -33,7 +33,6 @@ class AnyType(Type):
     For any type 't' within the typesystem, t is a subtype of Any (or: t <= Any)
     """
     def __add__(self, other):
-        # SumType([Any, t1, t2]) == SumType([t1, t2])
         return self
 
     def __ge__(self, other):

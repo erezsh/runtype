@@ -1,4 +1,5 @@
-# Runtype
+![alt text](logo.png "Logo")
+
 
 Runtype is a collection of run-time type utilities for Python.
 
@@ -29,7 +30,7 @@ It is:
     - Inspired by Julia.
 
 - :star: [**type utilities**](https://runtype.readthedocs.io/en/latest/types.html) - Provides a set of classes to implement your own type-system.
-   
+
     - Used by runtype itself, to emulate the Python type-system.
 
 
@@ -115,13 +116,13 @@ def append(a: str, b: str):
     return a + b
 
 
-print( append([1, 2, 3], 4) )        
+print( append([1, 2, 3], 4) )
 #> [1, 2, 3, 4]
-print( append((1, 2, 3), 4) )        
+print( append((1, 2, 3), 4) )
 #> (1, 2, 3, 4)
-print( append('foo', 'bar') )        
+print( append('foo', 'bar') )
 #> foobar
-print( append('foo', 4)     )        
+print( append('foo', 4)     )
 # Traceback (most recent call last):
 #    ...
 # runtype.dispatch.DispatchError: Function 'append' not found for signature (<class 'str'>, <class 'int'>)
