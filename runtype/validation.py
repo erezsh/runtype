@@ -1,6 +1,6 @@
 "User-facing API for validation"
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Set, FrozenSet
 from functools import wraps
 
 from .common import CHECK_TYPES
@@ -53,20 +53,23 @@ def assert_isa(obj, t):
             raise TypeError(msg)
 
 
+_CANONIZED_TYPES = {
+    Any: object,
+    List: list,
+    Set: set,
+    FrozenSet: frozenset,
+    Dict: dict,
+    Tuple: tuple,
+    List[Any]: list,
+    Set[Any]: set,
+    FrozenSet[Any]: frozenset,
+    Dict[Any, Any]: dict,
+    Tuple[Any, ...]: tuple,
+}
+
 def canonize_type(t):
     "Turns List -> list, Dict -> dict, etc."
-    try:
-        return {
-            Any: object,
-            List: list,
-            Dict: dict,
-            Tuple: tuple,
-            List[Any]: list,
-            Dict[Any, Any]: dict,
-            Tuple[Any]: tuple,
-        }[t]
-    except KeyError:
-        return t
+    return _CANONIZED_TYPES.get(t, t)
 
 
 def issubclass(t1, t2):
