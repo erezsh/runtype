@@ -9,7 +9,8 @@ import sys
 import typing
 from datetime import datetime
 
-from .base_types import AnyType, DataType, GenericType, ProductType, SumType, Type, Constraint, Validator, TypeMismatchError
+from .base_types import DataType, Validator, TypeMismatchError
+from . import base_types
 from . import datetime_parse
 
 py38 = sys.version_info >= (3, 8)
@@ -19,12 +20,12 @@ class LengthMismatchError(TypeMismatchError):
     pass
 
 
-class PythonType(Type, Validator):
+class PythonType(base_types.Type, Validator):
     pass
 
 
 
-class Constraint(Constraint):
+class Constraint(base_types.Constraint):
     def __init__(self, for_type, predicates):
         super().__init__(cast_to_type(for_type), predicates)
 
@@ -39,7 +40,7 @@ class Constraint(Constraint):
 
 
 
-class AnyType(AnyType, PythonType):
+class AnyType(base_types.AnyType, PythonType):
     def validate_instance(self, obj, sampler=None):
         return True
 
@@ -50,7 +51,7 @@ class AnyType(AnyType, PythonType):
 Any = AnyType()
 
 
-class ProductType(ProductType, PythonType):
+class ProductType(base_types.ProductType, PythonType):
     """Used for Tuple
     """
     def validate_instance(self, obj, sampler=None):
@@ -62,7 +63,7 @@ class ProductType(ProductType, PythonType):
             type_.validate_instance(item, sampler)
 
 
-class SumType(SumType, PythonType):
+class SumType(base_types.SumType, PythonType):
     def validate_instance(self, obj, sampler=None):
         if not any(t.test_instance(obj) for t in self.types):
             raise TypeMismatchError(obj, self)
@@ -85,7 +86,7 @@ def _flatten_types(t):
 
 
 class PythonDataType(DataType, PythonType):
-    def __init__(self, kernel: type, supertypes={Any}):
+    def __init__(self, kernel, supertypes={Any}):
         self.kernel = kernel
 
     def __le__(self, other):
@@ -156,7 +157,7 @@ class OneOf(PythonType):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
 
 
-class GenericType(GenericType, PythonType):
+class GenericType(base_types.GenericType, PythonType):
     def __init__(self, base, item=Any):
         return super().__init__(base, item)
 

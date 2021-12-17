@@ -6,6 +6,8 @@ We use comparison operators to indicate whether a type is a subtype of another:
  - t1 >= t2 means "t2 is a subtype of t1"
 This is consistent with the view that a type hierarchy can be expressed as a poset.
 """
+from typing import Callable, Sequence, Optional
+from abc import ABC, abstractmethod
 
 
 class RuntypeError(TypeError):
@@ -276,13 +278,13 @@ class PhantomGenericType(Type):
 
         return NotImplemented
 
+SamplerType = Callable[[Sequence], Sequence]
 
-from abc import ABC, abstractmethod
 class Validator(ABC):
     """Defines the validator interface.
     """
     @abstractmethod
-    def validate_instance(self, obj, sampler=None):
+    def validate_instance(self, obj, sampler: Optional[SamplerType]=None):
         """Validates obj, raising a TypeMismatchError if it does not conform.
 
         If sampler is provided, it will be applied to the instance in order to 

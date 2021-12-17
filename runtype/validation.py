@@ -1,6 +1,6 @@
 "User-facing API for validation"
 
-from typing import Any, Dict, List, Tuple, Set, FrozenSet
+from typing import Any, Dict, List, Tuple, Set, FrozenSet, Callable
 from functools import wraps
 
 from .common import CHECK_TYPES

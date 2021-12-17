@@ -1,5 +1,6 @@
 from collections import defaultdict
 from functools import wraps
+from typing import Dict
 
 from .utils import get_func_signatures
 from .typesystem import TypeSystem
@@ -18,7 +19,7 @@ class MultiDispatch:
     """
 
     def __init__(self, typesystem: TypeSystem, test_subtypes: set = set()):
-        self.roots = defaultdict(TypeTree)
+        self.roots : Dict[str, TypeTree] = defaultdict(TypeTree)
         self.typesystem = typesystem
         self.test_subtypes = test_subtypes
 

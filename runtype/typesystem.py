@@ -13,7 +13,7 @@ class TypeSystem:
     def get_type(self, obj):
         raise NotImplementedError()
 
-    default_type = NotImplemented
+    default_type: type = NotImplemented
 
 
 
