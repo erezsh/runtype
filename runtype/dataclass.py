@@ -241,8 +241,9 @@ def _process_class(cls, config, check_types, **kw):
         '__iter__': __iter__,
     })
 
+    slots = kw.pop('slots')
     c = dataclasses.dataclass(c, **kw)
-    if kw['slots']:
+    if slots:
         c = _add_slots(c, kw['frozen'])
     return c
 
