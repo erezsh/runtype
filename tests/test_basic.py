@@ -624,7 +624,7 @@ class TestDataclass(TestCase):
 
 
     def test_unfrozen(self):
-        @dataclass(frozen=False)
+        @dataclass(frozen=False, slots=False)
         class A:
             a: str
 

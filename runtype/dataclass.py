@@ -240,12 +240,44 @@ def _process_class(cls, config, check_types, **kw):
         'json': json,
         '__iter__': __iter__,
     })
-    return dataclasses.dataclass(c, **kw)
+
+    c = dataclasses.dataclass(c, **kw)
+    if kw['slots']:
+        c = _add_slots(c, kw['frozen'])
+    return c
+
+
+def _add_slots(cls, is_frozen):
+    # Taken from official dataclasses implementation (3.10)
+    # Need to create a new class, since we can't set __slots__ after a class has been created.
+
+    cls_dict = dict(cls.__dict__)
+    field_names = tuple(f.name for f in dataclasses.fields(cls))
+    cls_dict['__slots__'] = field_names
+    for field_name in field_names:
+        # Remove our attributes, if present. They'll still be available in _MARKER.
+        cls_dict.pop(field_name, None)
+
+    # Remove __dict__ itself.
+    cls_dict.pop('__dict__', None)
+
+    # And finally create the class.
+    qualname = getattr(cls, '__qualname__', None)
+    cls = type(cls)(cls.__name__, cls.__bases__, cls_dict)
+    if qualname is not None:
+        cls.__qualname__ = qualname
+
+    if is_frozen:
+        # Need this for pickling frozen classes with slots.
+        cls.__getstate__ = dataclasses._dataclass_getstate
+        cls.__setstate__ = dataclasses._dataclass_setstate
+
+    return cls
 
 
 def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
                            config: Configuration = PythonConfiguration(),
-                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True):
+                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True, slots=False):
     """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
     **Differences from builtin dataclass:**
@@ -293,7 +325,7 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
 
     def wrap(cls):
         return _process_class(cls, config, check_types,
-                              init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen)
+                              init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, slots=slots)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:
