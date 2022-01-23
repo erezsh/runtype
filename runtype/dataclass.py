@@ -248,6 +248,14 @@ def _process_class(cls, config, check_types, **kw):
     return c
 
 
+def _dataclass_getstate(self):
+    return [getattr(self, f.name) for f in dataclasses.fields(self)]
+
+def _dataclass_setstate(self, state):
+    for field, value in zip(dataclasses.fields(self), state):
+        # use setattr because dataclass may be frozen
+        object.__setattr__(self, field.name, value)
+
 def _add_slots(cls, is_frozen):
     # Taken from official dataclasses implementation (3.10)
     # Need to create a new class, since we can't set __slots__ after a class has been created.
@@ -270,8 +278,8 @@ def _add_slots(cls, is_frozen):
 
     if is_frozen:
         # Need this for pickling frozen classes with slots.
-        cls.__getstate__ = dataclasses._dataclass_getstate
-        cls.__setstate__ = dataclasses._dataclass_setstate
+        cls.__getstate__ = _dataclass_getstate
+        cls.__setstate__ = _dataclass_setstate
 
     return cls
 
