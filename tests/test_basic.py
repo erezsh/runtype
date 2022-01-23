@@ -635,6 +635,8 @@ class TestDataclass(TestCase):
             a.a = 4
         except TypeError:
             pass
+        else:
+            assert False
 
     def test_frozen(self):
         @dataclass
@@ -647,6 +649,34 @@ class TestDataclass(TestCase):
         assert a == b
         assert hash(a) == hash(b)
         assert a != x
+
+    def test_slots(self):
+        @dataclass(frozen=False, slots=True)
+        class A:
+            a: str
+
+        a = A("hello")
+        a.a = "ba"
+        try:
+            a.b = "hello"
+        except AttributeError:
+            pass
+        else:
+            assert False
+
+        @dataclass(frozen=True, slots=True)
+        class A:
+            a: str
+
+        assert A.__slots__ == ('a',)
+
+        a = A("hello")
+        try:
+            a.a = "ba"
+        except FrozenInstanceError:
+            pass
+        else:
+            assert False
 
     def test_custom_isinstance(self):
         class EnsureContains(Configuration):
