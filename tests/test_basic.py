@@ -762,6 +762,16 @@ class TestDataclass(TestCase):
         assert a.b == {}
 
 
+    def test_json_serialize(self):
+        @dataclass
+        class Bar:
+            baz: int
+
+        @dataclass
+        class Foo:
+            bars: list[Bar]
+
+        assert Foo([Bar(0)]).json() == {"bars": [{"baz": 0}]}
 
 
 

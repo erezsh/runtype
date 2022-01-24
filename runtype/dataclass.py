@@ -168,13 +168,21 @@ def astuple(inst):
     return tuple(getattr(inst, name) for name in inst.__dataclass_fields__)
 
 
+def _json_rec(inst):
+    if dataclasses.is_dataclass(inst):
+        return json(inst)
+    elif isinstance(inst, (list, set, frozenset, tuple)):
+        return [_json_rec(i) for i in inst]
+    elif isinstance(inst, dict):
+        return {k:_json_rec(v) for k, v in inst.items()}
+    return inst
+
 def json(inst):
     """Returns a JSON of values, going recursively into other objects (if possible)"""
     return {
-        k: json(v) if dataclasses.is_dataclass(v) else v
+        k: _json_rec(v)
         for k, v in inst
     }
-
 
 def _set_if_not_exists(cls, d):
     for attr, value in d.items():
