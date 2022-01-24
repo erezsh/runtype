@@ -769,7 +769,7 @@ class TestDataclass(TestCase):
 
         @dataclass
         class Foo:
-            bars: list[Bar]
+            bars: List[Bar]
 
         assert Foo([Bar(0)]).json() == {"bars": [{"baz": 0}]}
 
