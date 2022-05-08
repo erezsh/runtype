@@ -324,7 +324,8 @@ class Constraint(Validator, PhantomType):
                 raise TypeMismatchError(inst, self)
 
     def __ge__(self, other):
-        return self.type >= other
+        # Arbitrary predicates prevent it from being a superclass
+        return False
 
     def __le__(self, other):
         return self.type <= other
