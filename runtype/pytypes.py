@@ -14,7 +14,7 @@ from datetime import datetime, date, time, timedelta
 from types import FrameType
 
 from .utils import ForwardRef
-from .base_types import DataType, Validator, TypeMismatchError
+from .base_types import DataType, Validator, TypeMismatchError, dp
 from . import base_types
 from . import datetime_parse
 
@@ -129,12 +129,6 @@ class PythonDataType(DataType, PythonType):
     def __init__(self, kernel, supertypes={Any}):
         self.kernel = kernel
 
-    def __le__(self, other):
-        if isinstance(other, PythonDataType):
-            return issubclass(self.kernel, other.kernel)
-
-        return NotImplemented
-
     def validate_instance(self, obj, sampler=None):
         if not isinstance(obj, self.kernel):
             raise TypeMismatchError(obj, self)
@@ -160,28 +154,7 @@ class PythonDataType(DataType, PythonType):
 
         return obj
 
-
 class TupleType(PythonType):
-    def __le__(self, other):
-        # No superclasses or subclasses
-        if other is Any:
-            return True
-
-        return isinstance(other, TupleType)
-
-    def __ge__(self, other):
-        if isinstance(other, TupleEllipsisType):
-            return True
-        elif isinstance(other, TupleType):
-            return True
-        elif isinstance(other, DataType):
-            return False
-        elif isinstance(other, ProductType):
-            # Products are a tuple, but with length and types
-            return True
-
-        return NotImplemented
-
     def validate_instance(self, obj, sampler=None):
         if not isinstance(obj, tuple):
             raise TypeMismatchError(obj, self)
@@ -198,25 +171,6 @@ class OneOf(PythonType):
 
     def __init__(self, values):
         self.values = values
-
-    def __le__(self, other):
-        if isinstance(other, OneOf):
-            return set(self.values) <= set(other.values)
-        elif isinstance(other, PythonType):
-            try:
-                for v in self.values:
-                    other.validate_instance(v)
-            except TypeMismatchError:
-                return False
-            return True
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, OneOf):
-            return set(self.values) >= set(other.values)
-        elif isinstance(other, PythonType):
-            return False
-        return NotImplemented
 
     def validate_instance(self, obj, sampler=None):
         tok = cv_type_checking.set(True)
@@ -374,10 +328,6 @@ class _String(PythonDataType):
 
         return Constraint(self, predicates)
 
-    def __le__(self, other):
-        if isinstance(other, SequenceType):
-            return self <= other.base and self <= other.item
-        return super().__le__(other)
 
 
 class _DateTime(PythonDataType):
@@ -613,3 +563,32 @@ class TypeCaster(ATypeCaster):
 
 
 type_caster = TypeCaster()
+
+
+@dp
+def le(self: PythonDataType, other: PythonDataType):
+    return issubclass(self.kernel, other.kernel)
+@dp
+def le(self: TupleEllipsisType, other: TupleType):
+    return True
+@dp
+def le(self: ProductType, other: TupleType):
+    # Products are a tuple, but with length and specific types
+    return True
+
+@dp
+def le(self: PythonDataType, other: SequenceType):
+    return self <= other.base and self <= other.item
+
+@dp
+def le(self: OneOf, other: OneOf):
+    return set(self.values) <= set(other.values)
+
+@dp
+def le(self: OneOf, other: PythonType):
+    try:
+        for v in self.values:
+            other.validate_instance(v)
+    except TypeMismatchError:
+        return False
+    return True

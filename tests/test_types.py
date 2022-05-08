@@ -48,16 +48,25 @@ class TestTypes(TestCase):
         assert Int <= P[Int]
         assert P[Int] <= Int
         assert P[Int] <= P[Int]
-
         assert P[Int] <= P
         assert not P <= P[Int]
-        assert Q[P] <= Q
 
+        assert P[Q] <= Q
+        assert P[Q] <= P
+        assert not P <= Q[Int]
+
+        assert P[Q[Int]] <= P
+        assert P[Q[Int]] <= Q
+        assert P[Q[Int]] <= Int
         assert P[Q[Int]] <= P[Q]
         assert P[Q[Int]] <= P[Int]
         assert P[Q[Int]] <= Q[Int]
-        assert P[Q[Int]] <= Int
+        assert P[Q[Int]] <= P[Q[Int]]
+        assert Int <= P[Q[Int]]
 
+        assert P <= P + Int
+        assert not P <= Dict
+        assert not P <= Int + Dict
 
 
     def test_pytypes1(self):
@@ -114,6 +123,23 @@ class TestTypes(TestCase):
         assert not i.test_instance(9)
         assert not i.test_instance(13)
 
+        assert int_pair == int_pair
+        assert int_pair <= int_pair
+        assert int_pair >= int_pair
+        assert int_pair <= Any
+        assert Any >= int_pair
+        assert not int_pair <= Dict
+        assert not int_pair <= Int
+        assert not int_pair <= Int + Dict
+        assert not int_pair <= Tuple
+
+        assert int_pair <= List
+        assert List >= int_pair
+        assert int_pair <= List[Int]
+        assert List[Int] >= int_pair
+        assert not int_pair <= List[String]
+        assert not List[String] >= int_pair
+
 
 
     def test_typesystem(self):
@@ -142,12 +168,15 @@ class TestTypes(TestCase):
         assert not Tuple <= Int
         assert not Int <= Tuple
 
-        assert Literal([1]) <= Literal([1, 2])
-        assert not Literal([1, 3]) <= Literal([1, 2])
-        assert Literal([1, 3]) >= Literal([1])
+        one = Literal([1])
+        one_two = Literal([1, 2])
+        one_three = Literal([1, 3])
+        assert one <= one_two
+        assert not one_three <= one_two
+        assert one_three >= one
         assert not Literal([1]) <= Tuple
-        assert not Literal(1) >= Tuple
-        assert not Tuple <= Literal(1)
+        assert not Literal([1]) >= Tuple
+        assert not Tuple <= Literal([1])
 
         Tuple.validate_instance((1, 2))
         self.assertRaises(TypeError, Tuple.validate_instance, 1)
