@@ -135,6 +135,7 @@ class TestTypes(TestCase):
         Tuple.validate_instance((1, 2))
         self.assertRaises(TypeError, Tuple.validate_instance, 1)
 
+        assert List[int] == List[int]
 
 
 
