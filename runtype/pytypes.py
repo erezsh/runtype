@@ -388,7 +388,7 @@ def _cast_to_type(t):
             x ,= t.__args__
             return Sequence[_cast_to_type(x)]
 
-        elif t.__origin__ is type:
+        elif t.__origin__ is type or t.__origin__ is typing.Type:
             # TODO test issubclass on t.__args__
             return PythonDataType(type)
 
