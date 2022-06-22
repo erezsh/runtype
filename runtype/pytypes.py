@@ -225,6 +225,7 @@ class DictType(GenericType):
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
 List = SequenceType(PythonDataType(list))
+Sequence = SequenceType(PythonDataType(abc.Sequence))
 Set = SequenceType(PythonDataType(set))
 FrozenSet = SequenceType(PythonDataType(frozenset))
 Dict = DictType(PythonDataType(dict))
@@ -350,6 +351,8 @@ def _cast_to_type(t):
                 return Tuple
             elif t is typing.Mapping:  # 3.6
                 return Mapping
+            elif t is typing.Sequence:
+                return Sequence
 
         if t.__origin__ is origin_list:
             x ,= t.__args__
@@ -381,6 +384,13 @@ def _cast_to_type(t):
         elif t.__origin__ is abc.Mapping or t.__origin__ is typing.Mapping:
             k, v = t.__args__
             return Mapping[cast_to_type(k), cast_to_type(v)]
+        elif t.__origin__ is abc.Sequence or t.__origin__ is typing.Sequence:
+            x ,= t.__args__
+            return Sequence[_cast_to_type(x)]
+
+        elif t.__origin__ is type:
+            # TODO test issubclass on t.__args__
+            return PythonDataType(type)
 
         raise NotImplementedError("No support for type:", t)
 

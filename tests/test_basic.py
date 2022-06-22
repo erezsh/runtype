@@ -4,7 +4,7 @@ from collections import abc
 import sys
 
 import typing
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet, Sequence, Type
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, field
 
@@ -23,10 +23,12 @@ class TestIsa(TestCase):
         assert isa(1, int)
         assert issubclass(int, object)
         assert isa([1,2], List[int])
+        assert isa([1,2], Sequence[int])
         assert not isa([1,"a"], List[int])
         assert not isa([1,2], List[str])
         assert isa(1, (int, str))
         assert not isa(1, (float, str))
+        assert isa(int, Type[int])
 
         self.assertRaises(TypeError, isa, 1, 1)
         self.assertRaises(TypeError, issubclass, 1, 1)
