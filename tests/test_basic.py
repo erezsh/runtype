@@ -55,6 +55,7 @@ class TestIsa(TestCase):
         assert not issubclass(Any, int)
         assert issubclass(List[int], Any)
 
+
         # Tuples
         assert isa((3,), Tuple[int])
         assert isa((3, 5), Tuple[int, int])
@@ -85,6 +86,9 @@ class TestIsa(TestCase):
         assert isa(frozenset({'a'}), FrozenSet[str])
         assert not isa(frozenset({'a'}), FrozenSet[int])
         assert not isa(frozenset({'a'}), Set[int])
+
+    def test_basic2(self):
+        assert issubclass(List[Tuple], list)
 
     def test_assert(self):
         assert_isa(1, int)

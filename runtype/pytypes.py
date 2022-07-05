@@ -124,6 +124,9 @@ class PythonDataType(DataType, PythonType):
 class TupleType(PythonType):
     def __le__(self, other):
         # No superclasses or subclasses
+        if other is Any:
+            return True
+
         return isinstance(other, TupleType)
 
     def __ge__(self, other):
