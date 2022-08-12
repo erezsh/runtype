@@ -38,7 +38,11 @@ class MultiDispatch:
 
         return dispatched_f
 
+    def __enter__(self):
+        return self
 
+    def __exit__(self, exc_type, exc_value, exc_traceback): 
+        pass
 
 class TypeTree:
     def __init__(self):
