@@ -1,9 +1,10 @@
 import unittest
 from unittest import TestCase
 import typing
+import collections.abc as cabc
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import List, Dict, Int, Any, Constraint, String, Tuple, Iter
+from runtype.pytypes import cast_to_type, List, Dict, Int, Any, Constraint, String, Tuple, Iter
 from runtype.typesystem import TypeSystem
 
 
@@ -136,6 +137,51 @@ class TestTypes(TestCase):
         self.assertRaises(TypeError, Tuple.validate_instance, 1)
 
         assert List[int] == List[int]
+
+    def test_canonize_pytypes(self):
+        pytypes = [
+            int, str, list, dict, typing.Optional[int],
+            typing.Sequence[int], typing.Literal['a'],
+
+            # collections.abc
+            cabc.Hashable, cabc.Sized, cabc.Callable, cabc.Iterable, cabc.Container,
+            cabc.Collection, cabc.Iterator, cabc.Reversible, cabc.Generator,
+            cabc.Sequence, cabc.MutableSequence, cabc.ByteString,
+            cabc.Set, cabc.MutableSet,
+            cabc.Mapping, cabc.MutableMapping,
+            cabc.MappingView, cabc.ItemsView, cabc.KeysView, cabc.ValuesView,
+            cabc.Awaitable, cabc.Coroutine, 
+            cabc.AsyncIterable, cabc.AsyncIterator, cabc.AsyncGenerator,
+
+            typing.NoReturn, typing.TypeAlias,
+        ]
+        for t in pytypes:
+            a = cast_to_type(t)
+            # assert a.kernel == t, (a,t)
+
+
+        type_to_values = {
+            cabc.Hashable: ([1, "a", frozenset()], [{}, set()]),
+            cabc.Sized: ([(), {}], [10]),
+            cabc.Callable: ([int, lambda:1], [3, "a"]),
+            cabc.Iterable: ([(), {}, "", iter([])], [3]),
+            cabc.Container: ([(), ""], [3]),
+            cabc.Collection: ([(), ""], [iter([])]),
+            cabc.Iterator: ([iter([])], [[]]),
+            cabc.Reversible: ([[], ""], [iter([])]),
+            cabc.Generator: ([(x for x in [])], [3, iter('')]),
+
+            cabc.Set: ([set()], [{}]),
+            cabc.ItemsView: ([{}.items()], [{}])
+        }
+
+        for pyt, (good, bad) in type_to_values.items():
+            t = cast_to_type(pyt)
+            for g in good:
+                assert t.test_instance(g), (t, g)
+            for b in bad:
+                assert not t.test_instance(b), (t, b)
+
 
 
 
