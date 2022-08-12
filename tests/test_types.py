@@ -141,7 +141,7 @@ class TestTypes(TestCase):
     def test_canonize_pytypes(self):
         pytypes = [
             int, str, list, dict, typing.Optional[int],
-            typing.Sequence[int], typing.Literal['a'],
+            typing.Sequence[int],
 
             # collections.abc
             cabc.Hashable, cabc.Sized, cabc.Callable, cabc.Iterable, cabc.Container,
@@ -153,7 +153,7 @@ class TestTypes(TestCase):
             cabc.Awaitable, cabc.Coroutine, 
             cabc.AsyncIterable, cabc.AsyncIterator, cabc.AsyncGenerator,
 
-            typing.NoReturn, typing.TypeAlias,
+            typing.NoReturn
         ]
         for t in pytypes:
             a = cast_to_type(t)
