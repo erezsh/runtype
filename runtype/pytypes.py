@@ -9,6 +9,7 @@ import sys
 import typing
 from datetime import datetime
 
+from .utils import ForwardRef
 from .base_types import DataType, Validator, TypeMismatchError
 from . import base_types
 from . import datetime_parse
@@ -340,7 +341,7 @@ class TypeCaster:
         if isinstance(t, (base_types.Type, Validator)):
             return t
 
-        if isinstance(t, typing.ForwardRef):
+        if isinstance(t, ForwardRef):
             t = t._evaluate(self.frame.f_globals, self.frame.f_locals, set())
 
         if isinstance(t, tuple):

@@ -5,10 +5,11 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 import random
 from copy import copy
 import dataclasses
-from typing import Union, ForwardRef
+from typing import Union
 from abc import ABC, abstractmethod
 import inspect
 
+from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import TypeCaster, type_caster, SumType, NoneType
