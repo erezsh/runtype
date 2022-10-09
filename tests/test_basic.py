@@ -651,6 +651,27 @@ class TestDataclass(TestCase):
         t = Tree('a', [t])
         self.assertRaises(TypeError, Tree, 'a', [1])
 
+    def test_forward_reference_cache(self):
+        @dataclass
+        class A:
+            b: 'B'
+
+        class B:
+            pass
+
+        a = A(B())
+        self.assertRaises(TypeError, A, 1)
+
+        @dataclass
+        class A:
+            b: 'B'
+
+        class B:
+            pass
+
+        a = A(B())
+        self.assertRaises(TypeError, A, 1)
+
     def test_unfrozen(self):
         @dataclass(frozen=False, slots=False)
         class A:
