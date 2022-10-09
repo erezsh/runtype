@@ -5,15 +5,21 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 import random
 from copy import copy
 import dataclasses
-from typing import Union
+from typing import Union, ForwardRef
 from abc import ABC, abstractmethod
+import inspect
 
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import cast_to_type, SumType, NoneType
+from .pytypes import TypeCaster, type_caster, SumType, NoneType
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
+
+class NopTypeCaster:
+    cache = {}
+    def to_canon(self, t):
+        return t
 
 class Configuration(ABC):
     """Generic configuration template for dataclass. Mainly for type-checking.
@@ -48,15 +54,15 @@ class Configuration(ABC):
 
     """
 
-    def canonize_type(self, t):
-        """Given a type, return its canonical form.
-        """
-        return t
-
-    def on_default(self, t, default):
+    def on_default(self, default):
         """Called whenever a dataclass member is assigned a default value.
         """
-        return t, default
+        return default
+
+    def make_type_caster(self, frame):
+        """Return a type caster, as defined in pytypes.TypeCaster
+        """
+        return NopTypeCaster()
 
     @abstractmethod
     def ensure_isa(self, a, b, sampler=None):
@@ -79,24 +85,21 @@ class PythonConfiguration(Configuration):
 
     This is the default class given to the ``dataclass()`` function.
     """
-    canonize_type = staticmethod(cast_to_type)
+    make_type_caster = TypeCaster
     ensure_isa = staticmethod(default_ensure_isa)
 
     def cast(self, obj, to_type):
         return to_type.cast_from(obj)
 
-    def on_default(self, type_, default):
-        if default is None:
-            type_ = SumType([type_, NoneType])
-        elif isinstance(default, (list, dict, set)):
+    def on_default(self, default):
+        if isinstance(default, (list, dict, set)):
             def f(_=default):
                 return copy(_)
-            default = dataclasses.field(default_factory=f)
-        return type_, default
+            return dataclasses.field(default_factory=f)
+        return default
 
 
-
-def _post_init(self, config, should_cast, sampler):
+def _post_init(self, config, should_cast, sampler, type_caster):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
 
@@ -104,15 +107,26 @@ def _post_init(self, config, should_cast, sampler):
             raise TypeError(f"Field {name} requires a value")
 
         try:
+            type_ = type_caster.cache[id(field)]
+        except KeyError:
+            type_ = field.type
+            if isinstance(type_, str):
+                type_ = ForwardRef(type_)
+            type_ = type_caster.to_canon(type_)
+            if field.default is None:
+                type_ = SumType([type_, NoneType])
+            type_caster.cache[id(field)] = type_
+
+        try:
             if should_cast:    # Basic cast
                 assert not sampler
-                value = config.cast(value, field.type)
+                value = config.cast(value, type_)
                 object.__setattr__(self, name, value)
             else:
-                config.ensure_isa(value, field.type, sampler)
+                config.ensure_isa(value, type_, sampler)
         except TypeMismatchError as e:
             item_value, item_type = e.args
-            msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type {field.type}."
+            msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type '{type_}'."
             msg += f" Instead got {value!r}"
             if item_value is not value:
                 msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
@@ -197,9 +211,9 @@ def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
         return seq
     return random.sample(seq, max_sample_size)
 
-def _process_class(cls, config, check_types, **kw):
+def _process_class(cls, config, check_types, context_frame, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
-        type_ = config.canonize_type(type_)
+        # type_ = config.type_to_canon(type_) if not isinstance(type_, str) else type_
 
         # If default not specified, assign Required, for a later check
         # We don't assign MISSING; we want to bypass dataclass which is too strict for this
@@ -211,7 +225,7 @@ def _process_class(cls, config, check_types, **kw):
                 if default.default is dataclasses.MISSING and default.default_factory is dataclasses.MISSING:
                     default.default = Required
 
-            type_, new_default = config.on_default(type_, default)
+            new_default = config.on_default(default)
             if new_default is not default:
                 setattr(cls, name, new_default)
 
@@ -222,9 +236,12 @@ def _process_class(cls, config, check_types, **kw):
 
         orig_post_init = getattr(cls, '__post_init__', None)
         sampler = _sample if check_types=='sample' else None
+        # eval_type_string = EvalInContext(context_frame)
+        type_caster = config.make_type_caster(context_frame)
 
         def __post_init__(self):
-            _post_init(self, config=config, should_cast=check_types == 'cast', sampler=sampler)
+            # Only now context_frame has complete information
+            _post_init(self, config=config, should_cast=check_types == 'cast', sampler=sampler, type_caster=type_caster)
             if orig_post_init is not None:
                 orig_post_init(self)
 
@@ -340,8 +357,9 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
     """
     assert isinstance(config, Configuration)
 
+    context_frame = inspect.currentframe().f_back   # Get parent frame, to resolve forward-references
     def wrap(cls):
-        return _process_class(cls, config, check_types,
+        return _process_class(cls, config, check_types, context_frame,
                               init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, slots=slots)
 
     # See if we're being called as @dataclass or @dataclass().
