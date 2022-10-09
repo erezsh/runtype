@@ -15,7 +15,9 @@ class RuntypeError(TypeError):
 
 
 class TypeMismatchError(RuntypeError):
-    pass
+    def __str__(self) -> str:
+        v, t = self.args
+        return f"Expected type '{t}', but got value: {v}."
 
 
 

@@ -56,7 +56,7 @@ class ProductType(base_types.ProductType, PythonType):
     """
     def validate_instance(self, obj, sampler=None):
         if not isinstance(obj, tuple):
-            raise TypeMismatchError(f"Expected a tuple. Got {type(obj)}")
+            raise TypeMismatchError(obj, tuple)
         if self.types and len(obj) != len(self.types):
             raise LengthMismatchError(self, obj)
         for type_, item in zip(self.types, obj):
