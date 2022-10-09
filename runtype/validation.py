@@ -47,9 +47,9 @@ def assert_isa(obj, t):
             ensure_isa(obj, t)
         except TypeMismatchError as e:
             item_value, item_type = e.args
-            msg = f"Expected value of type {t}, instead got {obj!r}"
+            msg = f"Expected value of type '{t}', instead got '{obj!r}'."
             if item_value is not obj:
-                msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
+                msg += f"\n\n    Failed on item: '{item_value!r}', expected type '{item_type}'."
             raise TypeError(msg)
 
 
