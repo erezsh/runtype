@@ -627,7 +627,50 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, A)
         self.assertRaises(TypeError, A, 2)
 
+    def test_forward_references(self):
+        @dataclass
+        class A:
+            i: 'int'
+            b: 'B'
+            l: 'List[int]'
 
+        class B:
+            pass
+
+        A(10, B(), [3])
+        self.assertRaises(TypeError, A, 2, 3, [])
+        self.assertRaises(TypeError, A, 'a', B(), [])
+        self.assertRaises(TypeError, A, 10, B(), ['a'])
+
+        @dataclass
+        class Tree:
+            data: Any
+            children: List['Tree']
+        
+        t = Tree('a', [])
+        t = Tree('a', [t])
+        self.assertRaises(TypeError, Tree, 'a', [1])
+
+    def test_forward_reference_cache(self):
+        @dataclass
+        class A:
+            b: 'B'
+
+        class B:
+            pass
+
+        a = A(B())
+        self.assertRaises(TypeError, A, 1)
+
+        @dataclass
+        class A:
+            b: 'B'
+
+        class B:
+            pass
+
+        a = A(B())
+        self.assertRaises(TypeError, A, 1)
 
     def test_unfrozen(self):
         @dataclass(frozen=False, slots=False)

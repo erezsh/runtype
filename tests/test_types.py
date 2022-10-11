@@ -4,7 +4,7 @@ import typing
 import collections.abc as cabc
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import cast_to_type, List, Dict, Int, Any, Constraint, String, Tuple, Iter
+from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter
 from runtype.typesystem import TypeSystem
 
 
@@ -156,7 +156,7 @@ class TestTypes(TestCase):
             typing.NoReturn
         ]
         for t in pytypes:
-            a = cast_to_type(t)
+            a = type_caster.to_canon(t)
             # assert a.kernel == t, (a,t)
 
 
@@ -176,7 +176,7 @@ class TestTypes(TestCase):
         }
 
         for pyt, (good, bad) in type_to_values.items():
-            t = cast_to_type(pyt)
+            t = type_caster.to_canon(pyt)
             for g in good:
                 assert t.test_instance(g), (t, g)
             for b in bad:

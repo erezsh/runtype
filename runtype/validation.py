@@ -5,14 +5,14 @@ from functools import wraps
 
 from .common import CHECK_TYPES
 from .utils import get_func_signatures
-from .pytypes import TypeMismatchError, cast_to_type
+from .pytypes import TypeMismatchError, type_caster
 from .typesystem import TypeSystem
 
 
 def ensure_isa(obj, t, sampler=None):
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
     """
-    t = cast_to_type(t)
+    t = type_caster.to_canon(t)
     t.validate_instance(obj, sampler)
 
 
@@ -20,8 +20,8 @@ def is_subtype(t1, t2):
     """Test if t1 is a subtype of t2
     """
 
-    t1 = cast_to_type(t1)
-    t2 = cast_to_type(t2)
+    t1 = type_caster.to_canon(t1)
+    t2 = type_caster.to_canon(t2)
     return t1 <= t2
 
 
