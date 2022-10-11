@@ -112,13 +112,11 @@ Example:
 Compared to Pydantic
 ~~~~~~~~~~~~~~~~~~~~
 
-Using Pydantic's own benchmark, runtype performs 40% faster than Pydantic. (or, Pydantic 30% slower than Runtype)
+Using Pydantic's own benchmark, runtype performs twice faster than Pydantic. (or, Pydantic is twice slower than Runtype)
 
 ::
-
-          pydantic best=70.296μs/iter avg=79.918μs/iter stdev=11.326μs/iter version=1.8.1
-    attrs + cattrs best=75.502μs/iter avg=85.398μs/iter stdev=6.485μs/iter version=21.2.0
-           runtype best=49.468μs/iter avg=57.926μs/iter stdev=11.853μs/iter version=0.2.1
-
+          pydantic best=63.839μs/iter avg=65.501μs/iter stdev=1.763μs/iter version=1.9.1
+    attrs + cattrs best=45.607μs/iter avg=45.804μs/iter stdev=0.386μs/iter version=21.4.0
+           runtype best=31.500μs/iter avg=32.281μs/iter stdev=0.753μs/iter version=0.2.7
 
 See the code `here <https://github.com/samuelcolvin/pydantic/pull/3264>`_.

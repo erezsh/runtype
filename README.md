@@ -7,7 +7,7 @@ It is:
 
 :runner: Fast! Uses an internal typesystem for maximum performance.
 
-:brain: Smart! Supports `typing`, constraints, auto-casting, and much more.
+:brain: Smart! Supports `typing`, forward-references, constraints, auto-casting, and more.
 
 :gear: Configurative! Write your own type system, and use it with *dataclass* and *dispatch*.
 
@@ -20,10 +20,11 @@ It is:
 - :star: [**dataclass**](https://runtype.readthedocs.io/en/latest/dataclass.html) - Adds run-time type validation to the built-in dataclass.
 
     - Improves dataclass ergonomics.
+    - Supports most mypy constructs, like `typing` and forward-references (`foo: 'Bar'`).
     - Supports automatic value casting, Pydantic-style. (Optional, off by default)
     - Supports types with constraints. (e.g. `String(max_length=10)`)
     - Supports optional sampling for faster validation of big lists and dicts.
-    - 40% faster than Pydantic ([read here](https://runtype.readthedocs.io/en/latest/dataclass.html#compared-to-pydantic))
+    - Twice faster than Pydantic ([read here](https://runtype.readthedocs.io/en/latest/dataclass.html#compared-to-pydantic))
 
 - :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch.html) - Provides fast multiple-dispatch for functions and methods, via a decorator.
 
