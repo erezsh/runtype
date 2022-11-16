@@ -100,6 +100,19 @@ class PythonConfiguration(Configuration):
         return default
 
 
+def _get_field_type(type_caster, field):
+    try:
+        return type_caster.cache[id(field)]
+    except KeyError:
+        type_ = field.type
+        if isinstance(type_, str):
+            type_ = ForwardRef(type_)
+        type_ = type_caster.to_canon(type_)
+        if field.default is None:
+            type_ = SumType([type_, NoneType])
+        type_caster.cache[id(field)] = type_
+        return type_
+
 def _post_init(self, config, should_cast, sampler, type_caster):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
@@ -107,16 +120,7 @@ def _post_init(self, config, should_cast, sampler, type_caster):
         if value is Required:
             raise TypeError(f"Field {name} requires a value")
 
-        try:
-            type_ = type_caster.cache[id(field)]
-        except KeyError:
-            type_ = field.type
-            if isinstance(type_, str):
-                type_ = ForwardRef(type_)
-            type_ = type_caster.to_canon(type_)
-            if field.default is None:
-                type_ = SumType([type_, NoneType])
-            type_caster.cache[id(field)] = type_
+        type_ = _get_field_type(type_caster, field)
 
         try:
             if should_cast:    # Basic cast
@@ -134,13 +138,14 @@ def _post_init(self, config, should_cast, sampler, type_caster):
             raise TypeError(msg)
 
 
-def _setattr(self, name, value, ensure_isa):
+def _setattr(self, name, value, config, type_caster):
     try:
         field = self.__dataclass_fields__[name]
     except (KeyError, AttributeError):
         pass
     else:
-        ensure_isa(value, field.type)
+        type_ = _get_field_type(type_caster, field)
+        config.ensure_isa(value, type_)
 
 
 def replace(inst, **kwargs):
@@ -252,7 +257,7 @@ def _process_class(cls, config, check_types, context_frame, **kw):
             orig_set_attr = getattr(cls, '__setattr__')
 
             def __setattr__(self, name, value):
-                _setattr(self, name, value, ensure_isa=config.ensure_isa)
+                _setattr(self, name, value, config, type_caster)
                 orig_set_attr(self, name, value)
 
             c.__setattr__ = __setattr__

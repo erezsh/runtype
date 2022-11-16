@@ -569,6 +569,15 @@ class TestDataclass(TestCase):
         A(None)
         self.assertRaises(TypeError, A, 'a')
 
+        @dataclass(frozen=False)
+        class A:
+            a: list = None
+
+        A([1,2])
+        A()
+        A(None)
+        self.assertRaises(TypeError, A, 'a')
+
         @dataclass
         class B:
             b: Optional[list] = None
