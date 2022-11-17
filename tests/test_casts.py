@@ -19,7 +19,7 @@ class TestCasts(TestCase):
         self.assertRaises(TypeError, P, -3)
 
         assert P('10').a == 10
-        assert P('0').a == 0
+        self.assertEqual( P('0').a, 0 )
         assert P('+3').a == 3
         self.assertRaises(TypeError, P, '-3')
 

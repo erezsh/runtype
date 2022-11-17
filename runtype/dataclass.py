@@ -113,6 +113,21 @@ def _get_field_type(type_caster, field):
         type_caster.cache[id(field)] = type_
         return type_
 
+def _validate_attr(config, should_cast, sampler, obj, name, type_, value):
+    try:
+        if should_cast:    # Basic cast
+            assert not sampler
+            return config.cast(value, type_)
+        else:
+            config.ensure_isa(value, type_, sampler)
+    except TypeMismatchError as e:
+        item_value, item_type = e.args
+        msg = f"[{type(obj).__name__}] Attribute '{name}' expected a value of type '{type_}'."
+        msg += f" Instead got type '{type(value).__name__}', with value {value!r}."
+        if item_value is not value:
+            msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
+        raise TypeError(msg)
+
 def _post_init(self, config, should_cast, sampler, type_caster):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
         value = getattr(self, name)
@@ -121,31 +136,20 @@ def _post_init(self, config, should_cast, sampler, type_caster):
             raise TypeError(f"Field {name} requires a value")
 
         type_ = _get_field_type(type_caster, field)
-
-        try:
-            if should_cast:    # Basic cast
-                assert not sampler
-                value = config.cast(value, type_)
-                object.__setattr__(self, name, value)
-            else:
-                config.ensure_isa(value, type_, sampler)
-        except TypeMismatchError as e:
-            item_value, item_type = e.args
-            msg = f"[{type(self).__name__}] Attribute '{name}' expected value of type '{type_}'."
-            msg += f" Instead got {value!r}"
-            if item_value is not value:
-                msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
-            raise TypeError(msg)
+        new_value = _validate_attr(config, should_cast, sampler, self, name, type_, value)
+        if new_value is not None:
+            object.__setattr__(self, name, new_value)
 
 
-def _setattr(self, name, value, config, type_caster):
+def _setattr(obj, setattr, name, value, config, should_cast, sampler, type_caster):
     try:
-        field = self.__dataclass_fields__[name]
+        field = obj.__dataclass_fields__[name]
     except (KeyError, AttributeError):
-        pass
+        new_value = None
     else:
         type_ = _get_field_type(type_caster, field)
-        config.ensure_isa(value, type_)
+        new_value = _validate_attr(config, should_cast, sampler, obj, name, type_, value)
+    setattr(obj, name, value if new_value is None else new_value)
 
 
 def replace(inst, **kwargs):
@@ -244,10 +248,11 @@ def _process_class(cls, config, check_types, context_frame, **kw):
         sampler = _sample if check_types=='sample' else None
         # eval_type_string = EvalInContext(context_frame)
         type_caster = config.make_type_caster(context_frame)
+        should_cast = check_types == 'cast'
 
         def __post_init__(self):
             # Only now context_frame has complete information
-            _post_init(self, config=config, should_cast=check_types == 'cast', sampler=sampler, type_caster=type_caster)
+            _post_init(self, config=config, should_cast=should_cast, sampler=sampler, type_caster=type_caster)
             if orig_post_init is not None:
                 orig_post_init(self)
 
@@ -257,8 +262,7 @@ def _process_class(cls, config, check_types, context_frame, **kw):
             orig_set_attr = getattr(cls, '__setattr__')
 
             def __setattr__(self, name, value):
-                _setattr(self, name, value, config, type_caster)
-                orig_set_attr(self, name, value)
+                _setattr(self, orig_set_attr, name, value, config, should_cast, sampler, type_caster)
 
             c.__setattr__ = __setattr__
     else:
