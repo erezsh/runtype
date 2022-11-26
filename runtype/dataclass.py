@@ -5,7 +5,7 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 import random
 from copy import copy
 import dataclasses
-from typing import Union
+from typing import Union, Any, Tuple, Callable, TypeVar
 from abc import ABC, abstractmethod
 import inspect
 
@@ -319,9 +319,22 @@ def _add_slots(cls, is_frozen):
     return cls
 
 
+# This is a super-ugly hack called PEP-0681. https://peps.python.org/pep-0681/
+_T = TypeVar("_T")
+def __dataclass_transform__(
+    *,
+    eq_default: bool = True,
+    order_default: bool = False,
+    kw_only_default: bool = False,
+    field_descriptors: Tuple[Union[type, Callable[..., Any]], ...] = (()),
+) -> Callable[[_T], _T]:
+    return lambda a: a
+
+
+@__dataclass_transform__(eq_default=True, order_default=True)
 def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
                            config: Configuration = PythonConfiguration(),
-                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True, slots=False):
+                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True, slots=False) -> Any:
     """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
     **Differences from builtin dataclass:**
