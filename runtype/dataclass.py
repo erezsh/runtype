@@ -117,7 +117,11 @@ def _validate_attr(config, should_cast, sampler, obj, name, type_, value):
     try:
         if should_cast:    # Basic cast
             assert not sampler
-            return config.cast(value, type_)
+            try:
+                config.ensure_isa(value, type_, sampler)
+                return value
+            except TypeMismatchError:
+                return config.cast(value, type_)
         else:
             config.ensure_isa(value, type_, sampler)
     except TypeMismatchError as e:
