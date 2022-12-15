@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError, field
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, issubclass, assert_isa, String, Int, validate_func
+from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func
 from runtype.dataclass import Configuration
 
 
@@ -105,6 +105,8 @@ class TestIsa(TestCase):
     def test_py38(self):
         assert isa('a', typing.Literal['a', 'b'])
         assert not isa('c', typing.Literal['a', 'b'])
+
+        assert is_subtype(typing.Literal[1], typing.Literal[1,2])
 
     def test_validate_func(self):
         @validate_func
