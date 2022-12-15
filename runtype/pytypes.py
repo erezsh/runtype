@@ -166,6 +166,8 @@ class OneOf(PythonType):
         self.values = values
 
     def __le__(self, other):
+        if isinstance(other, OneOf):
+            return set(self.values) <= set(other.values)
         return NotImplemented
 
     def validate_instance(self, obj, sampler=None):
