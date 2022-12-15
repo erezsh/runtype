@@ -14,6 +14,21 @@ from .base_types import DataType, Validator, TypeMismatchError
 from . import base_types
 from . import datetime_parse
 
+
+if sys.version_info < (3, 9):
+    if sys.version_info < (3, 7):
+        # python 3.6 
+        _orig_eval = ForwardRef._eval_type
+    else:
+        _orig_eval = ForwardRef._evaluate
+
+    def _forwardref_evaluate(self, g, l, _):
+        return _orig_eval(self, g, l)
+else:
+    _forwardref_evaluate = ForwardRef._evaluate
+
+
+
 py38 = sys.version_info >= (3, 8)
 
 
@@ -342,7 +357,7 @@ class TypeCaster:
             return t
 
         if isinstance(t, ForwardRef):
-            t = t._evaluate(self.frame.f_globals, self.frame.f_locals, set())
+            t = _forwardref_evaluate(t, self.frame.f_globals, self.frame.f_locals, set())
 
         if isinstance(t, tuple):
             return SumType([to_canon(x) for x in t])

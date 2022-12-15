@@ -4,19 +4,8 @@ import sys
 if sys.version_info < (3, 7):
     # python 3.6 
     from typing import _ForwardRef as ForwardRef
-    _orig_eval = ForwardRef._eval_type
-elif sys.version_info < (3, 9):
-    from typing import ForwardRef
-    _orig_eval = ForwardRef._evaluate
 else:
     from typing import ForwardRef
-
-if sys.version_info < (3, 9):
-    def _evaluate(self, g, l, _):
-        return _orig_eval(self, g, l)
-    ForwardRef._evaluate = _evaluate
-
-
 
 def get_func_signatures(typesystem, f):
     sig = inspect.signature(f)
