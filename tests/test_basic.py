@@ -87,8 +87,16 @@ class TestIsa(TestCase):
         assert not isa(frozenset({'a'}), FrozenSet[int])
         assert not isa(frozenset({'a'}), Set[int])
 
+
     def test_basic2(self):
         assert issubclass(List[Tuple], list)
+
+        if hasattr(typing, 'Annotated'):
+            a = typing.Annotated[int, range(1, 10)]
+            assert is_subtype(a, int)
+            assert is_subtype(int, a)
+            assert isa(1, a)
+
 
     def test_assert(self):
         assert_isa(1, int)
