@@ -364,6 +364,9 @@ class TypeCaster:
         if isinstance(t, tuple):
             return SumType([to_canon(x) for x in t])
 
+        if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):
+            return to_canon(t.__origin__)
+
         try:
             t.__origin__
         except AttributeError:
@@ -418,7 +421,6 @@ class TypeCaster:
             elif t.__origin__ is abc.Sequence or t.__origin__ is typing.Sequence:
                 x ,= t.__args__
                 return Sequence[to_canon(x)]
-
             elif t.__origin__ is type or t.__origin__ is typing.Type:
                 # TODO test issubclass on t.__args__
                 return PythonDataType(type)
