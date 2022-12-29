@@ -372,8 +372,12 @@ class TypeCaster:
         if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):
             return to_canon(t.__origin__)
 
-        if typing_extensions and hasattr(typing_extensions, '_AnnotatedAlias') and isinstance(t, typing_extensions._AnnotatedAlias):
-            return to_canon(t.__origin__)
+        if typing_extensions:
+            if hasattr(typing_extensions, '_AnnotatedAlias') and isinstance(t, typing_extensions._AnnotatedAlias):
+                return to_canon(t.__origin__)
+            elif hasattr(typing_extensions, 'AnnotatedMeta') and isinstance(t, typing_extensions.AnnotatedMeta):
+                # Python 3.6
+                return to_canon(t.__args__[0])
 
         try:
             t.__origin__
