@@ -20,9 +20,9 @@ def is_subtype(t1, t2):
     """Test if t1 is a subtype of t2
     """
 
-    t1 = type_caster.to_canon(t1)
-    t2 = type_caster.to_canon(t2)
-    return t1 <= t2
+    ct1 = type_caster.to_canon(t1)
+    ct2 = type_caster.to_canon(t2)
+    return ct1 <= ct2
 
 
 def isa(obj, t):
