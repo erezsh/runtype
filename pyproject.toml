@@ -23,6 +23,9 @@ packages = [{ include = "runtype" }]
 python = "^3.6"
 dataclasses = {version = "*", python = "~3.6"}
 
+[tool.poetry.dev-dependencies]
+typing_extensions = "*"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
