@@ -27,6 +27,11 @@ if sys.version_info < (3, 9):
 else:
     _forwardref_evaluate = ForwardRef._evaluate
 
+try:
+    import typing_extensions
+except ImportError:
+    typing_extensions = None
+
 
 
 py38 = sys.version_info >= (3, 8)
@@ -365,6 +370,9 @@ class TypeCaster:
             return SumType([to_canon(x) for x in t])
 
         if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):
+            return to_canon(t.__origin__)
+
+        if typing_extensions and hasattr(typing_extensions, '_AnnotatedAlias') and isinstance(t, typing_extensions._AnnotatedAlias):
             return to_canon(t.__origin__)
 
         try:

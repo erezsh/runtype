@@ -14,6 +14,11 @@ logging.basicConfig(level=logging.INFO)
 from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func
 from runtype.dataclass import Configuration
 
+try:
+    import typing_extensions
+except ImportError:
+    typing_extensions = None
+
 
 class TestIsa(TestCase):
     def setUp(self):
@@ -132,6 +137,16 @@ class TestIsa(TestCase):
         f([1, 2])
         f()
         self.assertRaises(TypeError, f, [1, None])
+
+    def test_typing_extensions(self):
+        if typing_extensions is None:
+            logging.info("Skipping tests for typing extensions")
+            return
+
+        a = typing_extensions.Annotated[int, range(1, 10)]
+        assert is_subtype(a, int)
+        assert is_subtype(int, a)
+        assert isa(1, a)
 
 
 
