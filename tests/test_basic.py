@@ -148,6 +148,7 @@ class TestIsa(TestCase):
         assert is_subtype(int, a)
         assert isa(1, a)
 
+    @unittest.skipIf(not hasattr(typing, 'Literal'), "Literals not supported in this Python version")
     def test_literal_comparison(self):
         t1 = typing.Literal[1,2]
         t2 = Union[typing.Literal[1], typing.Literal[2]]
@@ -157,10 +158,14 @@ class TestIsa(TestCase):
 
         assert is_subtype(Optional[typing.Literal[1]], typing.Literal[None, 1])
         assert is_subtype(typing.Literal[None, 1], Optional[typing.Literal[1]])
-        assert is_subtype(typing.Literal[True], bool)
         assert is_subtype(typing.Literal[1,2,3], int)
         assert is_subtype(typing.Literal["a","b"], str)
         assert is_subtype(Tuple[typing.Literal[1,2,3], str], Tuple[int, str])
+
+        if sys.version_info >= (3, 9):
+            # the following fails for Python 3.8, because Literal[1] == Literal[True]
+            #      and our caching swaps between them.
+            assert is_subtype(typing.Literal[True], bool)
 
 
 class TestDispatch(TestCase):
