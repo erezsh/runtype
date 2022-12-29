@@ -148,6 +148,19 @@ class TestIsa(TestCase):
         assert is_subtype(int, a)
         assert isa(1, a)
 
+    def test_literal_comparison(self):
+        t1 = typing.Literal[1,2]
+        t2 = Union[typing.Literal[1], typing.Literal[2]]
+
+        assert is_subtype(t1, t2) 
+        assert is_subtype(t2, t1) 
+
+        assert is_subtype(Optional[typing.Literal[1]], typing.Literal[None, 1])
+        assert is_subtype(typing.Literal[None, 1], Optional[typing.Literal[1]])
+        assert is_subtype(typing.Literal[True], bool)
+        assert is_subtype(typing.Literal[1,2,3], int)
+        assert is_subtype(typing.Literal["a","b"], str)
+        assert is_subtype(Tuple[typing.Literal[1,2,3], str], Tuple[int, str])
 
 
 class TestDispatch(TestCase):

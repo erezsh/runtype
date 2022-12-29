@@ -85,6 +85,16 @@ class ProductType(base_types.ProductType, PythonType):
 
 
 class SumType(base_types.SumType, PythonType):
+    def __init__(self, types):
+        # Here we merge all the instances of OneOf into a single one (if necessary).
+        # The alternative is to turn all OneOf instances into SumTypes of single values.
+        # I chose this method due to intuition that it's faster for the common use-case.
+        one_ofs: List[OneOf] = [t for t in types if isinstance(t, OneOf)]
+        if len(one_ofs) > 1:
+            rest = [t for t in types if not isinstance(t, OneOf)]
+            types = rest + [OneOf([v for t in one_ofs for v in t.values])]
+        super().__init__(types)
+
     def validate_instance(self, obj, sampler=None):
         if not any(t.test_instance(obj) for t in self.types):
             raise TypeMismatchError(obj, self)
@@ -167,12 +177,28 @@ class TupleType(PythonType):
 
 
 class OneOf(PythonType):
+    values: typing.Sequence
+
     def __init__(self, values):
         self.values = values
 
     def __le__(self, other):
         if isinstance(other, OneOf):
             return set(self.values) <= set(other.values)
+        elif isinstance(other, PythonDataType):
+            try:
+                for v in self.values:
+                    other.validate_instance(v)
+            except TypeMismatchError as e:
+                return False
+            return True
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, OneOf):
+            return set(self.values) >= set(other.values)
+        elif isinstance(other, PythonDataType):
+            return False
         return NotImplemented
 
     def validate_instance(self, obj, sampler=None):
@@ -181,6 +207,10 @@ class OneOf(PythonType):
 
     def __repr__(self):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
+
+    def cast_from(self, obj):
+        if obj not in self.values:
+            raise TypeMismatchError(obj, self)
 
 
 class GenericType(base_types.GenericType, PythonType):
@@ -264,11 +294,6 @@ Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
 
 
-class _NoneType(PythonDataType):
-    def cast_from(self, obj):
-        if obj is not None:
-            raise TypeMismatchError(obj, self)
-
 class _Number(PythonDataType):
     def __call__(self, min=None, max=None):
         predicates = []
@@ -312,10 +337,20 @@ class _DateTime(PythonDataType):
         return super().cast_from(obj)
 
 
+class _NoneType(OneOf):
+    def __init__(self):
+        super().__init__([None])
+    def cast_from(self, obj):
+        assert self.values == [None]
+        if obj is not None:
+            raise TypeMismatchError(obj, self)
+        return None
+
+
 String = _String(str)
 Int = _Int(int)
 Float = _Float(float)
-NoneType = _NoneType(type(None))
+NoneType =  _NoneType()
 DateTime = _DateTime(datetime)
 
 
@@ -421,7 +456,8 @@ class TypeCaster:
                 return ProductType([to_canon(x) for x in t.__args__])
 
             elif t.__origin__ is typing.Union:
-                return SumType([to_canon(x) for x in t.__args__])
+                res = [to_canon(x) for x in t.__args__]
+                return SumType(res)
             elif t.__origin__ is abc.Callable or t is typing.Callable:
                 # return Callable[ProductType(to_canon(x) for x in t.__args__)]
                 return Callable  # TODO
