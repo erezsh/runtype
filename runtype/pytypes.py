@@ -185,7 +185,7 @@ class OneOf(PythonType):
     def __le__(self, other):
         if isinstance(other, OneOf):
             return set(self.values) <= set(other.values)
-        elif isinstance(other, PythonDataType):
+        elif isinstance(other, PythonType):
             try:
                 for v in self.values:
                     other.validate_instance(v)
@@ -197,7 +197,7 @@ class OneOf(PythonType):
     def __ge__(self, other):
         if isinstance(other, OneOf):
             return set(self.values) >= set(other.values)
-        elif isinstance(other, PythonDataType):
+        elif isinstance(other, PythonType):
             return False
         return NotImplemented
 
@@ -340,6 +340,7 @@ class _DateTime(PythonDataType):
 class _NoneType(OneOf):
     def __init__(self):
         super().__init__([None])
+
     def cast_from(self, obj):
         assert self.values == [None]
         if obj is not None:

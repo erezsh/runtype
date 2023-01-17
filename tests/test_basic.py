@@ -668,6 +668,9 @@ class TestDataclass(TestCase):
         self.assertRaises(TypeError, C, 3)
         self.assertRaises(TypeError, C, "hello", "abcdef")
 
+    def test_typing_optional2(self):
+        assert is_subtype(List[str], Optional[Union[List[str], int]])
+
 
     def test_required_keyword(self):
         @dataclass
