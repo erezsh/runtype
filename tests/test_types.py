@@ -109,21 +109,21 @@ class TestTypes(TestCase):
 
 
     def test_typesystem(self):
-    	t = TypeSystem()
-    	o = object()
-    	assert t.canonize_type(o) is o
+        t = TypeSystem()
+        o = object()
+        assert t.canonize_type(o) is o
 
-    	class IntOrder(TypeSystem):
-    		def issubclass(self, a, b):
-    			return a <= b 
+        class IntOrder(TypeSystem):
+            def issubclass(self, a, b):
+                return a <= b 
 
-    		def get_type(self, a):
-    			return a
+            def get_type(self, a):
+                return a
 
-    	i = IntOrder()
-    	assert i.isinstance(3, 3)
-    	assert i.isinstance(3, 4)
-    	assert not i.isinstance(4, 3)
+        i = IntOrder()
+        assert i.isinstance(3, 3)
+        assert i.isinstance(3, 4)
+        assert not i.isinstance(4, 3)
 
     def test_pytypes(self):
         assert Tuple <= Tuple

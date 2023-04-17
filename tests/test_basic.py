@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError, field
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func
+from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking
 from runtype.dataclass import Configuration
 
 try:
@@ -166,6 +166,23 @@ class TestIsa(TestCase):
             # the following fails for Python 3.8, because Literal[1] == Literal[True]
             #      and our caching swaps between them.
             assert is_subtype(typing.Literal[True], bool)
+
+    @unittest.skipIf(not hasattr(typing, 'Literal'), "Literals not supported in this Python version")
+    def test_context_vars(self):
+        class BadEq:
+            def __init__(self, smart):
+                self.smart = smart
+
+            def __eq__(self, other):
+                if self.smart and cv_type_checking.get():
+                    return False
+                raise NotImplementedError()
+
+        inst = BadEq(False)
+        self.assertRaises(NotImplementedError, isa, inst, typing.Literal[1])
+
+        inst = BadEq(True)
+        assert isa(inst, typing.Literal[1]) == False
 
 
 class TestDispatch(TestCase):
