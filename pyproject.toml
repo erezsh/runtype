@@ -37,3 +37,7 @@ minversion = "6.0"
 testpaths = [
     "tests",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

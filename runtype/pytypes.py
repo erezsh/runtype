@@ -22,8 +22,8 @@ if sys.version_info < (3, 9):
     else:
         _orig_eval = ForwardRef._evaluate
 
-    def _forwardref_evaluate(self, g, l, _):
-        return _orig_eval(self, g, l)
+    def _forwardref_evaluate(self, glob, loc, _):
+        return _orig_eval(self, glob, loc)
 else:
     _forwardref_evaluate = ForwardRef._evaluate
 
@@ -189,7 +189,7 @@ class OneOf(PythonType):
             try:
                 for v in self.values:
                     other.validate_instance(v)
-            except TypeMismatchError as e:
+            except TypeMismatchError:
                 return False
             return True
         return NotImplemented

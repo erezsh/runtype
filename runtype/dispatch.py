@@ -64,7 +64,8 @@ class TypeTree:
     def find_function(self, args):
         nodes = [self.root]
         for i, a in enumerate(args):
-            nodes = [n for node in nodes for n in node.follow_arg(a, self.typesystem, test_subtype=i in self.test_subtypes)]
+            nodes = [n for node in nodes
+                       for n in node.follow_arg(a, self.typesystem, test_subtype=i in self.test_subtypes)]
 
         funcs = [node.func for node in nodes if node.func]
 

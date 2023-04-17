@@ -1,6 +1,6 @@
 "User-facing API for validation"
 
-from typing import Any, Dict, List, Tuple, Set, FrozenSet, Callable
+from typing import Any, Dict, List, Tuple, Set, FrozenSet
 from functools import wraps
 
 from .common import CHECK_TYPES
@@ -38,7 +38,7 @@ def isa(obj, t):
     try:
         ensure_isa(obj, t)
         return True
-    except TypeMismatchError as e:
+    except TypeMismatchError:
         return False
 
 
