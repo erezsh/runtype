@@ -1,5 +1,7 @@
 import inspect
 import sys
+import contextvars
+from contextlib import contextmanager
 
 if sys.version_info < (3, 7):
     # python 3.6 
@@ -30,3 +32,19 @@ def get_func_signatures(typesystem, f):
 
     typesigs.append(typesig)
     return typesigs
+
+
+class ContextVar:
+    def __init__(self, default, name=''):
+        self._var = contextvars.ContextVar(name, default=default)
+
+    def get(self):
+        return self._var.get()
+
+    @contextmanager
+    def __call__(self, value):
+        token = self._var.set(value)
+        try:
+            yield
+        finally:
+            self._var.reset(token)
