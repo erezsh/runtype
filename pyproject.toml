@@ -22,6 +22,7 @@ packages = [{ include = "runtype" }]
 [tool.poetry.dependencies]
 python = "^3.6"
 dataclasses = {version = "*", python = "~3.6"}
+contextvars = {version = "*", python = "~3.6"}
 
 [tool.poetry.dev-dependencies]
 typing_extensions = "*"
@@ -29,3 +30,10 @@ typing_extensions = "*"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+# addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
