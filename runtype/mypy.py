@@ -9,7 +9,7 @@ plugins = runtype.mypy
 
 from typing import Callable, Optional, Type
 
-from mypy.plugin import ClassDefContext, MethodContext, Plugin
+from mypy.plugin import ClassDefContext, Plugin
 from mypy.plugins import dataclasses
 
 DATACLASS_PATHS = {"runtype.dataclass.dataclass"}

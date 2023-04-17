@@ -7,7 +7,7 @@ if sys.version_info < (3, 7):
     # python 3.6 
     from typing import _ForwardRef as ForwardRef
 else:
-    from typing import ForwardRef
+    from typing import ForwardRef as ForwardRef
 
 def get_func_signatures(typesystem, f):
     sig = inspect.signature(f)

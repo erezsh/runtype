@@ -12,7 +12,7 @@ import inspect
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, type_caster, SumType, NoneType
+from .pytypes import TypeCaster, SumType, NoneType
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
@@ -338,7 +338,8 @@ def __dataclass_transform__(
 @__dataclass_transform__(eq_default=True, order_default=True)
 def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
                            config: Configuration = PythonConfiguration(),
-                           init=True, repr=True, eq=True, order=False, unsafe_hash=False, frozen=True, slots=False) -> Any:
+                           init=True, repr=True, eq=True, order=False,
+                           unsafe_hash=False, frozen=True, slots=False) -> Any:
     """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
     **Differences from builtin dataclass:**
@@ -352,7 +353,8 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
       - Adds convenience methods: replace(), aslist(), astuple(), and iterator for dict(this).
         These methods won't override existing ones. They will be added only if the names aren't used.
       - Setting the default as ``None`` automatically makes the type into ``Optional``, if it isn't already.
-      - Members without a default are allowed after members with a default (but they are required to create the instance)
+      - Members without a default are allowed after members with a default
+        (but they are required in order to create the instance)
 
     3. Misc
       - Frozen by default
@@ -387,7 +389,8 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
     context_frame = inspect.currentframe().f_back   # Get parent frame, to resolve forward-references
     def wrap(cls):
         return _process_class(cls, config, check_types, context_frame,
-                              init=init, repr=repr, eq=eq, order=order, unsafe_hash=unsafe_hash, frozen=frozen, slots=slots)
+                              init=init, repr=repr, eq=eq, order=order,
+                              unsafe_hash=unsafe_hash, frozen=frozen, slots=slots)
 
     # See if we're being called as @dataclass or @dataclass().
     if cls is None:
