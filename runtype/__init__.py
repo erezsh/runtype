@@ -4,7 +4,7 @@ from .validation import (PythonTyping, TypeSystem, TypeMismatchError,
                          assert_isa, isa, issubclass, validate_func, is_subtype, cv_type_checking)
 from .pytypes import Constraint, String, Int
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 __all__ = (
     'dataclass',
     'DispatchError', 'MultiDispatch',
