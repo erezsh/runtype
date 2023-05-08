@@ -312,7 +312,7 @@ class _Int(_Number):
 
 class _Float(_Number):
     def cast_from(self, obj):
-        if isinstance(obj, int):
+        if isinstance(obj, (int, str)):
             return float(obj)
         return super().cast_from(obj)
 
@@ -323,6 +323,9 @@ class _String(PythonDataType):
             predicates += [lambda s: len(s) >= min_length]
         if max_length is not None:
             predicates += [lambda s: len(s) <= max_length]
+
+        if not predicates:
+            return self
 
         return Constraint(self, predicates)
 
