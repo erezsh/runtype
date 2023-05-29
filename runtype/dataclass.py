@@ -12,12 +12,12 @@ import inspect
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, SumType, NoneType
+from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
 
-class NopTypeCaster:
+class NopTypeCaster(ATypeCaster):
     cache = {}
     def to_canon(self, t):
         return t
@@ -60,7 +60,7 @@ class Configuration(ABC):
         """
         return default
 
-    def make_type_caster(self, frame):
+    def make_type_caster(self, frame) -> ATypeCaster:
         """Return a type caster, as defined in pytypes.TypeCaster
         """
         return NopTypeCaster()
