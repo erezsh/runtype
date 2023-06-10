@@ -1,4 +1,4 @@
 # https://docs.readthedocs.io/en/stable/guides/specifying-dependencies.html#specifying-a-requirements-file
 sphinx-gallery
 sphinx_markdown_tables
-sphinx_rtd_theme<2.0.0
+sphinx_rtd_theme>=1.2
