@@ -1,6 +1,7 @@
 from collections import defaultdict
 from functools import wraps
-from typing import Dict
+from typing import Dict, Callable, Sequence
+
 
 from .utils import get_func_signatures
 from .typesystem import TypeSystem
@@ -18,22 +19,23 @@ class MultiDispatch:
         test_subtypes: indices of params that should be matched by subclass instead of isinstance.
     """
 
-    def __init__(self, typesystem: TypeSystem, test_subtypes: set = set()):
-        self.roots : Dict[str, TypeTree] = defaultdict(TypeTree)
-        self.typesystem = typesystem
+    def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
+        self.fname_to_tree : Dict[str, TypeTree] = {}
+        self.typesystem: TypeSystem = typesystem
         self.test_subtypes = test_subtypes
 
     def __call__(self, f):
-        root = self.roots[f.__name__]
-        root.name = f.__name__
-        root.typesystem = self.typesystem
-        root.test_subtypes = self.test_subtypes
+        fname = f.__name__
+        try:
+            tree = self.fname_to_tree[fname]
+        except KeyError:
+            tree = self.fname_to_tree[fname] = TypeTree(fname, self.typesystem, self.test_subtypes)
 
-        root.define_function(f)
+        tree.define_function(f)
 
         @wraps(f)
         def dispatched_f(*args, **kw):
-            f = root.find_function_cached(args)
+            f = tree.find_function_cached(args)
             return f(*args, **kw)
 
         return dispatched_f
@@ -44,13 +46,34 @@ class MultiDispatch:
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         pass
 
-class TypeTree:
+
+class TypeNode:
     def __init__(self):
+        self.follow_type = defaultdict(TypeNode)
+        self.func = None
+
+    def follow_arg(self, arg, ts, test_subtype=False):
+        for type_, tree in self.follow_type.items():
+            if test_subtype:
+                if ts.issubclass(arg, type_):
+                    yield tree
+            elif ts.isinstance(arg, type_):
+                yield tree
+
+
+class TypeTree:
+    root: TypeNode
+    name: str
+    _cache: Dict[tuple, Callable]
+    typesystem: TypeSystem
+    test_subtypes: Sequence[int]
+
+    def __init__(self, name: str, typesystem: TypeSystem, test_subtypes: Sequence[int]):
         self.root = TypeNode()
         self._cache = {}
-        self.name = None
-        self.typesystem = None
-        self.test_subtypes = ()
+        self.name = name
+        self.typesystem = typesystem
+        self.test_subtypes = test_subtypes
 
     def get_arg_types(self, args):
         get_type = self.typesystem.get_type
@@ -153,18 +176,4 @@ def all_eq(xs):
         if a != b:
             return False
     return True
-
-class TypeNode:
-    def __init__(self):
-        self.follow_type = defaultdict(TypeNode)
-        self.func = None
-
-    def follow_arg(self, arg, ts, test_subtype=False):
-        for type_, tree in self.follow_type.items():
-            if test_subtype:
-                if ts.issubclass(arg, type_):
-                    yield tree
-            elif ts.isinstance(arg, type_):
-                yield tree
-
 

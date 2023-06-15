@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+from abc import abstractmethod, ABC
 from contextlib import suppress
 import collections
 from collections import abc
@@ -38,6 +39,9 @@ py38 = sys.version_info >= (3, 8)
 
 
 class LengthMismatchError(TypeMismatchError):
+    pass
+
+class CastFailed(TypeMismatchError):
     pass
 
 
@@ -312,8 +316,11 @@ class _Int(_Number):
 
 class _Float(_Number):
     def cast_from(self, obj):
-        if isinstance(obj, int):
-            return float(obj)
+        if isinstance(obj, (int, str)):
+            try:
+                return float(obj)
+            except ValueError:
+                raise CastFailed()
         return super().cast_from(obj)
 
 class _String(PythonDataType):
@@ -323,6 +330,9 @@ class _String(PythonDataType):
             predicates += [lambda s: len(s) >= min_length]
         if max_length is not None:
             predicates += [lambda s: len(s) <= max_length]
+
+        if not predicates:
+            return self
 
         return Constraint(self, predicates)
 
@@ -388,7 +398,13 @@ else:
     origin_frozenset = typing.FrozenSet
 
 
-class TypeCaster:
+
+class ATypeCaster(ABC):
+    @abstractmethod
+    def to_canon(self, t: typing.Any): ...
+
+
+class TypeCaster(ATypeCaster):
     def __init__(self, frame=None):
         self.cache = {}
         self.frame = frame
@@ -400,7 +416,9 @@ class TypeCaster:
             return t
 
         if isinstance(t, ForwardRef):
-            t = _forwardref_evaluate(t, self.frame.f_globals, self.frame.f_locals, set())
+            if self.frame is None:
+                raise RuntimeError("Cannot resolve ForwardRef: TypeCaster initialized without a frame")
+            t = _forwardref_evaluate(t, self.frame.f_globals, self.frame.f_locals, frozenset())
 
         if isinstance(t, tuple):
             return SumType([to_canon(x) for x in t])
