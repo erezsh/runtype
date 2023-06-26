@@ -9,6 +9,7 @@ from collections import abc
 import sys
 import typing
 from datetime import datetime
+from types import FrameType
 
 from .utils import ForwardRef
 from .base_types import DataType, Validator, TypeMismatchError
@@ -89,11 +90,11 @@ class ProductType(base_types.ProductType, PythonType):
 
 
 class SumType(base_types.SumType, PythonType):
-    def __init__(self, types):
+    def __init__(self, types: typing.Sequence[PythonType]):
         # Here we merge all the instances of OneOf into a single one (if necessary).
         # The alternative is to turn all OneOf instances into SumTypes of single values.
         # I chose this method due to intuition that it's faster for the common use-case.
-        one_ofs: List[OneOf] = [t for t in types if isinstance(t, OneOf)]
+        one_ofs: typing.List[OneOf] = [t for t in types if isinstance(t, OneOf)]
         if len(one_ofs) > 1:
             rest = [t for t in types if not isinstance(t, OneOf)]
             types = rest + [OneOf([v for t in one_ofs for v in t.values])]
@@ -405,8 +406,8 @@ class ATypeCaster(ABC):
 
 
 class TypeCaster(ATypeCaster):
-    def __init__(self, frame=None):
-        self.cache = {}
+    def __init__(self, frame: typing.Optional[FrameType]=None):
+        self.cache: typing.Dict[typing.Union[type, PythonType], PythonType] = {}
         self.frame = frame
 
     def _to_canon(self, t):
