@@ -688,7 +688,6 @@ class TestDataclass(TestCase):
     def test_typing_optional2(self):
         assert is_subtype(List[str], Optional[Union[List[str], int]])
 
-
     def test_required_keyword(self):
         @dataclass
         class A:
@@ -696,6 +695,16 @@ class TestDataclass(TestCase):
             b: int
 
         assert A(b=10) == A(None, 10)
+        self.assertRaises(TypeError, A)
+        self.assertRaises(TypeError, A, 2)
+
+    def test_required_keyword2(self):
+        @dataclass(check_types=False)   # Alternate behavior
+        class A:
+            a: int = 4
+            b: int
+
+        assert A(b=10) == A(4, 10)
         self.assertRaises(TypeError, A)
         self.assertRaises(TypeError, A, 2)
 

@@ -144,6 +144,12 @@ def _post_init(self, config, should_cast, sampler, type_caster):
         if new_value is not None:
             object.__setattr__(self, name, new_value)
 
+def _post_init__no_check_types(self):
+    for name, field in getattr(self, '__dataclass_fields__', {}).items():
+        value = getattr(self, name)
+
+        if value is Required:
+            raise TypeError(f"Field {name} requires a value")
 
 def _setattr(obj, setattr, name, value, config, should_cast, sampler, type_caster):
     try:
@@ -245,12 +251,12 @@ def _process_class(cls, config, check_types, context_frame, **kw):
 
         cls.__annotations__[name] = type_
 
-    if check_types:
-        c = copy(cls)
 
-        orig_post_init = getattr(cls, '__post_init__', None)
+    c = copy(cls)
+    orig_post_init = getattr(cls, '__post_init__', None)
+
+    if check_types:
         sampler = _sample if check_types=='sample' else None
-        # eval_type_string = EvalInContext(context_frame)
         type_caster = config.make_type_caster(context_frame)
         should_cast = check_types == 'cast'
 
@@ -270,7 +276,12 @@ def _process_class(cls, config, check_types, context_frame, **kw):
 
             c.__setattr__ = __setattr__
     else:
-        c = cls
+        def __post_init__(self):
+            _post_init__no_check_types(self)
+            if orig_post_init is not None:
+                orig_post_init(self)
+
+        c.__post_init__ = __post_init__
 
     _set_if_not_exists(c, {
         'replace': replace,
