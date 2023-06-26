@@ -5,20 +5,21 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 import random
 from copy import copy
 import dataclasses
-from typing import Union, Any, Tuple, Callable, TypeVar
+from typing import Union, Any, Tuple, Callable, TypeVar, Dict, ForwardRef, Optional
 from abc import ABC, abstractmethod
 import inspect
+import types
 
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster
+from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
 
 class NopTypeCaster(ATypeCaster):
-    cache = {}
+    cache: Dict[int,Union[PythonType, type]] = {}
     def to_canon(self, t):
         return t
 
@@ -86,7 +87,10 @@ class PythonConfiguration(Configuration):
 
     This is the default class given to the ``dataclass()`` function.
     """
-    make_type_caster = TypeCaster
+    
+    def make_type_caster(self, frame: Optional[types.FrameType]):
+        return TypeCaster(frame)
+
     ensure_isa = staticmethod(default_ensure_isa)
 
     def cast(self, obj, to_type):
@@ -231,7 +235,7 @@ def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
         return seq
     return random.sample(seq, max_sample_size)
 
-def _process_class(cls, config, check_types, context_frame, **kw):
+def _process_class(cls: type, config, check_types, context_frame, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         # type_ = config.type_to_canon(type_) if not isinstance(type_, str) else type_
 
@@ -397,7 +401,9 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
     """
     assert isinstance(config, Configuration)
 
-    context_frame = inspect.currentframe().f_back   # Get parent frame, to resolve forward-references
+    # Get parent frame, to resolve forward-references
+    _current_frame = inspect.currentframe()
+    context_frame = _current_frame and _current_frame.f_back
     def wrap(cls):
         return _process_class(cls, config, check_types, context_frame,
                               init=init, repr=repr, eq=eq, order=order,

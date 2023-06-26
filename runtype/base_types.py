@@ -6,7 +6,7 @@ We use comparison operators to indicate whether a type is a subtype of another:
  - t1 >= t2 means "t2 is a subtype of t1"
 This is consistent with the view that a type hierarchy can be expressed as a poset.
 """
-from typing import Callable, Sequence, Optional
+from typing import Callable, Sequence, Optional, Union
 from abc import ABC, abstractmethod
 
 
@@ -19,17 +19,20 @@ class TypeMismatchError(RuntypeError):
         v, t = self.args
         return f"Expected type '{t}', but got value: {v}."
 
+_Type = Union['Type', type]
 
-
-class Type:
+class Type(ABC):
     """Abstract Type class. All types inherit from it.
     """
-    def __add__(self, other):
+    def __add__(self, other: _Type):
         return SumType.create((self, other))
 
-    def __mul__(self, other):
+    def __mul__(self, other: _Type):
         return ProductType.create((self, other))
 
+    @abstractmethod
+    def __le__(self, other: _Type):
+        return NotImplemented
 
 class AnyType(Type):
     """Represents the Any type.
@@ -167,8 +170,10 @@ class GenericType(ContainerType):
 
     For any two generic types a[i] and b[j], it's true that a[i] <= b[j] iff a <= b and i <= j.
     """
+    base: Type
+    item: Union[type, Type]
 
-    def __init__(self, base, item=Any):
+    def __init__(self, base: Type, item: Union[type, Type]=Any):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
             if not item <= base.item:
