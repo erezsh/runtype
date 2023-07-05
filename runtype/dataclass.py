@@ -5,20 +5,28 @@ Enhances Python's built-in dataclass, with type-checking and extra ergonomics.
 import random
 from copy import copy
 import dataclasses
-from typing import Union, Any, Tuple, Callable, TypeVar
+from typing import Union, Any, Callable, TypeVar, Dict, Optional, overload
+from typing import TYPE_CHECKING, ClassVar, Type
 from abc import ABC, abstractmethod
 import inspect
+import types
+
+if TYPE_CHECKING:
+    from typing_extensions import dataclass_transform
+else:
+    def dataclass_transform(*a, **kw):
+        return lambda f:f
 
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster
+from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
 
 class NopTypeCaster(ATypeCaster):
-    cache = {}
+    cache: Dict[int,Union[PythonType, type]] = {}
     def to_canon(self, t):
         return t
 
@@ -86,7 +94,10 @@ class PythonConfiguration(Configuration):
 
     This is the default class given to the ``dataclass()`` function.
     """
-    make_type_caster = TypeCaster
+    
+    def make_type_caster(self, frame: Optional[types.FrameType]):
+        return TypeCaster(frame)
+
     ensure_isa = staticmethod(default_ensure_isa)
 
     def cast(self, obj, to_type):
@@ -231,7 +242,7 @@ def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
         return seq
     return random.sample(seq, max_sample_size)
 
-def _process_class(cls, config, check_types, context_frame, **kw):
+def _process_class(cls: type, config, check_types, context_frame, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         # type_ = config.type_to_canon(type_) if not isinstance(type_, str) else type_
 
@@ -334,23 +345,43 @@ def _add_slots(cls, is_frozen):
     return cls
 
 
-# This is a super-ugly hack called PEP-0681. https://peps.python.org/pep-0681/
-_T = TypeVar("_T")
-def __dataclass_transform__(
+_T = TypeVar('_T')
+python_config = PythonConfiguration()
+
+@dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
+@overload
+def dataclass(
     *,
-    eq_default: bool = True,
-    order_default: bool = False,
-    kw_only_default: bool = False,
-    field_descriptors: Tuple[Union[type, Callable[..., Any]], ...] = (()),
-) -> Callable[[_T], _T]:
-    return lambda a: a
+    check_types: Union[bool, str] = CHECK_TYPES,
+    config: Configuration = python_config,
+    init: bool = True,
+    repr: bool = True,
+    eq: bool = True,
+    order: bool = False,
+    unsafe_hash: bool = False,
+    frozen: bool = True,
+    slots: bool = ...,
+) -> Callable[[Type[_T]], Type[_T]]:
+    ...
 
+@dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
+@overload
+def dataclass(_cls: Type[_T]) -> Type[_T]:
+    ...
 
-@__dataclass_transform__(eq_default=True, order_default=True)
-def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
-                           config: Configuration = PythonConfiguration(),
-                           init=True, repr=True, eq=True, order=False,
-                           unsafe_hash=False, frozen=True, slots=False) -> Any:
+@dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
+def dataclass(cls: Optional[Type[_T]]=None, *,
+              check_types: Union[bool, str] = CHECK_TYPES,
+              config: Configuration = python_config,
+                init: bool = True,
+                repr: bool = True,
+                eq: bool = True,
+                order: bool = False,
+                unsafe_hash: bool = False,
+                frozen: bool = True,
+                slots: bool = ...,
+    ) -> type:
+
     """Runtype's dataclass is a drop-in replacement to Python's built-in dataclass, with added functionality.
 
     **Differences from builtin dataclass:**
@@ -397,7 +428,10 @@ def dataclass(cls=None, *, check_types: Union[bool, str] = CHECK_TYPES,
     """
     assert isinstance(config, Configuration)
 
-    context_frame = inspect.currentframe().f_back   # Get parent frame, to resolve forward-references
+    # Get parent frame, to resolve forward-references
+    _current_frame = inspect.currentframe()
+    context_frame = _current_frame and _current_frame.f_back
+
     def wrap(cls):
         return _process_class(cls, config, check_types, context_frame,
                               init=init, repr=repr, eq=eq, order=order,
