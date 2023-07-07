@@ -63,6 +63,8 @@ class Configuration(ABC):
 
     """
 
+    field_types = (dataclasses.Field,)
+
     def on_default(self, default):
         """Called whenever a dataclass member is assigned a default value.
         """
@@ -108,6 +110,13 @@ class PythonConfiguration(Configuration):
             def f(_=default):
                 return copy(_)
             return dataclasses.field(default_factory=f)
+        elif isinstance(default, self.field_types):
+            d = default.default
+            if isinstance(d, (list, dict, set)):
+                def f(_=d):
+                    return copy(_)
+                default.default = dataclasses.MISSING
+                default.default_factory = f
         return default
 
 
@@ -242,7 +251,7 @@ def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
         return seq
     return random.sample(seq, max_sample_size)
 
-def _process_class(cls: type, config, check_types, context_frame, **kw):
+def _process_class(cls: type, config: Configuration, check_types, context_frame, **kw):
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         # type_ = config.type_to_canon(type_) if not isinstance(type_, str) else type_
 
@@ -252,13 +261,14 @@ def _process_class(cls: type, config, check_types, context_frame, **kw):
         if default is Required:
             setattr(cls, name, Required)
         elif default is not dataclasses.MISSING:
-            if isinstance(default, dataclasses.Field):
+            if isinstance(default, config.field_types):
                 if default.default is dataclasses.MISSING and default.default_factory is dataclasses.MISSING:
                     default.default = Required
 
             new_default = config.on_default(default)
             if new_default is not default:
                 setattr(cls, name, new_default)
+
 
         cls.__annotations__[name] = type_
 
@@ -391,7 +401,7 @@ def dataclass(cls: Optional[Type[_T]]=None, *,
       - Performs automatic casting (when check_types == 'cast')
 
     2. Ergonomics
-      - Supports assigning mutable literals (i.e. list, set, and dict).
+      - Supports assigning mutable literals (i.e. list, set, and dict). Each instance gets a new copy.
       - Adds convenience methods: replace(), aslist(), astuple(), and iterator for dict(this).
         These methods won't override existing ones. They will be added only if the names aren't used.
       - Setting the default as ``None`` automatically makes the type into ``Optional``, if it isn't already.

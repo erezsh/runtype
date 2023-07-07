@@ -881,6 +881,8 @@ class TestDataclass(TestCase):
         assert a.a == "hi"
         assert a.b == [1]
 
+        assert a == A("hi", [2])
+
     def test_field2(self):
         @dataclass
         class A:
@@ -890,6 +892,25 @@ class TestDataclass(TestCase):
         a = A({})
         assert a.a == {}
         assert a.b == {}
+
+    def test_field3(self):
+        @dataclass
+        class A:
+            a: List = field(default=[])
+
+        a = A()
+        assert a.a == []
+        assert a.a is not A().a
+
+    def test_field_auto_optional(self):
+        @dataclass
+        class A:
+            a: int = field(default=None)
+
+        assert A().a is None
+        assert A(None).a is None
+        assert A(1).a == 1
+
 
 
     def test_json_serialize(self):
