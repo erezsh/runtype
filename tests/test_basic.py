@@ -102,6 +102,13 @@ class TestIsa(TestCase):
             assert is_subtype(int, a)
             assert isa(1, a)
 
+    def test_issubclass(self):
+        # test class tuple
+        t = int, float
+        assert issubclass(int, t)
+        assert issubclass(float, t)
+        assert not issubclass(str, t)
+
 
     def test_assert(self):
         assert_isa(1, int)
