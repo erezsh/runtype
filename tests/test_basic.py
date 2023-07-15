@@ -588,6 +588,9 @@ class TestDataclass(TestCase):
         assert p2.aslist() == [30, 3]
         assert p2.astuple() == (30, 3)
 
+        assert p2.asdict() == {'x':30, 'y':3}
+        assert list(p2.asdict().keys()) == ['x', 'y'] # test order
+
         self.assertRaises(AssertionError, Point, 0, 2)
 
         self.assertRaises(TypeError, Point, 0, "a") # Before post_init

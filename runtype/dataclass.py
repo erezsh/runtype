@@ -203,21 +203,22 @@ def replace(inst, **kwargs):
 
 def __iter__(inst):
     "Yields a list of tuples [(name, value), ...]"
+    # TODO: deprecate this method
     return ((name, getattr(inst, name)) for name in inst.__dataclass_fields__)
 
+def asdict(inst):
+    """Returns a dict of {name: value, ...}
+    """
+    return {name: getattr(inst, name) for name in inst.__dataclass_fields__}
 
 def aslist(inst):
-    """Returns a list of values
-
-    Equivalent to: ``list(dict(inst).values())``
+    """Returns a list of the values
     """
     return [getattr(inst, name) for name in inst.__dataclass_fields__]
 
 
 def astuple(inst):
-    """Returns a tuple of values
-
-    Equivalent to: ``tuple(dict(inst).values())``
+    """Returns a tuple of the values
     """
     return tuple(getattr(inst, name) for name in inst.__dataclass_fields__)
 
@@ -317,6 +318,7 @@ def _process_class(cls: type, config: Configuration, check_types, context_frame,
 
     _set_if_not_exists(c, {
         'replace': replace,
+        'asdict': asdict,
         'aslist': aslist,
         'astuple': astuple,
         'json': json,
