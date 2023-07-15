@@ -530,6 +530,25 @@ class TestDispatch(TestCase):
         assert f([]) is object
         assert f({}) is dict
 
+    def test_init(self):
+        dp = Dispatch()
+
+        @dataclass(frozen=False)
+        class Point:
+            x: int = 0
+            y: int = 0
+            
+            @dp
+            def __init__(self, points: list):
+                self.x, self.y = points
+            
+        assert Point() == Point([0, 0])
+
+        p1 = Point(10, 20)
+        p2 = Point([10, 20])
+        assert p1 == p2
+
+
 
     def test_sequence(self):
         pass

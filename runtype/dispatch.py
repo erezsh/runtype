@@ -38,6 +38,7 @@ class MultiDispatch:
             f = tree.find_function_cached(args)
             return f(*args, **kw)
 
+        dispatched_f.__dispatcher__ = self
         return dispatched_f
 
     def __enter__(self):
