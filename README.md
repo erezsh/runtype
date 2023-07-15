@@ -49,7 +49,6 @@ No dependencies.
 
 Requires Python 3.6 or up.
 
-[![Build Status](https://travis-ci.org/erezsh/runtype.svg?branch=master)](https://travis-ci.org/erezsh/runtype)
 [![codecov](https://codecov.io/gh/erezsh/runtype/branch/master/graph/badge.svg)](https://codecov.io/gh/erezsh/runtype)
 
 ## Examples
