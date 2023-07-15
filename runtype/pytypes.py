@@ -112,12 +112,12 @@ class SumType(base_types.SumType, PythonType):
         raise TypeMismatchError(obj, self)
 
 
-def _flatten_types(t):
-    if isinstance(t, SumType):
-        for t in t.types:
-            yield from _flatten_types(t)
-    else:
-        yield t
+# def _flatten_types(t):
+#     if isinstance(t, SumType):
+#         for t in t.types:
+#             yield from _flatten_types(t)
+#     else:
+#         yield t
 
 
 
@@ -271,12 +271,16 @@ class DictType(GenericType):
         return type(self)(self.base, item)
 
     def cast_from(self, obj):
-        # Must already be a dict
-        self.base.validate_instance(obj)
-
         # Optimize for Dict[Any] and empty dicts
         if self.item is Any or not obj:
-            return obj
+            # Already a dict?
+            if self.base.test_instance(obj):
+                return obj
+            # Make sure it's a dict
+            return dict(obj)
+
+        # Must already be a dict
+        self.base.validate_instance(obj)
 
         # Recursively cast each item
         kt, vt = self.item.types

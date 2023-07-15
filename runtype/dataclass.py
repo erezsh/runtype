@@ -79,7 +79,6 @@ class Configuration(ABC):
     def ensure_isa(self, a, b, sampler=None):
         """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
         """
-        ...
 
     @abstractmethod
     def cast(self, obj, t):
@@ -88,7 +87,6 @@ class Configuration(ABC):
         The result is expected to pass `self.ensure_isa(res, t)` without an error,
         however this assertion is not validated, for performance reasons.
         """
-        ...
 
 
 class PythonConfiguration(Configuration):

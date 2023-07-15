@@ -65,18 +65,13 @@ EPOCH = datetime(1970, 1, 1)
 MS_WATERSHED = int(2e10)
 # slightly more than datetime.max in ns - (datetime.max - EPOCH).total_seconds() * 1e9
 MAX_NUMBER = int(3e20)
-StrBytesIntFloat = Union[str, bytes, int, float]
 
 
-def get_numeric(value: StrBytesIntFloat, native_expected_type: str) -> Union[None, int, float]:
-    if isinstance(value, (int, float)):
-        return value
+def get_numeric(value: str, native_expected_type: str) -> Union[None, int, float]:
     try:
         return float(value)
     except ValueError:
         return None
-    except TypeError:
-        raise TypeError(f'invalid type; expected {native_expected_type}, string, bytes, int or float')
 
 
 def from_unix_seconds(seconds: Union[int, float]) -> datetime:
@@ -107,25 +102,16 @@ def _parse_timezone(value: Optional[str], error: Type[Exception]) -> Union[None,
         return None
 
 
-def parse_date(value: Union[date, StrBytesIntFloat]) -> date:
+def parse_date(value: str) -> date:
     """
     Parse a date/int/float/string and return a datetime.date.
 
     Raise ValueError if the input is well formatted but not a valid date.
     Raise ValueError if the input isn't well formatted.
     """
-    if isinstance(value, date):
-        if isinstance(value, datetime):
-            return value.date()
-        else:
-            return value
-
     number = get_numeric(value, 'date')
     if number is not None:
         return from_unix_seconds(number).date()
-
-    if isinstance(value, bytes):
-        value = value.decode()
 
     match = date_re.match(value)  # type: ignore
     if match is None:
@@ -139,25 +125,19 @@ def parse_date(value: Union[date, StrBytesIntFloat]) -> date:
         raise DateError()
 
 
-def parse_time(value: Union[time, StrBytesIntFloat]) -> time:
+def parse_time(value: str) -> time:
     """
     Parse a time/string and return a datetime.time.
 
     Raise ValueError if the input is well formatted but not a valid time.
     Raise ValueError if the input isn't well formatted, in particular if it contains an offset.
     """
-    if isinstance(value, time):
-        return value
-
     number = get_numeric(value, 'time')
     if number is not None:
         if number >= 86400:
             # doesn't make sense since the time time loop back around to 0
             raise TimeError()
         return (datetime.min + timedelta(seconds=number)).time()
-
-    if isinstance(value, bytes):
-        value = value.decode()
 
     match = time_re.match(value)  # type: ignore
     if match is None:
@@ -177,7 +157,7 @@ def parse_time(value: Union[time, StrBytesIntFloat]) -> time:
         raise TimeError()
 
 
-def parse_datetime(value: Union[datetime, StrBytesIntFloat]) -> datetime:
+def parse_datetime(value: str) -> datetime:
     """
     Parse a datetime/int/float/string and return a datetime.datetime.
 
@@ -187,15 +167,10 @@ def parse_datetime(value: Union[datetime, StrBytesIntFloat]) -> datetime:
     Raise ValueError if the input is well formatted but not a valid datetime.
     Raise ValueError if the input isn't well formatted.
     """
-    if isinstance(value, datetime):
-        return value
 
     number = get_numeric(value, 'datetime')
     if number is not None:
         return from_unix_seconds(number)
-
-    if isinstance(value, bytes):
-        value = value.decode()
 
     match = datetime_re.match(value)  # type: ignore
     if match is None:
@@ -215,7 +190,7 @@ def parse_datetime(value: Union[datetime, StrBytesIntFloat]) -> datetime:
         raise DateTimeError()
 
 
-def parse_duration(value: StrBytesIntFloat) -> timedelta:
+def parse_duration(value: str) -> timedelta:
     """
     Parse a duration int/float/string and return a datetime.timedelta.
 
@@ -223,15 +198,6 @@ def parse_duration(value: StrBytesIntFloat) -> timedelta:
 
     Also supports ISO 8601 representation.
     """
-    if isinstance(value, timedelta):
-        return value
-
-    if isinstance(value, (int, float)):
-        # below code requires a string
-        value = str(value)
-    elif isinstance(value, bytes):
-        value = value.decode()
-
     try:
         match = standard_duration_re.match(value) or iso8601_duration_re.match(value)
     except TypeError:

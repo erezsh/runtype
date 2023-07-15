@@ -1,3 +1,4 @@
+import sys
 import unittest
 from unittest import TestCase
 import typing
@@ -104,7 +105,14 @@ class TestTypes(TestCase):
         assert not String.test_instance(3)
 
         assert String(max_length=5).test_instance('abc')
+        assert String(min_length=2).test_instance('abc')
         assert not String(max_length=5).test_instance('abcdef')
+        assert not String(min_length=5).test_instance('abc')
+
+        i = Int(min=10, max=12)
+        assert i.test_instance(11)
+        assert not i.test_instance(9)
+        assert not i.test_instance(13)
 
 
 
@@ -136,6 +144,7 @@ class TestTypes(TestCase):
 
         assert Literal([1]) <= Literal([1, 2])
         assert not Literal([1, 3]) <= Literal([1, 2])
+        assert Literal([1, 3]) >= Literal([1])
         assert not Literal([1]) <= Tuple
         assert not Literal(1) >= Tuple
         assert not Tuple <= Literal(1)
@@ -148,8 +157,17 @@ class TestTypes(TestCase):
         self.assertRaises(TypeError, lambda: Tuple >= 1)
         self.assertRaises(TypeError, lambda: Literal >= 1)
 
-        type_caster.to_canon(list[int]).cast_from([])
-        type_caster.to_canon(list[int]).cast_from(())
+        assert type_caster.to_canon(typing.List[int]).cast_from([]) == []
+        assert type_caster.to_canon(typing.List[int]).cast_from(()) == []
+        assert type_caster.to_canon(typing.Dict[int, int]).cast_from({}) == {}
+        assert type_caster.to_canon(typing.Dict[int, int]).cast_from([]) == {}
+
+        t = type_caster.to_canon(typing.Tuple[int, ...])
+        assert t.test_instance((1,2,3))
+        assert not t.test_instance((1,2,3, 'a'))
+        if sys.version_info >= (3, 11):
+            self.assertRaises(ValueError, type_caster.to_canon, typing.Tuple[...])
+            self.assertRaises(ValueError, type_caster.to_canon, typing.Tuple[int, str, ...])
 
 
 

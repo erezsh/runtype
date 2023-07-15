@@ -12,6 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking
+from runtype.dispatch import MultiDispatch
 from runtype.dataclass import Configuration
 
 try:
@@ -253,6 +254,10 @@ class TestDispatch(TestCase):
 
         assert to_list([1]) == [1]
         assert to_list({1: 2}) == [(1, 2)]
+
+    def test_with(self):
+        with Dispatch() as d:
+            assert isinstance(d, MultiDispatch)
 
     def test_ambiguity(self):
         dp = Dispatch()
