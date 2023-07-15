@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from unittest import TestCase
 from typing import List, Dict
 
@@ -33,6 +33,22 @@ class TestCasts(TestCase):
         assert A(d).a.toordinal() == d.toordinal()
         assert A(d.isoformat()).a.toordinal() == d.toordinal()
         self.assertRaises(TypeError, A, 'bla')
+
+        @dataclass(check_types='cast')
+        class B:
+            b: date
+            c: time
+
+        b = B( d.date().isoformat(), d.time().isoformat() )
+        assert b.b.toordinal() == d.date().toordinal()
+        assert b.c == d.time()
+
+        @dataclass(check_types='cast')
+        class C:
+            t: timedelta
+
+        c = C('1:02')
+        assert c.t.seconds == 62
 
 
     def test_cast_dict(self):

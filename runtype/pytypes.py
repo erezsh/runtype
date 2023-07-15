@@ -8,7 +8,7 @@ import collections
 from collections import abc
 import sys
 import typing
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from types import FrameType
 
 from .utils import ForwardRef
@@ -347,6 +347,33 @@ class _DateTime(PythonDataType):
                 raise TypeMismatchError(obj, self)
         return super().cast_from(obj)
 
+class _Date(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_date(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
+class _Time(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_time(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
+class _TimeDelta(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_duration(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
 
 class _NoneType(OneOf):
     def __init__(self):
@@ -364,6 +391,9 @@ Int = _Int(int)
 Float = _Float(float)
 NoneType =  _NoneType()
 DateTime = _DateTime(datetime)
+Date = _Date(date)
+Time = _Time(time)
+TimeDelta = _TimeDelta(timedelta)
 
 
 _type_cast_mapping = {
@@ -381,7 +411,9 @@ _type_cast_mapping = {
     object: Any,
     typing.Any: Any,
     datetime: DateTime,
-
+    date: Date,
+    time: Time,
+    timedelta: TimeDelta,
 }
 
 
