@@ -252,6 +252,7 @@ def _sample(seq, max_sample_size=MAX_SAMPLE_SIZE):
     return random.sample(seq, max_sample_size)
 
 def _process_class(cls: type, config: Configuration, check_types, context_frame, **kw):
+
     for name, type_ in getattr(cls, '__annotations__', {}).items():
         # type_ = config.type_to_canon(type_) if not isinstance(type_, str) else type_
 
