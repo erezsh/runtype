@@ -129,6 +129,24 @@ print( append('foo', 4)     )
 # runtype.dispatch.DispatchError: Function 'append' not found for signature (<class 'str'>, <class 'int'>)
 ```
 
+Dispatch can also be used for extending the dataclass builtin `__init__`:
+
+```python
+dp = Dispatch()
+
+@dataclass(frozen=False)
+class Point:
+    x: int = 0
+    y: int = 0
+    
+    @dp
+    def __init__(self, points: list):
+        self.x, self.y = points
+    
+# Use either the default constructors or the custom constructor
+assert Point() == Point(0, 0) == Point([0, 0])
+```
+
 
 ## License
 
