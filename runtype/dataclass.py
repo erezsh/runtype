@@ -20,7 +20,7 @@ else:
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType
+from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType, type_caster
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
@@ -393,13 +393,11 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = True,
     slots: bool = ...,
-) -> Callable[[Type[_T]], Type[_T]]:
-    ...
+) -> Callable[[Type[_T]], Type[_T]]: ...
 
 @dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
 @overload
-def dataclass(_cls: Type[_T]) -> Type[_T]:
-    ...
+def dataclass(_cls: Type[_T]) -> Type[_T]: ...
 
 @dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
 def dataclass(cls: Optional[Type[_T]]=None, *,

@@ -4,7 +4,7 @@ import typing
 import collections.abc as cabc
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter
+from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal
 from runtype.typesystem import TypeSystem
 
 
@@ -127,16 +127,31 @@ class TestTypes(TestCase):
 
     def test_pytypes(self):
         assert Tuple <= Tuple
+        assert Tuple >= Tuple
         # assert Tuple[int] <= Tuple
         assert not List <= Tuple
         assert not Tuple <= List
         assert not Tuple <= Int
         assert not Int <= Tuple
 
+        assert Literal([1]) <= Literal([1, 2])
+        assert not Literal([1, 3]) <= Literal([1, 2])
+        assert not Literal([1]) <= Tuple
+        assert not Literal(1) >= Tuple
+        assert not Tuple <= Literal(1)
+
         Tuple.validate_instance((1, 2))
         self.assertRaises(TypeError, Tuple.validate_instance, 1)
 
         assert List[int] == List[int]
+
+        self.assertRaises(TypeError, lambda: Tuple >= 1)
+        self.assertRaises(TypeError, lambda: Literal >= 1)
+
+        type_caster.to_canon(list[int]).cast_from([])
+        type_caster.to_canon(list[int]).cast_from(())
+
+
 
     def test_canonize_pytypes(self):
         pytypes = [

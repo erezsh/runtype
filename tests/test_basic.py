@@ -950,8 +950,15 @@ class TestDataclass(TestCase):
         @dataclass
         class Foo:
             bars: List[Bar]
+            d: Dict[str, Bar]
 
-        assert Foo([Bar(0)]).json() == {"bars": [{"baz": 0}]}
+        assert Foo(
+            [Bar(0)],
+            {"a": Bar(2)}
+            ).json() == {
+                "bars": [{"baz": 0}],
+                "d": {"a": {"baz": 2}}
+                }
 
 
 

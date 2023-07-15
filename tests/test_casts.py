@@ -43,12 +43,18 @@ class TestCasts(TestCase):
         assert b.b.toordinal() == d.date().toordinal()
         assert b.c == d.time()
 
+        self.assertRaises(TypeError, B, d.date(), 'bla')
+        self.assertRaises(TypeError, B, 'bla', d.time())
+
         @dataclass(check_types='cast')
         class C:
             t: timedelta
 
-        c = C('1:02')
+        c = C('1:02.0003')
         assert c.t.seconds == 62
+        assert c.t.microseconds == 300
+
+        self.assertRaises(TypeError, C, 'bla')
 
 
     def test_cast_dict(self):
