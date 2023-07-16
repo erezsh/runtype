@@ -12,6 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking
+from runtype.dispatch import MultiDispatch
 from runtype.dataclass import Configuration
 
 try:
@@ -101,6 +102,13 @@ class TestIsa(TestCase):
             assert is_subtype(a, int)
             assert is_subtype(int, a)
             assert isa(1, a)
+
+    def test_issubclass(self):
+        # test class tuple
+        t = int, float
+        assert issubclass(int, t)
+        assert issubclass(float, t)
+        assert not issubclass(str, t)
 
 
     def test_assert(self):
@@ -246,6 +254,10 @@ class TestDispatch(TestCase):
 
         assert to_list([1]) == [1]
         assert to_list({1: 2}) == [(1, 2)]
+
+    def test_with(self):
+        with Dispatch() as d:
+            assert isinstance(d, MultiDispatch)
 
     def test_ambiguity(self):
         dp = Dispatch()
@@ -587,6 +599,9 @@ class TestDataclass(TestCase):
         assert dict(p2) == {'x':30, 'y':3}
         assert p2.aslist() == [30, 3]
         assert p2.astuple() == (30, 3)
+
+        assert p2.asdict() == {'x':30, 'y':3}
+        assert list(p2.asdict().keys()) == ['x', 'y'] # test order
 
         self.assertRaises(AssertionError, Point, 0, 2)
 
@@ -940,8 +955,15 @@ class TestDataclass(TestCase):
         @dataclass
         class Foo:
             bars: List[Bar]
+            d: Dict[str, Bar]
 
-        assert Foo([Bar(0)]).json() == {"bars": [{"baz": 0}]}
+        assert Foo(
+            [Bar(0)],
+            {"a": Bar(2)}
+            ).json() == {
+                "bars": [{"baz": 0}],
+                "d": {"a": {"baz": 2}}
+                }
 
 
 

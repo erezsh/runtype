@@ -298,7 +298,6 @@ class Validator(ABC):
         validate only a sample of the object. This approach may validate much faster,
         but might miss anomalies in the data.
         """
-        ...
 
 
     def test_instance(self, obj, sampler=None):

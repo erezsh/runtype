@@ -8,7 +8,7 @@ import collections
 from collections import abc
 import sys
 import typing
-from datetime import datetime
+from datetime import datetime, date, time, timedelta
 from types import FrameType
 
 from .utils import ForwardRef
@@ -112,12 +112,12 @@ class SumType(base_types.SumType, PythonType):
         raise TypeMismatchError(obj, self)
 
 
-def _flatten_types(t):
-    if isinstance(t, SumType):
-        for t in t.types:
-            yield from _flatten_types(t)
-    else:
-        yield t
+# def _flatten_types(t):
+#     if isinstance(t, SumType):
+#         for t in t.types:
+#             yield from _flatten_types(t)
+#     else:
+#         yield t
 
 
 
@@ -271,12 +271,16 @@ class DictType(GenericType):
         return type(self)(self.base, item)
 
     def cast_from(self, obj):
-        # Must already be a dict
-        self.base.validate_instance(obj)
-
         # Optimize for Dict[Any] and empty dicts
         if self.item is Any or not obj:
-            return obj
+            # Already a dict?
+            if self.base.test_instance(obj):
+                return obj
+            # Make sure it's a dict
+            return dict(obj)
+
+        # Must already be a dict
+        self.base.validate_instance(obj)
 
         # Recursively cast each item
         kt, vt = self.item.types
@@ -347,6 +351,33 @@ class _DateTime(PythonDataType):
                 raise TypeMismatchError(obj, self)
         return super().cast_from(obj)
 
+class _Date(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_date(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
+class _Time(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_time(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
+class _TimeDelta(PythonDataType):
+    def cast_from(self, obj):
+        if isinstance(obj, str):
+            try:
+                return datetime_parse.parse_duration(obj)
+            except datetime_parse.DateTimeError:
+                raise TypeMismatchError(obj, self)
+        return super().cast_from(obj)
+
 
 class _NoneType(OneOf):
     def __init__(self):
@@ -364,6 +395,9 @@ Int = _Int(int)
 Float = _Float(float)
 NoneType =  _NoneType()
 DateTime = _DateTime(datetime)
+Date = _Date(date)
+Time = _Time(time)
+TimeDelta = _TimeDelta(timedelta)
 
 
 _type_cast_mapping = {
@@ -381,7 +415,9 @@ _type_cast_mapping = {
     object: Any,
     typing.Any: Any,
     datetime: DateTime,
-
+    date: Date,
+    time: Time,
+    timedelta: TimeDelta,
 }
 
 

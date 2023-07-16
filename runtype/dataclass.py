@@ -20,7 +20,7 @@ else:
 from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
-from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType
+from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType, type_caster
 
 Required = object()
 MAX_SAMPLE_SIZE = 16
@@ -79,7 +79,6 @@ class Configuration(ABC):
     def ensure_isa(self, a, b, sampler=None):
         """Ensure that 'a' is an instance of type 'b'. If not, raise a TypeError.
         """
-        ...
 
     @abstractmethod
     def cast(self, obj, t):
@@ -88,7 +87,6 @@ class Configuration(ABC):
         The result is expected to pass `self.ensure_isa(res, t)` without an error,
         however this assertion is not validated, for performance reasons.
         """
-        ...
 
 
 class PythonConfiguration(Configuration):
@@ -203,21 +201,22 @@ def replace(inst, **kwargs):
 
 def __iter__(inst):
     "Yields a list of tuples [(name, value), ...]"
+    # TODO: deprecate this method
     return ((name, getattr(inst, name)) for name in inst.__dataclass_fields__)
 
+def asdict(inst):
+    """Returns a dict of {name: value, ...}
+    """
+    return {name: getattr(inst, name) for name in inst.__dataclass_fields__}
 
 def aslist(inst):
-    """Returns a list of values
-
-    Equivalent to: ``list(dict(inst).values())``
+    """Returns a list of the values
     """
     return [getattr(inst, name) for name in inst.__dataclass_fields__]
 
 
 def astuple(inst):
-    """Returns a tuple of values
-
-    Equivalent to: ``tuple(dict(inst).values())``
+    """Returns a tuple of the values
     """
     return tuple(getattr(inst, name) for name in inst.__dataclass_fields__)
 
@@ -317,6 +316,7 @@ def _process_class(cls: type, config: Configuration, check_types, context_frame,
 
     _set_if_not_exists(c, {
         'replace': replace,
+        'asdict': asdict,
         'aslist': aslist,
         'astuple': astuple,
         'json': json,
@@ -391,13 +391,11 @@ def dataclass(
     unsafe_hash: bool = False,
     frozen: bool = True,
     slots: bool = ...,
-) -> Callable[[Type[_T]], Type[_T]]:
-    ...
+) -> Callable[[Type[_T]], Type[_T]]: ...
 
 @dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
 @overload
-def dataclass(_cls: Type[_T]) -> Type[_T]:
-    ...
+def dataclass(_cls: Type[_T]) -> Type[_T]: ...
 
 @dataclass_transform(field_specifiers=(dataclasses.field, dataclasses.Field), frozen_default=True)
 def dataclass(cls: Optional[Type[_T]]=None, *,

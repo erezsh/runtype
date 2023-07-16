@@ -11,6 +11,7 @@ class DispatchError(Exception):
     pass
 
 
+# TODO: Remove test_subtypes, replace with support for Type[], like isa(t, Type[t])
 class MultiDispatch:
     """Creates a dispatch group for multiple dispatch
 
