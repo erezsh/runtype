@@ -67,32 +67,35 @@ Then, the group can be used as a decorator for any number of functions.
 
 Dispatch maintains the original name of every function. So, functions of different names will never collide with each other.
 
+The order in which you define functions doesn't matter.
+
 Example:
 ::
 
-    @dp
-    def f(a: int):
-        print("Got int:", a)
+    dp = Dispatch()
 
-    @dp
-    def f(a):   # No type means Any type
-        print("Got:", a)
+    @dataclass(frozen=False)
+    class Point:
+        x: int = 0
+        y: int = 0
+        
+        @dp
+        def __init__(self, points: list | tuple):
+            self.x, self.y = points
 
-    @dp
-    def g(a: str):
-        print("Got string in g:", a)
+        @dp
+        def __init__(self, points: dict):
+            self.x = points['x']
+            self.y = points['y']
+        
+    # Test constructors
+    p0 = Point()                         # Default constructor
+    assert p0 == Point(0, 0)             # Default constructor
+    assert p0 == Point([0, 0])           # User constructor
+    assert p0 == Point((0, 0))           # User constructor
+    assert p0 == Point({"x": 0, "y": 0}) # User constructor
 
-    ...
 
-    >>> f(1)
-    Got int: 1
-    >>> f("a")
-    Got: a
-    >>> g("a")
-    Got string in g: a
-
-
-The order in which you define functions doesn't matter.
 
 Specificity
 -----------

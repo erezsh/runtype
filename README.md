@@ -139,11 +139,20 @@ class Point:
     y: int = 0
     
     @dp
-    def __init__(self, points: list):
+    def __init__(self, points: list | tuple):
         self.x, self.y = points
+
+    @dp
+    def __init__(self, points: dict):
+        self.x = points['x']
+        self.y = points['y']
     
-# Use either the default constructors or the custom constructor
-assert Point() == Point(0, 0) == Point([0, 0])
+# Test constructors
+p0 = Point()                         # Default constructor
+assert p0 == Point(0, 0)             # Default constructor
+assert p0 == Point([0, 0])           # User constructor
+assert p0 == Point((0, 0))           # User constructor
+assert p0 == Point({"x": 0, "y": 0}) # User constructor
 ```
 
 
