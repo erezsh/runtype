@@ -55,33 +55,28 @@ Requires Python 3.6 or up.
 
 ### Validation (Isa & Subclass)
 
+Use `isa` and `issubclass` as a smarter alternative to the builtin isinstance & issubclass -
+
 ```python
-from typing import Dict, Mapping
 from runtype import isa, issubclass
 
-print( isa({'a': 1}, Dict[str, int]) )
-#> True
-print( isa({'a': 'b'}, Dict[str, int]) )
-#> False
+assert isa({'a': 1}, dict[str, int])        # == True
+assert not isa({'a': 'b'}, dict[str, int])  # == False
 
-print( issubclass(Dict[str, int], Mapping[str, int]) )
-#> True
-print( issubclass(Dict[str, int], Mapping[int, str]) )
-#> False
+assert issubclass(dict[str, int], typing.Mapping[str, int])     # == True
+assert not issubclass(dict[str, int], typing.Mapping[int, str]) # == False
 ```
 
 ### Dataclasses
 
 ```python
-from typing import List
-from datetime import datetime
 from runtype import dataclass
 
 @dataclass(check_types='cast')  # Cast values to the target type, when applicable
 class Person:
     name: str
-    birthday: datetime = None   # Optional
-    interests: List[str] = []   # The list is copied for each instance
+    birthday: datetime = None   # Implicit optional
+    interests: list[str] = []   # The list is copied for each instance
 
 
 print( Person("Beetlejuice") )
@@ -89,43 +84,36 @@ print( Person("Beetlejuice") )
 print( Person("Albert", "1955-04-18T00:00", ['physics']) )
 #> Person(name='Albert', birthday=datetime.datetime(1955, 4, 18, 0, 0), interests=['physics'])
 print( Person("Bad", interests=['a', 1]) )
-# Traceback (most recent call last):
-#   ...
 # TypeError: [Person] Attribute 'interests' expected value of type list[str]. Instead got ['a', 1]
-
 #     Failed on item: 1, expected type str
-
 ```
 
 ### Multiple Dispatch
+
+Runtype dispatches according to the most specific type match -
 
 ```python
 from runtype import Dispatch
 dp = Dispatch()
 
 @dp
-def append(a: list, b):
-    return a + [b]
-
+def mul(a: Any, b: Any):
+    return a * b
 @dp
-def append(a: tuple, b):
-    return a + (b,)
-
+def mul(a: list, b: Any):
+    return [ai*b for ai in a]
 @dp
-def append(a: str, b: str):
-    return a + b
+def mul(a: Any, b: list):
+    return [bi*b for bi in b]
+@dp
+def mul(a: list, b: list):
+    return [mul(i, j) for i, j in zip(a, b, strict=True)]
 
 
-print( append([1, 2, 3], 4) )
-#> [1, 2, 3, 4]
-print( append((1, 2, 3), 4) )
-#> (1, 2, 3, 4)
-print( append('foo', 'bar') )
-#> foobar
-print( append('foo', 4)     )
-# Traceback (most recent call last):
-#    ...
-# runtype.dispatch.DispatchError: Function 'append' not found for signature (<class 'str'>, <class 'int'>)
+assert mul("a", 4)         == "aaaa"        # Any, Any
+assert mul([1, 2, 3], 2)   == [2, 4, 6]     # list, Any
+assert mul([1, 2], [3, 4]) == [3, 8]        # list, list
+
 ```
 
 Dispatch can also be used for extending the dataclass builtin `__init__`:
