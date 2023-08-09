@@ -99,7 +99,7 @@ When running in production, it's recommended to use the `-O` switch for Python. 
 Alternatively, you can use a shared dataclass decorator, and enable/disable type-checking with a single change.
 
 Example:
-  ::
+::
   
     # common.py
     import runtype
@@ -115,8 +115,9 @@ Compared to Pydantic
 Using Pydantic's own benchmark, runtype performs twice faster than Pydantic. (or, Pydantic is twice slower than Runtype)
 
 ::
-          pydantic best=63.839μs/iter avg=65.501μs/iter stdev=1.763μs/iter version=1.9.1
+
+    pydantic best=63.839μs/iter avg=65.501μs/iter stdev=1.763μs/iter version=1.9.1
     attrs + cattrs best=45.607μs/iter avg=45.804μs/iter stdev=0.386μs/iter version=21.4.0
-           runtype best=31.500μs/iter avg=32.281μs/iter stdev=0.753μs/iter version=0.2.7
+    runtype best=31.500μs/iter avg=32.281μs/iter stdev=0.753μs/iter version=0.2.7
 
 See the code `here <https://github.com/samuelcolvin/pydantic/pull/3264>`_.
