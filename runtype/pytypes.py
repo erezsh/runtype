@@ -515,6 +515,8 @@ class TypeCaster(ATypeCaster):
                 k, v = t.__args__
                 return Dict[to_canon(k), to_canon(v)]
             elif t.__origin__ is origin_tuple:
+                if not t.__args__:
+                    return Tuple
                 if Ellipsis in t.__args__:
                     if len(t.__args__) != 2 or t.__args__[0] == Ellipsis:
                         raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
