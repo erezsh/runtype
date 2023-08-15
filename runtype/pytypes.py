@@ -477,7 +477,7 @@ class TypeCaster(ATypeCaster):
                 # Python 3.6
                 return to_canon(t.__args__[0])
 
-        if isinstance(t, types.UnionType):
+        if hasattr(types, 'UnionType') and isinstance(t, types.UnionType):
             res = [to_canon(x) for x in t.__args__]
             return SumType(res)
 
