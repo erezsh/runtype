@@ -94,16 +94,22 @@ class TestIsa(TestCase):
         assert not isa(frozenset({'a'}), Set[int])
 
 
-    def test_basic2(self):
+    def test_issubclass(self):
         assert issubclass(List[Tuple], list)
 
         if hasattr(typing, 'Annotated'):
             a = typing.Annotated[int, range(1, 10)]
-            assert is_subtype(a, int)
-            assert is_subtype(int, a)
+            assert issubclass(a, int)
+            assert issubclass(int, a)
             assert isa(1, a)
 
-    def test_issubclass(self):
+        assert issubclass(typing.Tuple, tuple)
+        assert issubclass(typing.Tuple[int], tuple)
+        assert issubclass(typing.Tuple[int, ...], tuple)
+        assert issubclass(typing.Tuple[int], typing.Tuple[typing.Union[int, str]])
+        assert issubclass(typing.Tuple[int, ...], typing.Tuple[typing.Union[int, str], ...])
+
+    def test_issubclass_tuple(self):
         # test class tuple
         t = int, float
         assert issubclass(int, t)

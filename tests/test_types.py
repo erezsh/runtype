@@ -162,9 +162,25 @@ class TestTypes(TestCase):
         assert type_caster.to_canon(typing.Dict[int, int]).cast_from({}) == {}
         assert type_caster.to_canon(typing.Dict[int, int]).cast_from([]) == {}
 
-        t = type_caster.to_canon(typing.Tuple[int, ...])
-        assert t.test_instance((1,2,3))
-        assert not t.test_instance((1,2,3, 'a'))
+        tpl0 = type_caster.to_canon(typing.Tuple)
+        tpl1 = type_caster.to_canon(typing.Tuple[int])
+        tpl2 = type_caster.to_canon(typing.Tuple[int, ...])
+        tpl0b = type_caster.to_canon(tuple)
+        tpl3 = type_caster.to_canon(typing.Tuple[typing.Union[int, str]])
+        tpl4 = type_caster.to_canon(typing.Tuple[typing.Union[int, str], ...])
+        assert tpl0 is tpl0b
+        assert tpl1 <= tpl0
+        assert tpl2 <= tpl0
+
+        assert tpl3 <= tpl0
+        assert tpl1 <= tpl3
+        assert not tpl3 <= tpl1
+        assert not tpl0 <= tpl3
+
+        assert tpl2 <= tpl4
+
+        assert tpl2.test_instance((1,2,3))
+        assert not tpl2.test_instance((1,2,3, 'a'))
         if sys.version_info >= (3, 11):
             self.assertRaises(ValueError, type_caster.to_canon, typing.Tuple[...])
             self.assertRaises(ValueError, type_caster.to_canon, typing.Tuple[int, str, ...])

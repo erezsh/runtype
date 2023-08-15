@@ -33,7 +33,7 @@ It is:
 - :star: [**type utilities**](https://runtype.readthedocs.io/en/latest/types.html) - Provides a set of classes to implement your own type-system.
 
     - Used by runtype itself, to emulate the Python type-system.
-
+ 
 
 ## Docs
 
