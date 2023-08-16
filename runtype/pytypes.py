@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+import types
 from abc import abstractmethod, ABC
 from contextlib import suppress
 import collections
@@ -166,7 +167,9 @@ class TupleType(PythonType):
         return isinstance(other, TupleType)
 
     def __ge__(self, other):
-        if isinstance(other, TupleType):
+        if isinstance(other, TupleEllipsisType):
+            return True
+        elif isinstance(other, TupleType):
             return True
         elif isinstance(other, DataType):
             return False
@@ -286,6 +289,10 @@ class DictType(GenericType):
         kt, vt = self.item.types
         return {kt.cast_from(k): vt.cast_from(v) for k, v in obj.items()}
 
+class TupleEllipsisType(SequenceType):
+    def __repr__(self):
+        return '%s[%s, ...]' % (self.base, self.item)
+
 
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
@@ -296,7 +303,7 @@ FrozenSet = SequenceType(PythonDataType(frozenset))
 Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
 Tuple = TupleType()
-TupleEllipsis = SequenceType(PythonDataType(tuple))
+TupleEllipsis = TupleEllipsisType(PythonDataType(tuple))
 # Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
@@ -470,6 +477,10 @@ class TypeCaster(ATypeCaster):
                 # Python 3.6
                 return to_canon(t.__args__[0])
 
+        if hasattr(types, 'UnionType') and isinstance(t, types.UnionType):
+            res = [to_canon(x) for x in t.__args__]
+            return SumType(res)
+
         try:
             t.__origin__
         except AttributeError:
@@ -504,6 +515,8 @@ class TypeCaster(ATypeCaster):
                 k, v = t.__args__
                 return Dict[to_canon(k), to_canon(v)]
             elif t.__origin__ is origin_tuple:
+                if not t.__args__:
+                    return Tuple
                 if Ellipsis in t.__args__:
                     if len(t.__args__) != 2 or t.__args__[0] == Ellipsis:
                         raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
