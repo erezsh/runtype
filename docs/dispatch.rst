@@ -3,6 +3,12 @@ Dispatch
 
 Provides a decorator that enables multiple-dispatch for functions.
 
+Features:
+
+- Full specificity resolution
+
+- Mypy support: Can be used with @overload decorator
+
 (Inspired by Julia)
 
 
@@ -184,6 +190,51 @@ Another example:
 
 
 Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
+
+MyPy support (@overload)
+------------------------
+
+Dispatch can be made to work with the overload decorator, aiding in granular type resolution.
+
+However, due to the limited design of the overload decorator, there are several rules that need to be followed, and limitations that should be considered.
+
+1. The overload decorator must be placed above the dispatch decorator.
+
+1. The last dispatched function of each function group, must be written without type declarations, and without the overload decorator. It is recommended to use this function for error handling.
+
+3. Mypy doesn't support all of the functionality of Runtype's dispatch, such as full specificity resolution. Therefore, some valid dispatch constructs will produce an error in mypy.
+
+
+Example usage:
+
+::
+
+    from runtype import Dispatch
+    from typing import overload
+    dp = Dispatch()
+
+    @overload
+    @dp
+    def join(seq, sep: str = ''):
+        return sep.join(str(s) for s in seq)
+
+    @overload
+    @dp
+    def join(seq, sep: list):
+        return join(join(sep, str(s)) for s in seq)
+
+    @dp
+    def join(seq, sep):
+        raise NotImplementedError()
+
+    # Calling join() with the wrong types -
+    join(1,2)   # At runtime, raises NotImplementedError
+
+    # Mypy generates the following report:
+    #   error: No overload variant of "join" matches argument types "int", "int"  [call-overload]
+    #   note: Possible overload variants:
+    #   note:     def join(seq: Any, sep: str = ...) -> Any
+    #   note:     def join(seq: Any, sep: list[Any]) -> Any
 
 
 Performance

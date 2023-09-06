@@ -48,8 +48,8 @@ class CastFailed(TypeMismatchError):
 
 
 class PythonType(base_types.Type, Validator):
-    pass
-
+    def cast_from(self, obj):
+        raise NotImplementedError()
 
 
 class Constraint(base_types.Constraint):
@@ -467,89 +467,87 @@ class TypeCaster(ATypeCaster):
         if isinstance(t, tuple):
             return SumType([to_canon(x) for x in t])
 
-        if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):
-            return to_canon(t.__origin__)
-
-        if typing_extensions:
-            if hasattr(typing_extensions, '_AnnotatedAlias') and isinstance(t, typing_extensions._AnnotatedAlias):
-                return to_canon(t.__origin__)
-            elif hasattr(typing_extensions, 'AnnotatedMeta') and isinstance(t, typing_extensions.AnnotatedMeta):
-                # Python 3.6
-                return to_canon(t.__args__[0])
-
         if hasattr(types, 'UnionType') and isinstance(t, types.UnionType):
             res = [to_canon(x) for x in t.__args__]
             return SumType(res)
 
-        try:
-            t.__origin__
-        except AttributeError:
-            pass
-        else:
-            if getattr(t, '__args__', None) is None:
-                if t is typing.List:
-                    return List
-                elif t is typing.Dict:
-                    return Dict
-                elif t is typing.Set:
-                    return Set
-                elif t is typing.FrozenSet:
-                    return FrozenSet
-                elif t is typing.Tuple:
-                    return Tuple
-                elif t is typing.Mapping:  # 3.6
-                    return Mapping
-                elif t is typing.Sequence:
-                    return Sequence
+        origin = getattr(t, '__origin__', None)
+        if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):
+            return to_canon(origin)
 
-            if t.__origin__ is origin_list:
-                x ,= t.__args__
-                return List[to_canon(x)]
-            elif t.__origin__ is origin_set:
-                x ,= t.__args__
-                return Set[to_canon(x)]
-            elif t.__origin__ is origin_frozenset:
-                x ,= t.__args__
-                return FrozenSet[to_canon(x)]
-            elif t.__origin__ is origin_dict:
-                k, v = t.__args__
-                return Dict[to_canon(k), to_canon(v)]
-            elif t.__origin__ is origin_tuple:
-                if not t.__args__:
-                    return Tuple
-                if Ellipsis in t.__args__:
-                    if len(t.__args__) != 2 or t.__args__[0] == Ellipsis:
-                        raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
-                    return TupleEllipsis[to_canon(t.__args__[0])]
+        if typing_extensions:
+            if hasattr(typing_extensions, '_AnnotatedAlias') and isinstance(t, typing_extensions._AnnotatedAlias):
+                return to_canon(origin)
+            elif hasattr(typing_extensions, 'AnnotatedMeta') and isinstance(t, typing_extensions.AnnotatedMeta):
+                # Python 3.6
+                return to_canon(t.__args__[0])
 
-                return ProductType([to_canon(x) for x in t.__args__])
+        if t is typing.List:
+            return List
+        elif t is typing.Dict:
+            return Dict
+        elif t is typing.Set:
+            return Set
+        elif t is typing.FrozenSet:
+            return FrozenSet
+        elif t is typing.Tuple:
+            return Tuple
+        elif t is typing.Mapping:  # 3.6
+            return Mapping
+        elif t is typing.Sequence:
+            return Sequence
 
-            elif t.__origin__ is typing.Union:
-                res = [to_canon(x) for x in t.__args__]
-                return SumType(res)
-            elif t.__origin__ is abc.Callable or t is typing.Callable:
-                # return Callable[ProductType(to_canon(x) for x in t.__args__)]
-                return Callable  # TODO
-            elif py38 and t.__origin__ is typing.Literal:
-                return OneOf(t.__args__)
-            elif t.__origin__ is abc.Mapping or t.__origin__ is typing.Mapping:
-                k, v = t.__args__
-                return Mapping[to_canon(k), to_canon(v)]
-            elif t.__origin__ is abc.Sequence or t.__origin__ is typing.Sequence:
-                x ,= t.__args__
-                return Sequence[to_canon(x)]
-            elif t.__origin__ is type or t.__origin__ is typing.Type:
-                # TODO test issubclass on t.__args__
-                return PythonDataType(type)
+        if origin is None:
+            if isinstance(t, typing.TypeVar):
+                return Any  # XXX is this correct?
 
-            raise NotImplementedError("No support for type:", t)
+            return PythonDataType(t)
 
-        if isinstance(t, typing.TypeVar):
-            return Any  # XXX is this correct?
+        args = getattr(t, '__args__', None)
 
-        return PythonDataType(t)
+        if origin is origin_list:
+            x ,= args
+            return List[to_canon(x)]
+        elif origin is origin_set:
+            x ,= args
+            return Set[to_canon(x)]
+        elif origin is origin_frozenset:
+            x ,= args
+            return FrozenSet[to_canon(x)]
+        elif origin is origin_dict:
+            k, v = args
+            return Dict[to_canon(k), to_canon(v)]
+        elif origin is origin_tuple:
+            if not args:
+                return Tuple
+            if Ellipsis in args:
+                if len(args) != 2 or args[0] == Ellipsis:
+                    raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
+                return TupleEllipsis[to_canon(args[0])]
 
-    def to_canon(self, t):
+            return ProductType([to_canon(x) for x in args])
+
+        elif origin is typing.Union:
+            res = [to_canon(x) for x in args]
+            return SumType(res)
+        elif origin is abc.Callable or t is typing.Callable:
+            # return Callable[ProductType(to_canon(x) for x in t.__args__)]
+            return Callable  # TODO
+        elif py38 and origin is typing.Literal:
+            return OneOf(args)
+        elif origin is abc.Mapping or origin is typing.Mapping:
+            k, v = args
+            return Mapping[to_canon(k), to_canon(v)]
+        elif origin is abc.Sequence or origin is typing.Sequence:
+            x ,= args
+            return Sequence[to_canon(x)]
+        elif origin is type or origin is typing.Type:
+            # TODO test issubclass on t.__args__
+            return PythonDataType(type)
+
+        raise NotImplementedError("No support for type:", t)
+
+    def to_canon(self, t) -> PythonType:
         try:
             return self.cache[t]
         except KeyError:
