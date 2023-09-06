@@ -482,6 +482,21 @@ class TypeCaster(ATypeCaster):
                 # Python 3.6
                 return to_canon(t.__args__[0])
 
+        if t is typing.List:
+            return List
+        elif t is typing.Dict:
+            return Dict
+        elif t is typing.Set:
+            return Set
+        elif t is typing.FrozenSet:
+            return FrozenSet
+        elif t is typing.Tuple:
+            return Tuple
+        elif t is typing.Mapping:  # 3.6
+            return Mapping
+        elif t is typing.Sequence:
+            return Sequence
+
         if origin is None:
             if isinstance(t, typing.TypeVar):
                 return Any  # XXX is this correct?
@@ -489,21 +504,6 @@ class TypeCaster(ATypeCaster):
             return PythonDataType(t)
 
         args = getattr(t, '__args__', None)
-        if args is None:
-            if t is typing.List:
-                return List
-            elif t is typing.Dict:
-                return Dict
-            elif t is typing.Set:
-                return Set
-            elif t is typing.FrozenSet:
-                return FrozenSet
-            elif t is typing.Tuple:
-                return Tuple
-            elif t is typing.Mapping:  # 3.6
-                return Mapping
-            elif t is typing.Sequence:
-                return Sequence
 
         if origin is origin_list:
             x ,= args
