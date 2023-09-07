@@ -28,12 +28,14 @@ It is:
 
 - :star: [**dispatch**](https://runtype.readthedocs.io/en/latest/dispatch.html) - Provides fast multiple-dispatch for functions and methods, via a decorator.
 
-    - Full specificity resolution
-    - Mypy support: Can be used with @overload decorator
+    - Dispatch on multiple arguments
+    - Full [specificity](https://runtype.readthedocs.io/en/latest/dispatch.html#specificity) resolution
+    - [Supports Mypy typing](https://runtype.readthedocs.io/en/latest/dispatch.html#mypy-support-overload), using the `@overload` decorator
     - Inspired by Julia.
 
 - :star: [**type utilities**](https://runtype.readthedocs.io/en/latest/types.html) - Provides a set of classes to implement your own type-system.
 
+    - Supports generics, constraints, phantom types
     - Used by runtype itself, to emulate the Python type-system.
  
 
