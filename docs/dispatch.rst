@@ -200,9 +200,12 @@ However, due to the limited design of the overload decorator, there are several 
 
 1. The overload decorator must be placed above the dispatch decorator.
 
-1. The last dispatched function of each function group, must be written without type declarations, and without the overload decorator. It is recommended to use this function for error handling.
+2. For MyPy's benefit, more specific functions should be placed above less specific functions.
 
-3. Mypy doesn't support all of the functionality of Runtype's dispatch, such as full specificity resolution. Therefore, some valid dispatch constructs will produce an error in mypy.
+3. The last dispatched function of each function group, must be written without type declarations (making it the least specific), and without the overload decorator. It is recommended to use this function for error handling and default functionality.
+
+
+Note: Mypy doesn't support all of the functionality of Runtype's dispatch, such as full specificity resolution. Therefore, some valid dispatch constructs will produce an error in mypy.
 
 
 Example usage:
