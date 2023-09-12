@@ -298,10 +298,13 @@ Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
 List = SequenceType(PythonDataType(list))
 Sequence = SequenceType(PythonDataType(abc.Sequence))
+MutableSequence = SequenceType(PythonDataType(abc.MutableSequence))
 Set = SequenceType(PythonDataType(set))
 FrozenSet = SequenceType(PythonDataType(frozenset))
+AbstractSet = SequenceType(PythonDataType(abc.Set))
 Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
+MutableMapping = DictType(PythonDataType(abc.MutableMapping))
 Tuple = TupleType()
 TupleEllipsis = TupleEllipsisType(PythonDataType(tuple))
 # Float = PythonDataType(float)
@@ -347,6 +350,11 @@ class _String(PythonDataType):
             return self
 
         return Constraint(self, predicates)
+
+    def __le__(self, other):
+        if isinstance(other, SequenceType):
+            return self <= other.base and self <= other.item
+        return super().__le__(other)
 
 
 class _DateTime(PythonDataType):
@@ -494,8 +502,12 @@ class TypeCaster(ATypeCaster):
             return Tuple
         elif t is typing.Mapping:  # 3.6
             return Mapping
+        elif t is typing.MutableMapping:
+            return MutableMapping
         elif t is typing.Sequence:
             return Sequence
+        elif t is typing.MutableSequence:
+            return MutableSequence
 
         if origin is None:
             if isinstance(t, typing.TypeVar):
@@ -538,9 +550,21 @@ class TypeCaster(ATypeCaster):
         elif origin is abc.Mapping or origin is typing.Mapping:
             k, v = args
             return Mapping[to_canon(k), to_canon(v)]
+        elif origin is abc.MutableMapping or origin is typing.MutableMapping:
+            k, v = args
+            return MutableMapping[to_canon(k), to_canon(v)]
         elif origin is abc.Sequence or origin is typing.Sequence:
             x ,= args
             return Sequence[to_canon(x)]
+        elif origin is abc.MutableSequence or origin is typing.MutableSequence:
+            x ,= args
+            return MutableSequence[to_canon(x)]
+        elif origin is abc.MutableSet or origin is typing.MutableSet:
+            x ,= args
+            return Set[to_canon(x)]
+        elif origin is abc.Set or origin is typing.AbstractSet:
+            x ,= args
+            return AbstractSet[to_canon(x)]
         elif origin is type or origin is typing.Type:
             # TODO test issubclass on t.__args__
             return PythonDataType(type)

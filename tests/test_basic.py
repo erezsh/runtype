@@ -109,6 +109,21 @@ class TestIsa(TestCase):
         assert issubclass(typing.Tuple[int], typing.Tuple[typing.Union[int, str]])
         assert issubclass(typing.Tuple[int, ...], typing.Tuple[typing.Union[int, str], ...])
 
+    def test_issubclass_mutable(self):
+        assert issubclass(typing.Dict[int, str], typing.MutableMapping[int, str])
+        assert issubclass(typing.MutableMapping[int, str], typing.Mapping[int, str])
+
+        assert issubclass(typing.List[int], typing.MutableSequence[int])
+        assert issubclass(typing.MutableSequence[int], typing.Sequence[int])
+
+        assert issubclass(typing.Set[int], typing.MutableSet[int])
+        assert issubclass(typing.MutableSet[int], typing.AbstractSet[int])
+ 
+    def test_issubclass_str_sequence(self):
+        assert not issubclass(str, typing.MutableSequence[int])
+        assert not issubclass(str, typing.Sequence[int])
+        assert issubclass(str, typing.Sequence[str])
+
     def test_issubclass_tuple(self):
         # test class tuple
         t = int, float
