@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+import contextvars
 import types
 from abc import abstractmethod, ABC
 from contextlib import suppress
@@ -102,8 +103,10 @@ class SumType(base_types.SumType, PythonType):
         super().__init__(types)
 
     def validate_instance(self, obj, sampler=None):
-        if not any(t.test_instance(obj) for t in self.types):
-            raise TypeMismatchError(obj, self)
+        for t in self.types:
+            if t.test_instance(obj):
+                return 
+        raise TypeMismatchError(obj, self)
 
     def cast_from(self, obj):
         for t in self.types:
@@ -183,6 +186,11 @@ class TupleType(PythonType):
         if not isinstance(obj, tuple):
             raise TypeMismatchError(obj, self)
 
+# cv_type_checking allows the user to define different behaviors for their objects
+# while they are being type-checked.
+# This is especially useful if they overrode __hash__ or __eq__ in nonconventional ways.
+cv_type_checking = contextvars.ContextVar('type_checking', default=False)
+
 
 class OneOf(PythonType):
     values: typing.Sequence
@@ -210,8 +218,12 @@ class OneOf(PythonType):
         return NotImplemented
 
     def validate_instance(self, obj, sampler=None):
-        if obj not in self.values:
-            raise TypeMismatchError(obj, self)
+        tok = cv_type_checking.set(True)
+        try:
+            if obj not in self.values:
+                raise TypeMismatchError(obj, self)
+        finally:
+            cv_type_checking.reset(tok)
 
     def __repr__(self):
         return 'Literal[%s]' % ', '.join(map(repr, self.values))
