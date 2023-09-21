@@ -4,21 +4,15 @@ from typing import Any, Dict, List, Tuple, Set, FrozenSet
 from functools import wraps
 
 from .common import CHECK_TYPES
-from .utils import get_func_signatures, ContextVar
+from .utils import get_func_signatures
 from .pytypes import TypeMismatchError, type_caster
 from .typesystem import TypeSystem
-
-# cv_type_checking allows the user to define different behaviors for their objects
-# while they are being type-checked.
-# This is especially useful if they overrode __hash__ or __eq__ in nonconventional ways.
-cv_type_checking: ContextVar = ContextVar(False, name='type_checking')
 
 def ensure_isa(obj, t, sampler=None):
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
     """
-    with cv_type_checking(True):
-        t = type_caster.to_canon(t)
-        t.validate_instance(obj, sampler)
+    t = type_caster.to_canon(t)
+    t.validate_instance(obj, sampler)
 
 
 def is_subtype(t1, t2):
