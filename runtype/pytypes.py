@@ -186,6 +186,7 @@ class TupleType(PythonType):
         if not isinstance(obj, tuple):
             raise TypeMismatchError(obj, self)
 
+
 # cv_type_checking allows the user to define different behaviors for their objects
 # while they are being type-checked.
 # This is especially useful if they overrode __hash__ or __eq__ in nonconventional ways.
@@ -234,7 +235,7 @@ class OneOf(PythonType):
 
 
 class GenericType(base_types.GenericType, PythonType):
-    def __init__(self, base, item=Any):
+    def __init__(self, base: PythonType, item=Any):
         return super().__init__(base, item)
 
 
@@ -263,7 +264,7 @@ class SequenceType(GenericType):
 
 class DictType(GenericType):
 
-    def __init__(self, base, item=Any*Any):
+    def __init__(self, base: PythonType, item=Any*Any):
         super().__init__(base)
         if isinstance(item, tuple):
             assert len(item) == 2
@@ -305,6 +306,13 @@ class TupleEllipsisType(SequenceType):
     def __repr__(self):
         return '%s[%s, ...]' % (self.base, self.item)
 
+class TypeType(GenericType):
+
+    def validate_instance(self, obj, sampler=None):
+        t = type_caster.to_canon(obj)
+        if not t <= self.item:
+            raise TypeMismatchError(obj, self)
+
 
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
@@ -323,6 +331,7 @@ TupleEllipsis = TupleEllipsisType(PythonDataType(tuple))
 Bytes = PythonDataType(bytes)
 Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
+Type = TypeType(PythonDataType(type))
 
 
 class _Number(PythonDataType):
@@ -578,8 +587,11 @@ class TypeCaster(ATypeCaster):
             x ,= args
             return AbstractSet[to_canon(x)]
         elif origin is type or origin is typing.Type:
+            if args:
+                t ,= args
+                return Type[self.to_canon(t)]
             # TODO test issubclass on t.__args__
-            return PythonDataType(type)
+            return Type
 
         raise NotImplementedError("No support for type:", t)
 

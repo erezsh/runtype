@@ -213,6 +213,21 @@ class TestIsa(TestCase):
         inst = BadEq(True)
         assert isa(inst, typing.Literal[1]) == False
 
+    def test_type_generic(self):
+        assert isa(int, typing.Type)
+        assert isa(int, typing.Type[int])
+        assert not isa(int, typing.Type[str])
+        assert isa(typing.List[int], typing.Type[typing.List[int]])
+        assert not isa(typing.List[int], typing.Type[typing.List[str]])
+        assert isa(int, typing.Type[object])
+        assert isa(list, typing.Type[typing.Sequence])
+
+        assert issubclass(typing.Type[int], typing.Type[int])
+        assert not issubclass(typing.Type[int], typing.Type[str])
+        assert issubclass(typing.Type[list], typing.Type[typing.Sequence])
+        assert issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[int]])
+        assert not issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[str]])
+
 
 class TestDispatch(TestCase):
     def setUp(self):
@@ -581,7 +596,20 @@ class TestDispatch(TestCase):
         p2 = Point([10, 20])
         assert p1 == p2
 
+    @unittest.skip("not implemented yet")
+    def test_type_generic(self):
+        dp = Dispatch()
 
+        @dp
+        def f(t: typing.Type[int]):
+            return "int"
+
+        @dp
+        def f(t: typing.Type[str]):
+            return "str"
+
+        assert f(int) == "int"
+        assert f(str) == "str"
 
     def test_sequence(self):
         pass
