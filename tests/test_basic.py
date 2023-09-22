@@ -217,16 +217,16 @@ class TestIsa(TestCase):
         assert isa(int, typing.Type)
         assert isa(int, typing.Type[int])
         assert not isa(int, typing.Type[str])
-        assert isa(list[int], typing.Type[list[int]])
-        assert not isa(list[int], typing.Type[list[str]])
+        assert isa(typing.List[int], typing.Type[typing.List[int]])
+        assert not isa(typing.List[int], typing.Type[typing.List[str]])
         assert isa(int, typing.Type[object])
         assert isa(list, typing.Type[typing.Sequence])
 
         assert issubclass(typing.Type[int], typing.Type[int])
         assert not issubclass(typing.Type[int], typing.Type[str])
         assert issubclass(typing.Type[list], typing.Type[typing.Sequence])
-        assert issubclass(typing.Type[list[int]], typing.Type[typing.Sequence[int]])
-        assert not issubclass(typing.Type[list[int]], typing.Type[typing.Sequence[str]])
+        assert issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[int]])
+        assert not issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[str]])
 
 
 class TestDispatch(TestCase):
