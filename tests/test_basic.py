@@ -11,7 +11,7 @@ from dataclasses import FrozenInstanceError, field
 import logging
 logging.basicConfig(level=logging.INFO)
 
-from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking
+from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking, multidispatch
 from runtype.dispatch import MultiDispatch
 from runtype.dataclass import Configuration
 
@@ -626,7 +626,24 @@ class TestDispatch(TestCase):
     def test_match(self):
         pass
 
+    def test_dispatch_singleton(self):
+        def f(a: int):
+            return 'a'
+        f.__module__ = 'a'
+        f1 = multidispatch(f)
 
+        def f(a: int):
+            return 'a'
+        f.__module__ = 'b'
+        f2 = multidispatch(f)
+
+        assert f1(1) == 'a'
+        assert f2(1) == 'a'
+
+        def f(a: int):
+            return 'a'
+        f.__module__ = 'a'
+        self.assertRaises(ValueError, multidispatch, f)
 
 class TestDataclass(TestCase):
     def setUp(self):

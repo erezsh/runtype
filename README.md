@@ -97,22 +97,20 @@ print( Person("Bad", interests=['a', 1]) )
 Runtype dispatches according to the most specific type match -
 
 ```python
-from runtype import Dispatch
-dp = Dispatch()
+from runtype import multidispatch as md
 
-@dp
-def mul(a: Any, b: Any):
-    return a * b
-@dp
-def mul(a: list, b: Any):
-    return [ai*b for ai in a]
-@dp
-def mul(a: Any, b: list):
-    return [bi*b for bi in b]
-@dp
+@md
 def mul(a: list, b: list):
     return [mul(i, j) for i, j in zip(a, b, strict=True)]
-
+@md
+def mul(a: list, b: Any):
+    return [ai*b for ai in a]
+@md
+def mul(a: Any, b: list):
+    return [bi*b for bi in b]
+@md
+def mul(a: Any, b: Any):
+    return a * b
 
 assert mul("a", 4)         == "aaaa"        # Any, Any
 assert mul([1, 2, 3], 2)   == [2, 4, 6]     # list, Any
@@ -123,18 +121,16 @@ assert mul([1, 2], [3, 4]) == [3, 8]        # list, list
 Dispatch can also be used for extending the dataclass builtin `__init__`:
 
 ```python
-dp = Dispatch()
-
 @dataclass(frozen=False)
 class Point:
     x: int = 0
     y: int = 0
     
-    @dp
+    @md
     def __init__(self, points: list | tuple):
         self.x, self.y = points
 
-    @dp
+    @md
     def __init__(self, points: dict):
         self.x = points['x']
         self.y = points['y']

@@ -62,34 +62,25 @@ Ideally, every project will instanciate Dispatch only once, in a module such as 
 Basic Use
 ---------
 
-First, users must instanciate the `Dispatch` class, to create a dispatch group:
+Multidispatch groups functions by their name. Functions of different names will never collide with each other.
 
-::
-
-    from runtype import Dispatch
-    dp = Dispatch()
-
-Then, the group can be used as a decorator for any number of functions.
-
-Dispatch maintains the original name of every function. So, functions of different names will never collide with each other.
-
-The order in which you define functions doesn't matter.
+The order in which you define functions doesn't matter to runtype, but it's recommended to order functions from most specific to least specific.
 
 Example:
 ::
 
-    dp = Dispatch()
+    from runtype import multidispatch as md
 
     @dataclass(frozen=False)
     class Point:
         x: int = 0
         y: int = 0
         
-        @dp
+        @md
         def __init__(self, points: list | tuple):
             self.x, self.y = points
 
-        @dp
+        @md
         def __init__(self, points: dict):
             self.x = points['x']
             self.y = points['y']
@@ -101,6 +92,19 @@ Example:
     assert p0 == Point((0, 0))           # User constructor
     assert p0 == Point({"x": 0, "y": 0}) # User constructor
 
+
+A different dispatch object is created for each module, so collisions between different modules are impossible.
+
+Users who want to define a dispatch across several modules, or to have more granular control, can use the Dispatch class:
+
+::
+
+    from runtype import Dispatch
+    dp = Dispatch()
+
+Then, the group can be used as a decorator for any number of functions, in any module.
+
+Functions will still be grouped by name.
 
 
 Specificity
@@ -117,11 +121,11 @@ Example:
 
     from typing import Union
 
-    @dp
+    @md
     def f(a: int, b: int):
         return a + b
 
-    @dp
+    @md
     def f(a: Union[int, str], b: int):
         return (a, b)
 
@@ -147,9 +151,9 @@ Ambiguity can result from two situations:
 Example:
 ::
 
-    >>> @dp
+    >>> @md
     ... def f(a, b: int): pass
-    >>> @dp
+    >>> @md
     ... def f(a: int, b): pass
     >>> f(1, 1)
     Traceback (most recent call last):
@@ -161,14 +165,11 @@ Dispatch is designed to always throw an error when the right choice isn't obviou
 Another example:
 ::
 
-    from runtype import Dispatch
-    dp = Dispatch()
-
-    @dp
+    @md
     def join(seq, sep: str = ''):
         return sep.join(str(s) for s in seq)
 
-    @dp
+    @md
     def join(seq, sep: list):
         return join(join(sep, str(s)) for s in seq)
     ...
@@ -191,39 +192,36 @@ Another example:
 
 Dispatch chooses the right function based on the idea specificity, which means that `class MyStr(str)` is more specific than `str`, and so on: `MyStr(str) < str < Union[int, str] < object`.
 
-MyPy support (@overload)
+MyPy support
 ------------------------
 
-Dispatch can be made to work with the overload decorator, aiding in granular type resolution.
+multidispatch works with mypy by employing the typing.overload decorator, aiding in granular type resolution.
 
 However, due to the limited design of the overload decorator, there are several rules that need to be followed, and limitations that should be considered.
 
-1. The overload decorator must be placed above the dispatch decorator.
+1. For MyPy's benefit, more specific functions should be placed above less specific functions.
 
-1. The last dispatched function of each function group, must be written without type declarations, and without the overload decorator. It is recommended to use this function for error handling.
+2. The last dispatched function of each function group, must be written without type declarations (making it the least specific), and use the multidispatch_final decorator. It is recommended to use this function for error handling and default functionality.
 
-3. Mypy doesn't support all of the functionality of Runtype's dispatch, such as full specificity resolution. Therefore, some valid dispatch constructs will produce an error in mypy.
+Note: Mypy doesn't support all of the functionality of Runtype's dispatch, such as full specificity resolution. Therefore, some valid dispatch constructs will produce an error in mypy.
 
 
 Example usage:
 
 ::
 
-    from runtype import Dispatch
+    from runtype import multidispatch as md, multidispatch_final as md_final
     from typing import overload
-    dp = Dispatch()
 
-    @overload
-    @dp
+    @md
     def join(seq, sep: str = ''):
         return sep.join(str(s) for s in seq)
 
-    @overload
-    @dp
+    @md
     def join(seq, sep: list):
         return join(join(sep, str(s)) for s in seq)
 
-    @dp
+    @md_final
     def join(seq, sep):
         raise NotImplementedError()
 
