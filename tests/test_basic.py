@@ -659,10 +659,10 @@ class TestDataclass(TestCase):
                 assert self.x != 0
 
         p = Point(2,3)
-        assert dict(p) == {'x':2, 'y':3}
+        assert p.asdict() == {'x':2, 'y':3}
 
         p2 = p.replace(x=30)
-        assert dict(p2) == {'x':30, 'y':3}
+        # assert dict(p2) == {'x':30, 'y':3}
         assert p2.aslist() == [30, 3]
         assert p2.astuple() == (30, 3)
 

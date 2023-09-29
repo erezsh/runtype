@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, ClassVar, Type
 from abc import ABC, abstractmethod
 import inspect
 import types
+import warnings
 
 if TYPE_CHECKING:
     from typing_extensions import dataclass_transform
@@ -201,13 +202,18 @@ def replace(inst, **kwargs):
 
 def __iter__(inst):
     "Yields a list of tuples [(name, value), ...]"
-    # TODO: deprecate this method
+    warnings.warn("This method is deprecated and will be removed in future versions."
+                  "Please use `.asdict()` or `.asitems()` instead.", DeprecationWarning)
     return ((name, getattr(inst, name)) for name in inst.__dataclass_fields__)
 
 def asdict(inst):
     """Returns a dict of {name: value, ...}
     """
     return {name: getattr(inst, name) for name in inst.__dataclass_fields__}
+
+def asitems(inst):
+    "Yields a list of tuples [(name, value), ...]"
+    return ((name, getattr(inst, name)) for name in inst.__dataclass_fields__)
 
 def aslist(inst):
     """Returns a list of the values
@@ -234,7 +240,7 @@ def json(inst):
     """Returns a JSON of values, going recursively into other objects (if possible)"""
     return {
         k: _json_rec(v)
-        for k, v in inst
+        for k, v in inst.asitems()
     }
 
 def _set_if_not_exists(cls, d):
@@ -317,6 +323,7 @@ def _process_class(cls: type, config: Configuration, check_types, context_frame,
     _set_if_not_exists(c, {
         'replace': replace,
         'asdict': asdict,
+        'asitems': asitems,
         'aslist': aslist,
         'astuple': astuple,
         'json': json,
