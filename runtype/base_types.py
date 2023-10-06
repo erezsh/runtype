@@ -157,6 +157,12 @@ class ProductType(Type):
 
         return NotImplemented
 
+    def __ge__(self, other):
+        if isinstance(other, DataType):
+            return False
+
+        return NotImplemented
+
 
 class ContainerType(DataType):
     """Base class for containers, such as generics.
