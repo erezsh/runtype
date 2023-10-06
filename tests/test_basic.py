@@ -70,6 +70,7 @@ class TestIsa(TestCase):
 
         assert isa((3,), (Tuple[int], list))
         assert not isa([40, 2], Tuple[int, int])
+        assert not issubclass(float, typing.Tuple[float, float])
 
         # Mappings
         assert issubclass(dict, abc.Mapping)
