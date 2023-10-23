@@ -7,7 +7,7 @@ Features:
 
 - Full specificity resolution
 
-- Mypy support: Can be used with @overload decorator
+- Mypy support
 
 (Inspired by Julia)
 
@@ -197,7 +197,7 @@ MyPy support
 
 multidispatch works with mypy by employing the typing.overload decorator, aiding in granular type resolution.
 
-However, due to the limited design of the overload decorator, there are several rules that need to be followed, and limitations that should be considered.
+However, due to the limited design of the `typing.overload` decorator, there are several rules that need to be followed, and limitations that should be considered.
 
 1. For MyPy's benefit, more specific functions should be placed above less specific functions.
 
@@ -211,7 +211,6 @@ Example usage:
 ::
 
     from runtype import multidispatch as md, multidispatch_final as md_final
-    from typing import overload
 
     @md
     def join(seq, sep: str = ''):
