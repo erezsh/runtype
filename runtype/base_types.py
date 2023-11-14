@@ -208,7 +208,7 @@ class GenericType(ContainerType):
 
 
     def __le__(self, other):
-        if isinstance(other, type(self)):
+        if isinstance(other, GenericType):
             return self.base <= other.base and self.item <= other.item
 
         elif isinstance(other, DataType):

@@ -144,6 +144,9 @@ class TestIsa(TestCase):
         assert_isa((1,2,3), Tuple[int, ...])
         self.assertRaises(TypeError, assert_isa, (1, "2"), Tuple[int, ...])
 
+        assert issubclass(Tuple[str, ...], typing.Sequence[str])
+        assert not issubclass(Tuple[str, ...], typing.Sequence[int])
+
     @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
     def test_py38(self):
         assert isa('a', typing.Literal['a', 'b'])
