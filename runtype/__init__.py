@@ -14,6 +14,7 @@ __all__ = (
     'assert_isa', 'isa', 'issubclass', 'validate_func', 'is_subtype', 'cv_type_checking',
     'Constraint', 'String', 'Int',
     'Dispatch',
+    'multidispatch', 'multidispatch_final',
 )
 
 def Dispatch(typesystem: TypeSystem = PythonTyping()):
