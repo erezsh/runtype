@@ -50,7 +50,8 @@ class AnyType(Type):
 
     def __le__(self, other):
         if isinstance(other, Type):
-            return other is self
+            if other is self:   # Optimization
+                return True
 
         return NotImplemented
 
@@ -71,6 +72,12 @@ class DataType(Type):
             return self == other
 
         return super().__le__(other)
+
+    def __ge__(self, other):
+        # XXX hack
+        if isinstance(other, AnyType):
+            return False
+        return NotImplemented
 
 
 class SumType(Type):
@@ -170,6 +177,11 @@ class ContainerType(DataType):
     def __getitem__(self, other):
         return GenericType(self, other)
 
+    def __le__(self, other):
+        # XXX hack
+        if isinstance(other, AnyType):
+            return True
+        return super().__le__(other)
 
 class GenericType(ContainerType):
     """Implements a generic type. i.e. a container for items of a specific type.
@@ -214,6 +226,10 @@ class GenericType(ContainerType):
         elif isinstance(other, DataType):
             return self.base <= other
 
+        elif isinstance(other, AnyType):
+            # HACK
+            return True
+
         return NotImplemented
 
     def __ge__(self, other):
@@ -222,6 +238,10 @@ class GenericType(ContainerType):
 
         elif isinstance(other, DataType):
             return self.base >= other
+
+        elif isinstance(other, AnyType):
+            # HACK
+            return False
 
         return NotImplemented
 

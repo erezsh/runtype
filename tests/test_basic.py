@@ -1035,9 +1035,17 @@ class TestDataclass(TestCase):
                 "d": {"a": {"baz": 2}}
                 }
 
-
-
-
+    def test_any(self):
+        assert is_subtype(int, Any)
+        assert not is_subtype(Any, int)
+        assert is_subtype(Any, Any)
+        assert is_subtype(Any, Union[Any, int])
+        assert is_subtype(Any, Union[Any, None])
+        assert is_subtype(Union[Any, int], Any)
+        assert is_subtype(Union[Any, None], Any)
+        assert is_subtype(Union[Any, None], Union[Any, None])
+        assert is_subtype(dict, Any, )
+        assert not is_subtype(Any, dict)
 
 if __name__ == '__main__':
     unittest.main()

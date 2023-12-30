@@ -5,7 +5,7 @@ import typing
 import collections.abc as cabc
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal
+from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType
 from runtype.typesystem import TypeSystem
 
 
@@ -60,7 +60,7 @@ class TestTypes(TestCase):
 
 
 
-    def test_pytypes(self):
+    def test_pytypes1(self):
         assert List + Dict == Dict + List
         assert Any + ((Any + Any) + Any) is Any
 
@@ -133,7 +133,7 @@ class TestTypes(TestCase):
         assert i.isinstance(3, 4)
         assert not i.isinstance(4, 3)
 
-    def test_pytypes(self):
+    def test_pytypes2(self):
         assert Tuple <= Tuple
         assert Tuple >= Tuple
         # assert Tuple[int] <= Tuple
@@ -231,8 +231,12 @@ class TestTypes(TestCase):
             for b in bad:
                 assert not t.test_instance(b), (t, b)
 
-
-
+    def test_any(self):
+        assert Any <= Any
+        assert Any <= Any + Int
+        assert Any <= Any + NoneType
+        assert Any + Int <= Any
+        assert Any + NoneType <= Any
 
 
 
