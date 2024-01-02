@@ -333,6 +333,8 @@ Callable = PythonDataType(abc.Callable)  # TODO: Generic
 Literal = OneOf
 Type = TypeType(PythonDataType(type))
 
+class _Bool(PythonDataType):
+    pass
 
 class _Number(PythonDataType):
     def __call__(self, min=None, max=None):
@@ -427,6 +429,7 @@ class _NoneType(OneOf):
 
 
 String = _String(str)
+Bool = _Bool(bool)
 Int = _Int(int)
 Float = _Float(float)
 NoneType =  _NoneType()
@@ -443,6 +446,8 @@ _type_cast_mapping = {
     frozenset: FrozenSet,
     dict: Dict,
     tuple: Tuple,
+    bool: Bool,
+    None: NoneType,
     int: Int,
     str: String,
     float: Float,
