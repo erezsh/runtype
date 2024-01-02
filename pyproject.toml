@@ -28,9 +28,9 @@ contextvars = {version = "*", python = "~3.6"}
 typing_extensions = "*"
 # The following are used for benchmarking - 
 pytest-benchmark = "*"
-beartype = "*"
-plum-dispatch = "*"
-multipledispatch = "*"
+# beartype = "*"
+# plum-dispatch = "*"
+# multipledispatch = "*"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
