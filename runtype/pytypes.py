@@ -447,6 +447,7 @@ _type_cast_mapping = {
     dict: Dict,
     tuple: Tuple,
     bool: Bool,
+    None: NoneType,
     int: Int,
     str: String,
     float: Float,
