@@ -499,11 +499,11 @@ class TypeCaster(ATypeCaster):
             t = _forwardref_evaluate(t, self.frame.f_globals, self.frame.f_locals, frozenset())
 
         if isinstance(t, tuple):
-            return SumType([to_canon(x) for x in t])
+            return SumType.create([to_canon(x) for x in t])
 
         if hasattr(types, 'UnionType') and isinstance(t, types.UnionType):
             res = [to_canon(x) for x in t.__args__]
-            return SumType(res)
+            return SumType.create(res)
 
         origin = getattr(t, '__origin__', None)
         if hasattr(typing, '_AnnotatedAlias') and isinstance(t, typing._AnnotatedAlias):

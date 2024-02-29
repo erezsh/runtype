@@ -94,6 +94,8 @@ class SumType(Type):
             if isinstance(t, SumType):
                 # Optimization: Flatten recursive SumTypes
                 x |= set(t.types)
+            elif isinstance(t, AnyType):
+                return t
             else:
                 x.add(t)
 
