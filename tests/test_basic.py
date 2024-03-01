@@ -649,6 +649,21 @@ class TestDispatch(TestCase):
         f.__module__ = 'a'
         self.assertRaises(ValueError, multidispatch, f)
 
+    def test_none(self):
+        dp = Dispatch()
+
+        @dp
+        def f(t: None):
+            return "none"
+
+        @dp
+        def f(t: int):
+            return "int"
+
+        assert f(2) == "int"
+        assert f(None) == "none"
+
+
 class TestDataclass(TestCase):
     def setUp(self):
         pass

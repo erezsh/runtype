@@ -33,11 +33,11 @@ class MultiDispatch:
             tree = self.fname_to_tree[fname] = TypeTree(fname, self.typesystem, self.test_subtypes)
 
         tree.define_function(f)
+        find_function_cached = tree.find_function_cached
 
         @wraps(f)
         def dispatched_f(*args, **kw):
-            f = tree.find_function_cached(args)
-            return f(*args, **kw)
+            return find_function_cached(args)(*args, **kw)
 
         dispatched_f.__dispatcher__ = self
         return dispatched_f

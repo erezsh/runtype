@@ -186,6 +186,10 @@ class TestTypes(TestCase):
             self.assertRaises(ValueError, type_caster.to_canon, typing.Tuple[int, str, ...])
 
 
+    def test_pytypes3(self):
+        assert Any + Int == Any
+        assert Int + Any == Any
+
 
     def test_canonize_pytypes(self):
         pytypes = [
