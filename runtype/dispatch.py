@@ -97,7 +97,7 @@ class TypeTree:
         if len(funcs) == 0:
             raise DispatchError(f"Function '{self.name}' not found for signature {self.get_arg_types(args)}")
         elif len(funcs) > 1:
-            f, _sig = self.choose_most_specific_function(*funcs)
+            f, _sig = self.choose_most_specific_function(args, *funcs)
         else:
             (f, _sig) ,= funcs
         return f
@@ -126,7 +126,7 @@ class TypeTree:
             node.func = f, signature
 
 
-    def choose_most_specific_function(self, *funcs):
+    def choose_most_specific_function(self, args, *funcs):
         issubclass = self.typesystem.issubclass
 
         class IsSubclass:
@@ -164,9 +164,11 @@ class TypeTree:
         # Is there only one function that matches each and every parameter?
         most_specific = set.intersection(*most_specific_per_param)
         if len(most_specific) != 1:
+            ambig_funcs = [funcs[i] for i in set.union(*most_specific_per_param)]
             n = funcs[0][0].__name__
             msg = f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions"
-            msg += ''.join(f'\n\t- {n}{tuple(f[1])}' for f in funcs)
+            msg += ''.join(f'\n\t- {n}{tuple(f[1])}' for f in ambig_funcs)
+            msg += f'\nFor arguments: {args}'
             raise DispatchError(msg)
 
         ms ,= most_specific
