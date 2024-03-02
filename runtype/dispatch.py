@@ -1,7 +1,9 @@
 from collections import defaultdict
 from functools import wraps
-from typing import Dict, Callable, Sequence
+from typing import Any, Dict, Callable, Sequence
+from operator import itemgetter
 
+from dataclasses import dataclass
 
 from .utils import get_func_signatures
 from .typesystem import TypeSystem
@@ -25,17 +27,25 @@ class MultiDispatch:
         self.typesystem: TypeSystem = typesystem
         self.test_subtypes = test_subtypes
 
-    def __call__(self, f):
-        fname = f.__name__
+    def __call__(self, func=None, *, priority=None):
+        if func is None:
+            if priority is None:
+                raise ValueError("Must either provide a function to decorate, or set a priority")
+            return MultiDispatchWithOptions(self, priority=priority)
+
+        if priority is not None:
+            raise ValueError("Must either provide a function to decorate, or set a priority")
+
+        fname = func.__name__
         try:
             tree = self.fname_to_tree[fname]
         except KeyError:
             tree = self.fname_to_tree[fname] = TypeTree(fname, self.typesystem, self.test_subtypes)
 
-        tree.define_function(f)
+        tree.define_function(func)
         find_function_cached = tree.find_function_cached
 
-        @wraps(f)
+        @wraps(func)
         def dispatched_f(*args, **kw):
             return find_function_cached(args)(*args, **kw)
 
@@ -47,6 +57,16 @@ class MultiDispatch:
 
     def __exit__(self, exc_type, exc_value, exc_traceback): 
         pass
+
+
+@dataclass
+class MultiDispatchWithOptions:
+    dispatch: MultiDispatch
+    priority: int
+
+    def __call__(self, f):
+        f.__dispatch_priority__ = self.priority
+        return self.dispatch(f)
 
 
 class TypeNode:
@@ -163,16 +183,26 @@ class TypeTree:
 
         # Is there only one function that matches each and every parameter?
         most_specific = set.intersection(*most_specific_per_param)
-        if len(most_specific) != 1:
-            ambig_funcs = [funcs[i] for i in set.union(*most_specific_per_param)]
-            n = funcs[0][0].__name__
-            msg = f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions"
-            msg += ''.join(f'\n\t- {n}{tuple(f[1])}' for f in ambig_funcs)
-            msg += f'\nFor arguments: {args}'
-            raise DispatchError(msg)
+        if len(most_specific) == 1:
+            ms ,= most_specific
+            return funcs[ms]
 
-        ms ,= most_specific
-        return funcs[ms]
+        ambig_funcs = [funcs[i] for i in set.union(*most_specific_per_param)]
+        assert len(ambig_funcs) > 1
+        p_ambig_funcs = [(getattr(f, '__dispatch_priority__', 0), f, params) for f, params in ambig_funcs]
+        p_ambig_funcs.sort(key=itemgetter(0), reverse=True)
+        if p_ambig_funcs[0][0] > p_ambig_funcs[1][0]:
+            # If one item has a higher priority than all others, choose it
+            p, f, params = p_ambig_funcs[0]
+            return f, params
+
+        # Could not resolve ambiguity. Throw error
+        n = funcs[0][0].__name__
+        msg = f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions"
+        msg += ''.join(f'\n\t- {n}{tuple(params)} [priority={p}]' for p, f, params in p_ambig_funcs)
+        msg += f'\nFor arguments: {args}'
+        raise DispatchError(msg)
+
 
 def all_eq(xs):
     a = xs[0]
