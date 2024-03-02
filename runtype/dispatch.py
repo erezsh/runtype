@@ -166,18 +166,12 @@ class TypeTree:
             ms_set = {ms_i}     # Init set of indexes of most significant params
             for i, t in x[1:]:
                 if ms_t == t:
-                    ms_set.add(i)   # Add more indexes with the same type
+                    # Add more indexes with the same type
+                    ms_set.add(i)
                 elif issubclass(t, ms_t) or not issubclass(ms_t, t):
-                    # Cannot resolve ordering of these two types
-                    n = funcs[0][0].__name__
-                    msg = f"Ambiguous dispatch in '{n}', argument #{arg_idx+1}: Unable to resolve the specificity of the types: \n\t- {t}\n\t- {ms_t}\n"
-                    msg += '\nThis error occured because neither is a subclass of the other.'
-                    msg += '\nRelevant functions:\n'
-                    for f, sig in funcs:
-                        c = f.__code__
-                        msg += f'\t- {c.co_filename}:{c.co_firstlineno} :: {sig}\n'
-
-                    raise DispatchError(msg)
+                    # Possibly ambiguous. We might throw an error below
+                    # TODO secondary candidates should still obscure less specific candidates
+                    ms_set.add(i)
 
             most_specific_per_param.append(ms_set)
 
