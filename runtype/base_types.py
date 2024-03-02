@@ -1,6 +1,14 @@
 """
 Base Type Classes - contains the basic building blocks of a generic type system
 
+There are five kinds of types: (to date)
+- Any - Contains every type
+- Sum - marks a union between types
+- Product - marks a record / tuple / struct
+- Data - marks any type that contains non-type information
+- Phantom - A "meta"-type that can wrap existing types,
+            but is transparent, and has no effect otherwise.
+
 We use comparison operators to indicate whether a type is a subtype of another:
  - t1 <= t2 means "t1 is a subtype of t2"
  - t1 >= t2 means "t2 is a subtype of t1"
@@ -8,6 +16,11 @@ This is consistent with the view that a type hierarchy can be expressed as a pos
 """
 from typing import Callable, Sequence, Optional, Union
 from abc import ABC, abstractmethod
+
+from .dispatch import MultiDispatch
+from .typesystem import PythonBasic
+
+dp = MultiDispatch(PythonBasic())
 
 
 class RuntypeError(TypeError):
@@ -19,46 +32,33 @@ class TypeMismatchError(RuntypeError):
         v, t = self.args
         return f"Expected type '{t}', but got value: {v}."
 
-_Type = Union['Type', type]
+
+_Type = Union["Type", type]
+
 
 class Type(ABC):
-    """Abstract Type class. All types inherit from it.
-    """
+    """Abstract Type class. All types inherit from it."""
+
     def __add__(self, other: _Type):
         return SumType.create((self, other))
 
     def __mul__(self, other: _Type):
         return ProductType.create((self, other))
 
-    @abstractmethod
-    def __le__(self, other: _Type):
-        return NotImplemented
 
 class AnyType(Type):
     """Represents the Any type.
 
+    Any contains every other type.
+
     For any type 't' within the typesystem, t is a subtype of Any (or: t <= Any)
     """
+
     def __add__(self, other):
         return self
 
-    def __ge__(self, other):
-        if isinstance(other, (type, Type)):
-            return True
-
-        return NotImplemented
-
-    def __le__(self, other):
-        if other is self:   # Optimization
-            return True
-        elif isinstance(other, (type, Type)):
-            if not isinstance(other, SumType):
-                return False
-
-        return NotImplemented
-
     def __repr__(self):
-        return 'Any'
+        return "Any"
 
 
 Any = AnyType()
@@ -67,16 +67,10 @@ Any = AnyType()
 class DataType(Type):
     """Abstract class for a data type.
 
-    Example of possible data-types: int, float, text
+    A data-type is any type that contains non-type information.
+
+    Example of possible data-types: int, float, text, list
     """
-    def __le__(self, other):
-        if isinstance(other, DataType):
-            return self == other
-
-        return super().__le__(other)
-
-    def __ge__(self, other):
-        return NotImplemented
 
 
 class SumType(Type):
@@ -84,6 +78,7 @@ class SumType(Type):
 
     Similar to Python's `typing.Union`.
     """
+
     def __init__(self, types):
         self.types = frozenset(types)
 
@@ -99,33 +94,19 @@ class SumType(Type):
             else:
                 x.add(t)
 
-        if len(x) == 1:         # SumType([x]) is x
+        if len(x) == 1:  # SumType([x]) is x
             return list(x)[0]
         return cls(x)
 
     def __repr__(self):
-        return '(%s)' % '+'.join(map(repr, self.types))
-
-    def __le__(self, other):
-        return all(t <= other for t in self.types)
-
-    def __ge__(self, other):
-        return any(other <= t for t in self.types)
-
-    def __eq__(self, other):
-        if isinstance(other, SumType):
-            return self.types == other.types
-
-        return NotImplemented
+        return "(%s)" % "+".join(map(repr, self.types))
 
     def __hash__(self):
         return hash(frozenset(self.types))
 
 
-
 class ProductType(Type):
-    """Implements a product type, i.e. a tuple of types.
-    """
+    """Implements a product type, i.e. a record / tuple / struct"""
 
     def __init__(self, types):
         self.types = tuple(types)
@@ -143,54 +124,35 @@ class ProductType(Type):
         return cls(x)
 
     def __repr__(self):
-        return '(%s)' % '*'.join(map(repr, self.types))
+        return "(%s)" % "*".join(map(repr, self.types))
 
     def __hash__(self):
         return hash(self.types)
 
-    def __eq__(self, other):
-        if isinstance(other, ProductType):
-            return self.types == other.types
-
-        return NotImplemented
-
-    def __le__(self, other):
-        if isinstance(other, ProductType):
-            if len(self.types) != len(other.types):
-                return False
-
-            return all(t1<=t2 for t1, t2 in zip(self.types, other.types))
-        elif isinstance(other, DataType):
-            return False
-
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, DataType):
-            return False
-
-        return NotImplemented
-
 
 class ContainerType(DataType):
-    """Base class for containers, such as generics.
-    """
+    """Base class for containers, such as generics."""
+
     def __getitem__(self, other):
         return GenericType(self, other)
+
 
 class GenericType(ContainerType):
     """Implements a generic type. i.e. a container for items of a specific type.
 
     For any two generic types a[i] and b[j], it's true that a[i] <= b[j] iff a <= b and i <= j.
     """
+
     base: Type
     item: Union[type, Type]
 
-    def __init__(self, base: Type, item: Union[type, Type]=Any):
+    def __init__(self, base: Type, item: Union[type, Type] = Any):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
             if not item <= base.item:
-                raise TypeError(f"Expecting new generic to be a subtype of base, but {item} </= {base.item}")
+                raise TypeError(
+                    f"Expecting new generic to be a subtype of base, but {item} </= {base.item}"
+                )
             base = base.base
 
         self.base = base
@@ -199,38 +161,10 @@ class GenericType(ContainerType):
     def __repr__(self):
         if self.item is Any:
             return str(self.base)
-        return '%r[%r]' % (self.base, self.item)
+        return "%r[%r]" % (self.base, self.item)
 
     def __getitem__(self, item):
         return type(self)(self, item)
-
-    def __eq__(self, other):
-        if isinstance(other, GenericType):
-            return self.base == other.base and self.item == other.item
-
-        elif isinstance(other, Type):
-            return Any <= self.item and self.base == other
-
-        return NotImplemented
-
-
-    def __le__(self, other):
-        if isinstance(other, GenericType):
-            return self.base <= other.base and self.item <= other.item
-
-        elif isinstance(other, DataType):
-            return self.base <= other
-
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, type(self)):
-            return self.base >= other.base and self.item >= other.item
-
-        elif isinstance(other, DataType):
-            return self.base >= other
-
-        return NotImplemented
 
     def __hash__(self):
         return hash((self.base, self.item))
@@ -238,28 +172,13 @@ class GenericType(ContainerType):
 
 class PhantomType(Type):
     """Implements a base for phantom types.
+
+    A phantom type is a "meta" type that can wrap existing types,
+    but it is transparent (subtype checks may skip over it), and has no effect otherwise.
     """
+
     def __getitem__(self, other):
         return PhantomGenericType(self, other)
-
-    def __le__(self, other):
-        if isinstance(other, PhantomType):
-            return self == other
-
-        elif not isinstance(other, PhantomGenericType):
-            return False
-
-        return NotImplemented
-
-
-    def __ge__(self, other):
-        if isinstance(other, PhantomType):
-            return self == other
-
-        elif not isinstance(other, PhantomGenericType):
-            return False
-
-        return NotImplemented
 
 
 class PhantomGenericType(Type):
@@ -267,56 +186,31 @@ class PhantomGenericType(Type):
 
     For any phantom type p[i], it's true that p[i] <= p but also p[i] <= i and i <= p[i].
     """
+
     def __init__(self, base, item=Any):
         self.base = base
         self.item = item
 
-    def __le__(self, other):
-        if isinstance(other, PhantomType):
-            return self.base <= other or self.item <= other
-
-        elif isinstance(other, PhantomGenericType):
-            return (self.base <= other.base and self.item <= other.item) or self.item <= other
-
-        elif isinstance(other, DataType):
-            return self.item <= other
-
-        return NotImplemented
-
-    def __eq__(self, other):
-        if isinstance(other, PhantomGenericType):
-            return self.base == other.base and self.item == other.base
-
-        return NotImplemented
-
-    def __ge__(self, other):
-        if isinstance(other, PhantomType):
-            return False
-
-        elif isinstance(other, DataType):
-            return other <= self.item
-
-        return NotImplemented
 
 SamplerType = Callable[[Sequence], Sequence]
 
+
 class Validator(ABC):
-    """Defines the validator interface.
-    """
+    """Defines the validator interface."""
+
     @abstractmethod
-    def validate_instance(self, obj, sampler: Optional[SamplerType]=None):
+    def validate_instance(self, obj, sampler: Optional[SamplerType] = None):
         """Validates obj, raising a TypeMismatchError if it does not conform.
 
-        If sampler is provided, it will be applied to the instance in order to 
+        If sampler is provided, it will be applied to the instance in order to
         validate only a sample of the object. This approach may validate much faster,
         but might miss anomalies in the data.
         """
 
-
     def test_instance(self, obj, sampler=None):
         """Tests obj, returning a True/False for whether it conforms or not.
 
-        If sampler is provided, it will be applied to the instance in order to 
+        If sampler is provided, it will be applied to the instance in order to
         validate only a sample of the object.
         """
         try:
@@ -325,10 +219,9 @@ class Validator(ABC):
         except TypeMismatchError:
             return False
 
-            
-class Constraint(Validator, PhantomType):
-    """Defines a constraint, which activates during validation.
-    """
+
+class Constraint(Validator, Type):
+    """Defines a constraint, which activates during validation."""
 
     def __init__(self, for_type, predicates):
         self.type = for_type
@@ -342,9 +235,128 @@ class Constraint(Validator, PhantomType):
             if not p(inst):
                 raise TypeMismatchError(inst, self)
 
-    def __ge__(self, other):
-        # Arbitrary predicates prevent it from being a superclass
+
+# fmt: off
+@dp
+def le(self, other):
+    return NotImplemented
+
+@dp(priority=-1)
+def le(self: Type, other: Type):
+    return self == other
+
+@dp
+def ge(self, other):
+    return le(other, self)
+
+@dp
+def eq(self, other):
+    return NotImplemented
+
+@dp
+def eq(self: SumType, other: SumType):
+    return self.types == other.types
+
+@dp
+def eq(self: ProductType, other: ProductType):
+    return self.types == other.types
+
+@dp
+def eq(self: GenericType, other: GenericType):
+    return self.base == other.base and self.item == other.item
+
+@dp
+def eq(self: GenericType, other: Type):
+    return Any <= self.item and self.base == other
+
+@dp
+def eq(self: PhantomGenericType, other: PhantomGenericType):
+    return self.base == other.base and self.item == other.base
+
+
+# le() for AnyType
+
+
+@dp(priority=100)
+def le(self: Type, other: AnyType):
+    # Any contains all types
+    return True
+
+@dp
+def le(self: type, other: AnyType):
+    # Any contains all types
+    return True
+
+
+# le() for SumType
+
+
+@dp(priority=51)
+def le(self: SumType, other: Type):
+    return all(t <= other for t in self.types)
+
+@dp(priority=50)
+def le(self: Type, other: SumType):
+    return any(self <= t for t in other.types)
+
+
+# le() for ProductType
+
+
+@dp
+def le(self: ProductType, other: ProductType):
+    if len(self.types) != len(other.types):
         return False
 
-    def __le__(self, other):
-        return self.type <= other
+    return all(t1 <= t2 for t1, t2 in zip(self.types, other.types))
+
+
+# le() for GenericType
+
+
+@dp
+def le(self: GenericType, other: GenericType):
+    return self.base <= other.base and self.item <= other.item
+
+@dp
+def le(self: GenericType, other: Type):
+    return self.base <= other
+
+@dp
+def le(self: Type, other: GenericType):
+    return other.item is Any and self <= other.base
+
+
+# le() for PhantomType and PhantomGenericType
+
+
+@dp(priority=1)
+def le(self: Type, other: PhantomGenericType):
+    return self <= other.item
+
+@dp
+def le(self: PhantomGenericType, other: Type):
+    return self.item <= other
+
+@dp
+def le(self: PhantomGenericType, other: PhantomType):
+    # Only phantom types can match the base of a phantom-generic
+    return self.base <= other or self.item <= other
+
+# le() for Constraint
+
+@dp
+def le(self: Constraint, other: Constraint):
+    # Arbitrary predicates prevent it from being a superclass
+    return self == other
+
+@dp(priority=1)
+def le(self: Constraint, other: Type):
+    return self.type <= other
+
+
+Type.__eq__ = eq
+Type.__le__ = le
+Type.__ge__ = ge
+
+# fmt: on
