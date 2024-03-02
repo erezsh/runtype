@@ -23,24 +23,34 @@ class MultiDispatch:
     """
 
     def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
-        self.fname_to_tree : Dict[str, TypeTree] = {}
+        self.fname_to_tree: Dict[str, TypeTree] = {}
         self.typesystem: TypeSystem = typesystem
         self.test_subtypes = test_subtypes
 
     def __call__(self, func=None, *, priority=None):
+        """Decorate the function
+
+        Warning: Priority is still an experimental feature
+        """
         if func is None:
             if priority is None:
-                raise ValueError("Must either provide a function to decorate, or set a priority")
+                raise ValueError(
+                    "Must either provide a function to decorate, or set a priority"
+                )
             return MultiDispatchWithOptions(self, priority=priority)
 
         if priority is not None:
-            raise ValueError("Must either provide a function to decorate, or set a priority")
+            raise ValueError(
+                "Must either provide a function to decorate, or set a priority"
+            )
 
         fname = func.__name__
         try:
             tree = self.fname_to_tree[fname]
         except KeyError:
-            tree = self.fname_to_tree[fname] = TypeTree(fname, self.typesystem, self.test_subtypes)
+            tree = self.fname_to_tree[fname] = TypeTree(
+                fname, self.typesystem, self.test_subtypes
+            )
 
         tree.define_function(func)
         find_function_cached = tree.find_function_cached
@@ -55,7 +65,7 @@ class MultiDispatch:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback): 
+    def __exit__(self, exc_type, exc_value, exc_traceback):
         pass
 
 
@@ -101,27 +111,35 @@ class TypeTree:
         get_type = self.typesystem.get_type
         if self.test_subtypes:
             # TODO can be made more efficient
-            return tuple((a if i in self.test_subtypes else get_type(a))
-                         for i, a in enumerate(args))
+            return tuple(
+                (a if i in self.test_subtypes else get_type(a))
+                for i, a in enumerate(args)
+            )
 
         return tuple(map(get_type, args))
 
     def find_function(self, args):
         nodes = [self.root]
         for i, a in enumerate(args):
-            nodes = [n for node in nodes
-                       for n in node.follow_arg(a, self.typesystem, test_subtype=i in self.test_subtypes)]
+            nodes = [
+                n
+                for node in nodes
+                for n in node.follow_arg(
+                    a, self.typesystem, test_subtype=i in self.test_subtypes
+                )
+            ]
 
         funcs = [node.func for node in nodes if node.func]
 
         if len(funcs) == 0:
-            raise DispatchError(f"Function '{self.name}' not found for signature {self.get_arg_types(args)}")
+            raise DispatchError(
+                f"Function '{self.name}' not found for signature {self.get_arg_types(args)}"
+            )
         elif len(funcs) > 1:
             f, _sig = self.choose_most_specific_function(args, *funcs)
         else:
-            (f, _sig) ,= funcs
+            ((f, _sig),) = funcs
         return f
-
 
     def find_function_cached(self, args):
         "Memoized version of find_function"
@@ -133,7 +151,6 @@ class TypeTree:
             self._cache[sig] = f
             return f
 
-
     def define_function(self, f):
         for signature in get_func_signatures(self.typesystem, f):
             node = self.root
@@ -142,9 +159,10 @@ class TypeTree:
 
             if node.func is not None:
                 code_obj = node.func[0].__code__
-                raise ValueError(f"Function {f.__name__} at {code_obj.co_filename}:{code_obj.co_firstlineno} matches existing signature: {signature}!")
+                raise ValueError(
+                    f"Function {f.__name__} at {code_obj.co_filename}:{code_obj.co_firstlineno} matches existing signature: {signature}!"
+                )
             node.func = f, signature
-
 
     def choose_most_specific_function(self, args, *funcs):
         issubclass = self.typesystem.issubclass
@@ -162,8 +180,8 @@ class TypeTree:
             if all_eq(zipped_params):
                 continue
             x = sorted(enumerate(zipped_params), key=IsSubclass)
-            ms_i, ms_t = x[0]   # Most significant index and type
-            ms_set = {ms_i}     # Init set of indexes of most significant params
+            ms_i, ms_t = x[0]  # Most significant index and type
+            ms_set = {ms_i}  # Init set of indexes of most significant params
             for i, t in x[1:]:
                 if ms_t == t:
                     # Add more indexes with the same type
@@ -171,6 +189,7 @@ class TypeTree:
                 elif issubclass(t, ms_t) or not issubclass(ms_t, t):
                     # Possibly ambiguous. We might throw an error below
                     # TODO secondary candidates should still obscure less specific candidates
+                    #      by only considering the top match, we are ignoring them
                     ms_set.add(i)
 
             most_specific_per_param.append(ms_set)
@@ -178,12 +197,15 @@ class TypeTree:
         # Is there only one function that matches each and every parameter?
         most_specific = set.intersection(*most_specific_per_param)
         if len(most_specific) == 1:
-            ms ,= most_specific
+            (ms,) = most_specific
             return funcs[ms]
 
         ambig_funcs = [funcs[i] for i in set.union(*most_specific_per_param)]
         assert len(ambig_funcs) > 1
-        p_ambig_funcs = [(getattr(f, '__dispatch_priority__', 0), f, params) for f, params in ambig_funcs]
+        p_ambig_funcs = [
+            (getattr(f, "__dispatch_priority__", 0), f, params)
+            for f, params in ambig_funcs
+        ]
         p_ambig_funcs.sort(key=itemgetter(0), reverse=True)
         if p_ambig_funcs[0][0] > p_ambig_funcs[1][0]:
             # If one item has a higher priority than all others, choose it
@@ -193,8 +215,10 @@ class TypeTree:
         # Could not resolve ambiguity. Throw error
         n = funcs[0][0].__name__
         msg = f"Ambiguous dispatch in '{n}': Unable to resolve the specificity of the functions"
-        msg += ''.join(f'\n\t- {n}{tuple(params)} [priority={p}]' for p, f, params in p_ambig_funcs)
-        msg += f'\nFor arguments: {args}'
+        msg += "".join(
+            f"\n\t- {n}{tuple(params)} [priority={p}]" for p, f, params in p_ambig_funcs
+        )
+        msg += f"\nFor arguments: {args}"
         raise DispatchError(msg)
 
 
@@ -204,4 +228,3 @@ def all_eq(xs):
         if a != b:
             return False
     return True
-
