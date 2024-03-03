@@ -147,8 +147,8 @@ class TestIsa(TestCase):
         assert issubclass(Tuple[str, ...], typing.Sequence[str])
         assert not issubclass(Tuple[str, ...], typing.Sequence[int])
 
-        assert is_subtype(tuple[str, str], tuple[str, ...])
-        assert not is_subtype(tuple[str, int], tuple[str, ...])
+        assert is_subtype(Tuple[str, str], Tuple[str, ...])
+        assert not is_subtype(Tuple[str, int], Tuple[str, ...])
 
     @unittest.skipIf(sys.version_info < (3, 8), "Not supported before Python 3.8")
     def test_py38(self):
