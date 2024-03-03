@@ -577,6 +577,10 @@ def le(self: ProductType, other: TupleType):
     return True
 
 @dp
+def le(self: ProductType, other: TupleEllipsisType):
+    return all(t <= other.item for t in self.types)
+
+@dp
 def le(self: PythonDataType, other: SequenceType):
     return self <= other.base and self <= other.item
 
