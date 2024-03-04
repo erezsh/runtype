@@ -2,6 +2,7 @@ from collections import defaultdict
 from functools import wraps
 from typing import Any, Dict, Callable, Sequence
 from operator import itemgetter
+import warnings
 
 from dataclasses import dataclass
 
@@ -25,6 +26,10 @@ class MultiDispatch:
     def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
         self.fname_to_tree: Dict[str, TypeTree] = {}
         self.typesystem: TypeSystem = typesystem
+        if test_subtypes:
+            warnings.warn("The test_subtypes option is deprecated and will be removed in the future."
+                          "Use typing.Type[t] instead.", DeprecationWarning)
+
         self.test_subtypes = test_subtypes
 
     def __call__(self, func=None, *, priority=None):
