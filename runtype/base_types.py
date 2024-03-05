@@ -198,7 +198,6 @@ SamplerType = Callable[[Sequence], Sequence]
 class Validator(ABC):
     """Defines the validator interface."""
 
-    @abstractmethod
     def validate_instance(self, obj, sampler: Optional[SamplerType] = None):
         """Validates obj, raising a TypeMismatchError if it does not conform.
 
@@ -206,18 +205,21 @@ class Validator(ABC):
         validate only a sample of the object. This approach may validate much faster,
         but might miss anomalies in the data.
         """
+        if not self.test_instance(obj, sampler):
+            raise TypeMismatchError(obj, self)
 
+    @abstractmethod
     def test_instance(self, obj, sampler=None):
         """Tests obj, returning a True/False for whether it conforms or not.
 
         If sampler is provided, it will be applied to the instance in order to
         validate only a sample of the object.
         """
-        try:
-            self.validate_instance(obj, sampler)
-            return True
-        except TypeMismatchError:
-            return False
+        # try:
+        #     self.validate_instance(obj, sampler)
+        #     return True
+        # except TypeMismatchError:
+        #     return False
 
 
 class Constraint(Validator, Type):
@@ -234,6 +236,16 @@ class Constraint(Validator, Type):
         for p in self.predicates:
             if not p(inst):
                 raise TypeMismatchError(inst, self)
+
+    def test_instance(self, inst, sampler=None):
+        """Makes sure the instance conforms by applying it to all the predicates."""
+        if not self.type.test_instance(inst, sampler):
+            return False
+
+        for p in self.predicates:
+            if not p(inst):
+                return False
+        return True
 
 
 # fmt: off

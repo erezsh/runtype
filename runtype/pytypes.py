@@ -69,7 +69,7 @@ class Constraint(base_types.Constraint):
 
 
 class AnyType(base_types.AnyType, PythonType):
-    def validate_instance(self, obj, sampler=None):
+    def test_instance(self, obj, sampler=None):
         return True
 
     def cast_from(self, obj):
@@ -89,6 +89,16 @@ class ProductType(base_types.ProductType, PythonType):
             raise LengthMismatchError(self, obj)
         for type_, item in zip(self.types, obj):
             type_.validate_instance(item, sampler)
+    
+    def test_instance(self, obj, sampler=None):
+        if not isinstance(obj, tuple):
+            return False
+        if self.types and len(obj) != len(self.types):
+            return False
+        for type_, item in zip(self.types, obj):
+            if not type_.test_instance(item, sampler):
+                return False
+        return True
 
 
 class SumType(base_types.SumType, PythonType):
@@ -102,11 +112,32 @@ class SumType(base_types.SumType, PythonType):
             types = rest + [OneOf([v for t in one_ofs for v in t.values])]
         super().__init__(types)
 
+        # Optimization for instance validation
+        data_types = []
+        self.other_types = []
+        for t in types:
+            if isinstance(t, PythonDataType):
+                data_types.append(t.kernel)
+            else:
+                self.other_types.append(t)
+        self.data_types = tuple(data_types)
+                
+
     def validate_instance(self, obj, sampler=None):
-        for t in self.types:
+        if isinstance(obj, self.data_types):
+            return
+        for t in self.other_types:
             if t.test_instance(obj):
                 return 
         raise TypeMismatchError(obj, self)
+
+    def test_instance(self, obj, sampler=None):
+        if isinstance(obj, self.data_types):
+            return True
+        for t in self.other_types:
+            if t.test_instance(obj):
+                return True
+        return False
 
     def cast_from(self, obj):
         for t in self.types:
@@ -129,9 +160,8 @@ class PythonDataType(DataType, PythonType):
     def __init__(self, kernel, supertypes={Any}):
         self.kernel = kernel
 
-    def validate_instance(self, obj, sampler=None):
-        if not isinstance(obj, self.kernel):
-            raise TypeMismatchError(obj, self)
+    def test_instance(self, obj, sampler=None):
+        return isinstance(obj, self.kernel)
 
     def __repr__(self):
         try:
@@ -144,9 +174,7 @@ class PythonDataType(DataType, PythonType):
             # kernel is probably a class. Cast the dict into the class.
             return self.kernel(**obj)
 
-        try:
-            self.validate_instance(obj)
-        except TypeMismatchError:
+        if not self.test_instance(obj):
             cast = getattr(self.kernel, 'cast_from', None)
             if cast:
                 return cast(obj)
@@ -155,9 +183,8 @@ class PythonDataType(DataType, PythonType):
         return obj
 
 class TupleType(PythonType):
-    def validate_instance(self, obj, sampler=None):
-        if not isinstance(obj, tuple):
-            raise TypeMismatchError(obj, self)
+    def test_instance(self, obj, sampler=None):
+        return isinstance(obj, tuple)
 
 
 # cv_type_checking allows the user to define different behaviors for their objects
@@ -172,11 +199,10 @@ class OneOf(PythonType):
     def __init__(self, values):
         self.values = values
 
-    def validate_instance(self, obj, sampler=None):
+    def test_instance(self, obj, sampler=None):
         tok = cv_type_checking.set(True)
         try:
-            if obj not in self.values:
-                raise TypeMismatchError(obj, self)
+            return obj in self.values
         finally:
             cv_type_checking.reset(tok)
 
@@ -189,11 +215,25 @@ class OneOf(PythonType):
 
 
 class GenericType(base_types.GenericType, PythonType):
+    base: PythonType
+    item: PythonType
+
     def __init__(self, base: PythonType, item=Any):
         return super().__init__(base, item)
 
 
 class SequenceType(GenericType):
+
+    def test_instance(self, obj, sampler=None):
+        if not self.base.test_instance(obj):
+            return False
+        if self.item is not Any:
+            if sampler:
+                obj = sampler(obj)
+            for item in obj:
+                if not self.item.test_instance(item, sampler):
+                    return False
+        return True
 
     def validate_instance(self, obj, sampler=None):
         self.base.validate_instance(obj)
@@ -217,6 +257,7 @@ class SequenceType(GenericType):
 
 
 class DictType(GenericType):
+    item: ProductType
 
     def __init__(self, base: PythonType, item=Any*Any):
         super().__init__(base)
@@ -235,6 +276,21 @@ class DictType(GenericType):
             for k, v in items:
                 kt.validate_instance(k, sampler)
                 vt.validate_instance(v, sampler)
+
+    def test_instance(self, obj, sampler=None):
+        if not self.base.test_instance(obj):
+            return False
+        if self.item is not Any:
+            kt, vt = self.item.types
+            items = obj.items()
+            if sampler:
+                items = sampler(items)
+            for k, v in items:
+                if not kt.test_instance(k, sampler):
+                    return False
+                if not vt.test_instance(v, sampler):
+                    return False
+        return True
 
     def __getitem__(self, item):
         assert self.item == Any*Any
@@ -261,11 +317,9 @@ class TupleEllipsisType(SequenceType):
         return '%s[%s, ...]' % (self.base, self.item)
 
 class TypeType(GenericType):
-
-    def validate_instance(self, obj, sampler=None):
+    def test_instance(self, obj, sampler=None):
         t = type_caster.to_canon(obj)
-        if not t <= self.item:
-            raise TypeMismatchError(obj, self)
+        return t <= self.item
 
 
 Object = PythonDataType(object)

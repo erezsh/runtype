@@ -29,11 +29,13 @@ def isa(obj, t):
 
     Behaves like Python's isinstance, but supports the ``typing`` module and constraints.
     """
-    try:
-        ensure_isa(obj, t)
-        return True
-    except TypeMismatchError:
-        return False
+    ct = type_caster.to_canon(t)
+    return ct.test_instance(obj)
+    # try:
+    #     ensure_isa(obj, t)
+    #     return True
+    # except TypeMismatchError:
+    #     return False
 
 
 def assert_isa(obj, t):
