@@ -2,6 +2,7 @@ from collections import defaultdict
 from functools import wraps
 from typing import Any, Dict, Callable, Sequence
 from operator import itemgetter
+import warnings
 
 from dataclasses import dataclass
 
@@ -25,6 +26,10 @@ class MultiDispatch:
     def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
         self.fname_to_tree: Dict[str, TypeTree] = {}
         self.typesystem: TypeSystem = typesystem
+        if test_subtypes:
+            warnings.warn("The test_subtypes option is deprecated and will be removed in the future."
+                          "Use typing.Type[t] instead.", DeprecationWarning)
+
         self.test_subtypes = test_subtypes
 
     def __call__(self, func=None, *, priority=None):
@@ -106,17 +111,21 @@ class TypeTree:
         self.name = name
         self.typesystem = typesystem
         self.test_subtypes = test_subtypes
+        self._get_type = self.typesystem.get_type
+
+        if self.test_subtypes:
+            # Deprecated!!
+            self.find_function_cached = self._old_find_function_cached
 
     def get_arg_types(self, args):
-        get_type = self.typesystem.get_type
         if self.test_subtypes:
             # TODO can be made more efficient
             return tuple(
-                (a if i in self.test_subtypes else get_type(a))
+                (a if i in self.test_subtypes else self._get_type(a))
                 for i, a in enumerate(args)
             )
 
-        return tuple(map(get_type, args))
+        return tuple(map(self._get_type, args))
 
     def find_function(self, args):
         nodes = [self.root]
@@ -141,12 +150,22 @@ class TypeTree:
             ((f, _sig),) = funcs
         return f
 
-    def find_function_cached(self, args):
+    def _old_find_function_cached(self, args):
         "Memoized version of find_function"
         sig = self.get_arg_types(args)
         try:
             return self._cache[sig]
         except KeyError:
+            f = self.find_function(args)
+            self._cache[sig] = f
+            return f
+
+    def find_function_cached(self, args):
+        "Memoized version of find_function"
+        try:
+            return self._cache[tuple(map(self._get_type, args))]
+        except KeyError:
+            sig = tuple(map(self._get_type, args))
             f = self.find_function(args)
             self._cache[sig] = f
             return f
