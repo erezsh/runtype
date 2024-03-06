@@ -143,11 +143,26 @@ assert p0 == Point((0, 0))           # User constructor
 assert p0 == Point({"x": 0, "y": 0}) # User constructor
 ```
 
+## Benchmarks
+
+Runtype beats its competition handily. It is significantly faster than both *beartype* and *plum*, and in some cases is even faster than regular Python code.
+
+See the [benchmarks page](https://runtype.readthedocs.io/en/latest/benchmarks.html) in the documentation for detailed benchmarks.
+
+![alt text](bench1.jpg "Validation Benchmark")
+
+![alt text](bench2.jpg "Dispatch Benchmark")
 
 ## License
 
 Runtype uses the [MIT license](LICENSE).
 
-## Donate
+## Contribute
 
-If you like Runtype and want to show your appreciation, you can do so at my [patreon page](https://www.patreon.com/erezsh), or [ko-fi page](https://ko-fi.com/erezsh).
+If you like Runtype and want to see it grow, you can help by:
+
+- Reporting bugs or suggesting features
+
+- Submitting pull requests (better to ask me first)
+
+- Writing about runtype in a blogpost or even a tweet
