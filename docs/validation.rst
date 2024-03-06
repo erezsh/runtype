@@ -3,9 +3,9 @@ Validation (isa & issubclass)
 
 This module provides type validation functions for Python with support for the ``typing`` module.
 
-You may use them to replace ``isinstance()`` and ``issubclass``.
+It uses the same internal mechanism as used by 'dataclass' and 'dispatch' in order to resolve and validate types and values.
 
-It uses the same validation mechanism as used by 'dataclass' and 'dispatch' in order to resolve and validate types and values.
+You may use them to replace ``isinstance()`` and ``issubclass``.  See :ref:`benchmarks <benchmarks-validation>`.
 
 Functions
 ---------
