@@ -11,6 +11,7 @@ Features:
 
 (Inspired by Julia)
 
+See :ref:`benchmarks <benchmarks-dispatch>`.
 
 Decorator
 ---------
@@ -237,10 +238,11 @@ Example usage:
 Performance
 -----------
 
-Multiple-dispatch caches call-signatures by default (disable at your own risk!), and should add a minimal runtime overhead after the initial resolution. A single dispatch of two arguments is only 5 to 8 times slower than adding two numbers (see: `examples/benchmark\_dispatch.py <https://github.com/erezsh/runtype/blob/master/examples/benchmark_dispatch.py>`_), which is negligable for most use-cases.
+Multiple-dispatch caches call-signatures by default, and adds a small runtime overhead after the first call.
+
+See :ref:`benchmarks <benchmarks-dispatch>`.
 
 Dispatch is not recommended for use in functions that are called often in time-critical code.
-
 
 Limitations
 -----------
