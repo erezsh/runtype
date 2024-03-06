@@ -15,6 +15,7 @@ Welcome to Runtype's documentation!
    dataclass
    dispatch
    types
+   benchmarks
 
 
 Runtype is a collection of run-time type utilities for Python.
