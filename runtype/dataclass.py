@@ -24,6 +24,7 @@ from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType, type_caster
 
 Required = object()
+Skip = object()
 MAX_SAMPLE_SIZE = 16
 
 class NopTypeCaster(ATypeCaster):
@@ -150,6 +151,7 @@ def _validate_attr(config, should_cast, sampler, obj, name, type_, value):
         if item_value is not value:
             msg += f'\n\n    Failed on item: {item_value!r}, expected type {item_type}'
         raise TypeError(msg)
+    return Skip
 
 def _post_init(self, config, should_cast, sampler, type_caster):
     for name, field in getattr(self, '__dataclass_fields__', {}).items():
@@ -160,7 +162,7 @@ def _post_init(self, config, should_cast, sampler, type_caster):
 
         type_ = _get_field_type(type_caster, field)
         new_value = _validate_attr(config, should_cast, sampler, self, name, type_, value)
-        if new_value is not None:
+        if new_value is not Skip:
             object.__setattr__(self, name, new_value)
 
 def _post_init__no_check_types(self):
@@ -174,11 +176,11 @@ def _setattr(obj, setattr, name, value, config, should_cast, sampler, type_caste
     try:
         field = obj.__dataclass_fields__[name]
     except (KeyError, AttributeError):
-        new_value = None
+        new_value = Skip
     else:
         type_ = _get_field_type(type_caster, field)
         new_value = _validate_attr(config, should_cast, sampler, obj, name, type_, value)
-    setattr(obj, name, value if new_value is None else new_value)
+    setattr(obj, name, value if new_value is Skip else new_value)
 
 
 def replace(inst, **kwargs):

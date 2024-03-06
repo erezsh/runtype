@@ -890,6 +890,16 @@ class TestDataclass(TestCase):
         else:
             assert False
 
+    def test_unfrozen2(self):
+        @dataclass(frozen=False)
+        class A:
+            a: list = None
+
+        a = A([1,2])
+        assert a.a == [1,2]
+        a.a = None
+        assert a.a is None
+
     def test_frozen(self):
         @dataclass
         class A:

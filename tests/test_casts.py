@@ -159,3 +159,24 @@ class TestCasts(TestCase):
             bla: int = None
 
         assert Person("Albert Einstein") == Person(('Albert', 'Einstein'), None) == Person(['Albert', 'Einstein'])
+
+    def test_cast_in_unfrozen(self):
+        @dataclass
+        class CastToNone:
+            @classmethod
+            def cast_from(cls, c: str):
+                if c == 'none':
+                    return None
+                return c
+
+        @dataclass(check_types='cast', frozen=False)
+        class A:
+            s: CastToNone
+
+        assert A('hello').s == 'hello'
+        assert A('none').s is None
+        a = A('hello') 
+        a.s = 'bla'
+        assert a.s == 'bla'
+        a.s = None
+        assert a.s is None
