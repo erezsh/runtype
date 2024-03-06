@@ -7,16 +7,22 @@ Welcome to Runtype's documentation!
 ===================================
 
 .. toctree::
-   :maxdepth: 2
    :caption: Modules
+   :maxdepth: 2
    :hidden:
 
    validation
    dataclass
    dispatch
    types
-   benchmarks
 
+.. toctree::
+   :caption: Overview
+   :maxdepth: 2
+   :hidden:
+
+   typing_support
+   benchmarks
 
 Runtype is a collection of run-time type utilities for Python.
 
