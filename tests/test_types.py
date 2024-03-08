@@ -5,7 +5,7 @@ import typing
 import collections.abc as cabc
 
 from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType
+from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence
 from runtype.typesystem import TypeSystem
 
 
@@ -271,6 +271,10 @@ class TestTypes(TestCase):
         assert Any + Int <= Any
         assert Any + NoneType <= Any
 
+    def test_invariance(self):
+        assert List <= Sequence
+        assert not List[List] <= List[Sequence]
+        assert not List[Sequence] <= List[List] 
 
 
 if __name__ == '__main__':

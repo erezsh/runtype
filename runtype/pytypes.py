@@ -14,7 +14,7 @@ from datetime import datetime, date, time, timedelta
 from types import FrameType
 
 from .utils import ForwardRef
-from .base_types import DataType, Validator, TypeMismatchError, dp
+from .base_types import DataType, Validator, TypeMismatchError, dp, Variance
 from . import base_types
 from . import datetime_parse
 
@@ -218,8 +218,8 @@ class GenericType(base_types.GenericType, PythonType):
     base: PythonType
     item: PythonType
 
-    def __init__(self, base: PythonType, item=Any):
-        return super().__init__(base, item)
+    def __init__(self, base: PythonType, item: PythonType=Any, variance: Variance = Variance.Covariant):
+        return super().__init__(base, item, variance)
 
 
 class SequenceType(GenericType):
@@ -259,8 +259,8 @@ class SequenceType(GenericType):
 class DictType(GenericType):
     item: ProductType
 
-    def __init__(self, base: PythonType, item=Any*Any):
-        super().__init__(base)
+    def __init__(self, base: PythonType, item=Any*Any, variance: Variance = Variance.Covariant):
+        super().__init__(base, variance=variance)
         if isinstance(item, tuple):
             assert len(item) == 2
             item = ProductType([type_caster.to_canon(x) for x in item])
@@ -324,15 +324,15 @@ class TypeType(GenericType):
 
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
-List = SequenceType(PythonDataType(list))
 Sequence = SequenceType(PythonDataType(abc.Sequence))
-MutableSequence = SequenceType(PythonDataType(abc.MutableSequence))
-Set = SequenceType(PythonDataType(set))
+List = SequenceType(PythonDataType(list), variance=Variance.Invariant)
+MutableSequence = SequenceType(PythonDataType(abc.MutableSequence), variance=Variance.Invariant)
+Set = SequenceType(PythonDataType(set), variance=Variance.Invariant)
 FrozenSet = SequenceType(PythonDataType(frozenset))
 AbstractSet = SequenceType(PythonDataType(abc.Set))
-Dict = DictType(PythonDataType(dict))
 Mapping = DictType(PythonDataType(abc.Mapping))
-MutableMapping = DictType(PythonDataType(abc.MutableMapping))
+Dict = DictType(PythonDataType(dict), variance=Variance.Invariant)
+MutableMapping = DictType(PythonDataType(abc.MutableMapping), variance=Variance.Invariant)
 Tuple = TupleType()
 TupleEllipsis = TupleEllipsisType(PythonDataType(tuple))
 # Float = PythonDataType(float)
