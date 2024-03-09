@@ -3,6 +3,7 @@ import unittest
 from unittest import TestCase
 import typing
 import collections.abc as cabc
+import io
 
 from runtype.base_types import DataType, GenericType, PhantomType, Variance
 from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence, Mapping    
@@ -294,6 +295,20 @@ class TestTypes(TestCase):
         assert not repeat <= make_type(typing.Callable[[str, int], _Str])
         assert make_type(typing.Callable[[str, int], _Str]) <= repeat
         assert repeat <= make_type(typing.Callable[[_Str, int], str])
+
+    def test_io(self):
+        IO = make_type(io.IOBase)
+        TextIO = make_type(io.TextIOBase)
+        assert IO <= IO
+        assert TextIO <= IO
+        assert IO.test_instance(sys.stdout)
+
+    def test_typing_io(self):
+        IO = make_type(typing.IO)
+        TextIO = make_type(typing.TextIO)
+        assert IO <= IO
+        assert TextIO <= IO
+        assert IO.test_instance(sys.stdout)
 
 
 
