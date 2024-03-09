@@ -294,7 +294,7 @@ class DictType(GenericType):
 
     def __getitem__(self, item):
         assert self.item == Any*Any
-        return type(self)(self.base, item)
+        return type(self)(self.base, item, self.variance)
 
     def cast_from(self, obj):
         # Optimize for Dict[Any] and empty dicts

@@ -132,10 +132,13 @@ class ProductType(Type):
 
 
 class ContainerType(DataType):
-    """Base class for containers, such as generics."""
+    """Base class for containers, such as generics.
+    
+    """
 
+    @abstractmethod
     def __getitem__(self, other):
-        return GenericType(self, other)
+        ...
 
 
 class Variance(Enum):

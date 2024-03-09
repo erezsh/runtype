@@ -52,7 +52,7 @@ class TestIsa(TestCase):
         assert isa(lambda:0, Callable)
         assert not isa(1, Callable)
 
-        assert issubclass(List[int], list)
+        assert not issubclass(List[int], list)  # invariant
         assert issubclass(Tuple[int], tuple)
         assert issubclass(Tuple[int, int], tuple)
         assert not issubclass(tuple, Tuple[int])
@@ -96,7 +96,8 @@ class TestIsa(TestCase):
 
 
     def test_issubclass(self):
-        assert issubclass(List[Tuple], list)
+        assert not issubclass(List[Tuple], list)    # invariant
+        assert issubclass(Sequence[Tuple], Sequence)
 
         if hasattr(typing, 'Annotated'):
             a = typing.Annotated[int, range(1, 10)]
