@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+import typing as t
 import contextvars
 import types
 from abc import abstractmethod, ABC
@@ -215,48 +216,69 @@ class OneOf(PythonType):
 
 
 class GenericType(base_types.GenericType, PythonType):
-    base: PythonType
+    base: PythonDataType
     item: PythonType
 
     def __init__(self, base: PythonType, item: PythonType=Any, variance: Variance = Variance.Covariant):
         return super().__init__(base, item, variance)
 
-
-class SequenceType(GenericType):
+class GenericContainerType(GenericType):
+    def validate_instance(self, obj, sampler=None):
+        self.base.validate_instance(obj)
+        if not self.accepts_any:
+            self.validate_instance_items(obj, sampler)
 
     def test_instance(self, obj, sampler=None):
         if not self.base.test_instance(obj):
             return False
-        if self.item is not Any:
-            if sampler:
-                obj = sampler(obj)
-            for item in obj:
-                if not self.item.test_instance(item, sampler):
-                    return False
-        return True
-
-    def validate_instance(self, obj, sampler=None):
-        self.base.validate_instance(obj)
-        if self.item is not Any:
-            if sampler:
-                obj = sampler(obj)
-            for item in obj:
-                self.item.validate_instance(item, sampler)
+        return self.accepts_any or self.test_instance_items(obj, sampler)
 
     def cast_from(self, obj):
-        # Optimize for List[Any] and empty sequences
-        if self.item is Any or not obj:
-            # Already a list?
-            if self.base.test_instance(obj):
-                return obj
-            # Make sure it's a list
-            return list(obj)
+        # Optimize for X[Any] and empty containers
+        if not obj or self.accepts_any:
+            # Make sure it's the right type
+            return obj if self.base.test_instance(obj) else self.base.kernel(obj)
 
+        return self.cast_from_items(obj)
+
+    @property
+    @abstractmethod
+    def accepts_any(self) -> bool:
+        ...
+
+    @abstractmethod
+    def validate_instance_items(self, items: t.Iterable, sampler):
+        ...
+
+    @abstractmethod
+    def test_instance_items(self, items: t.Iterable, sampler) -> bool:
+        ...
+
+    @abstractmethod
+    def cast_from_items(self, obj):
+        ...
+
+class SequenceType(GenericContainerType):
+    @property
+    def accepts_any(self):
+        return self.item is Any
+
+    def validate_instance_items(self, obj: t.Sequence, sampler):
+        for item in sampler(obj) if sampler else obj:
+            self.item.validate_instance(item, sampler)
+
+    def test_instance_items(self, obj: t.Sequence, sampler) -> bool:
+        return all(
+            self.item.test_instance(item, sampler)
+            for item in (sampler(obj) if sampler else obj)
+        )
+
+    def cast_from_items(self, obj: t.Sequence):
         # Recursively cast each item
-        return [self.item.cast_from(item) for item in obj]
+        return self.base.kernel(self.item.cast_from(item) for item in obj)
 
 
-class DictType(GenericType):
+class DictType(GenericContainerType):
     item: ProductType
 
     def __init__(self, base: PythonType, item=Any*Any, variance: Variance = Variance.Covariant):
@@ -266,45 +288,30 @@ class DictType(GenericType):
             item = ProductType([type_caster.to_canon(x) for x in item])
         self.item = item
 
-    def validate_instance(self, obj, sampler=None):
-        self.base.validate_instance(obj)
-        if self.item is not Any:
-            kt, vt = self.item.types
-            items = obj.items()
-            if sampler:
-                items = sampler(items)
-            for k, v in items:
-                kt.validate_instance(k, sampler)
-                vt.validate_instance(v, sampler)
+    @property
+    def accepts_any(self):
+        return self.item is Any or self.item == Any*Any
 
-    def test_instance(self, obj, sampler=None):
-        if not self.base.test_instance(obj):
-            return False
-        if self.item is not Any:
-            kt, vt = self.item.types
-            items = obj.items()
-            if sampler:
-                items = sampler(items)
-            for k, v in items:
-                if not kt.test_instance(k, sampler):
-                    return False
-                if not vt.test_instance(v, sampler):
-                    return False
-        return True
+    def validate_instance_items(self, obj: t.Mapping, sampler):
+        assert isinstance(self.item, base_types.ProductType)
+        kt, vt = self.item.types
+        for k, v in sampler(obj.items()) if sampler else obj.items():
+            kt.validate_instance(k, sampler)
+            vt.validate_instance(v, sampler)
+
+    def test_instance_items(self, obj: t.Mapping, sampler) -> bool:
+        assert isinstance(self.item, base_types.ProductType)
+        kt, vt = self.item.types
+        return all(
+            kt.test_instance(k, sampler) and vt.test_instance(v, sampler)
+            for k, v in (sampler(obj.items()) if sampler else obj.items())
+        )
 
     def __getitem__(self, item):
         assert self.item == Any*Any
         return type(self)(self.base, item, self.variance)
 
-    def cast_from(self, obj):
-        # Optimize for Dict[Any] and empty dicts
-        if self.item is Any or not obj:
-            # Already a dict?
-            if self.base.test_instance(obj):
-                return obj
-            # Make sure it's a dict
-            return dict(obj)
-
+    def cast_from_items(self, obj: t.Mapping):
         # Must already be a dict
         self.base.validate_instance(obj)
 
