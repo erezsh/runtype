@@ -8,6 +8,7 @@ from runtype.base_types import DataType, GenericType, PhantomType, Variance
 from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence, Mapping    
 from runtype.typesystem import TypeSystem
 
+make_type = type_caster.to_canon
 
 class TestTypes(TestCase):
     def test_basic_types(self):
@@ -282,6 +283,18 @@ class TestTypes(TestCase):
         assert not Dict[Int, List] <= Dict[Int, Sequence]
         assert not Mapping[Int, Sequence] <= Mapping[Int, List]
         assert not Dict[Int, Sequence] <= Dict[Int, List]
+
+    def test_callable(self):
+        repeat = make_type(typing.Callable[[str, int], str])
+        class _Str(str):
+            pass
+        assert repeat <= repeat
+        assert not make_type(typing.Callable[[_Str, int], str]) <= repeat
+        assert not make_type(typing.Callable[[int, str], str]) <= repeat
+        assert not repeat <= make_type(typing.Callable[[str, int], _Str])
+        assert make_type(typing.Callable[[str, int], _Str]) <= repeat
+        assert repeat <= make_type(typing.Callable[[_Str, int], str])
+
 
 
 if __name__ == '__main__':

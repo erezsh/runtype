@@ -158,6 +158,8 @@ class SumType(base_types.SumType, PythonType):
 
 
 class PythonDataType(DataType, PythonType):
+    kernel: type
+
     def __init__(self, kernel, supertypes={Any}):
         self.kernel = kernel
 
@@ -328,6 +330,22 @@ class TypeType(GenericType):
         t = type_caster.to_canon(obj)
         return t <= self.item
 
+class CallableType(PythonDataType):
+    args: PythonType = Any
+    ret: PythonType = Any
+
+    def __init__(self, args: PythonType = Any, ret: PythonType = Any):
+        self.args = args
+        self.ret = ret
+        self.kernel = typing.Callable
+
+    def __getitem__(self, signature):
+        args, ret = signature
+        return type(self)(args, ret)
+
+    def __repr__(self):
+        return f"Callable[{self.args}, {self.ret}]"
+
 
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
@@ -344,7 +362,7 @@ Tuple = TupleType()
 TupleEllipsis = TupleEllipsisType(PythonDataType(tuple))
 # Float = PythonDataType(float)
 Bytes = PythonDataType(bytes)
-Callable = PythonDataType(abc.Callable)  # TODO: Generic
+Callable = CallableType()
 Literal = OneOf
 Type = TypeType(PythonDataType(type))
 
@@ -545,6 +563,8 @@ class TypeCaster(ATypeCaster):
             return Sequence
         elif t is typing.MutableSequence:
             return MutableSequence
+        elif t is typing.Callable:
+            return Callable
 
         if origin is None:
             if isinstance(t, typing.TypeVar):
@@ -579,8 +599,8 @@ class TypeCaster(ATypeCaster):
         elif origin is typing.Union:
             res = [to_canon(x) for x in args]
             return SumType(res)
-        elif origin is abc.Callable or t is typing.Callable:
-            # return Callable[ProductType(to_canon(x) for x in t.__args__)]
+        elif origin is abc.Callable or origin is typing.Callable:
+            return Callable[ProductType(to_canon(x) for x in args[:-1]), to_canon(args[-1])]
             return Callable  # TODO
         elif py38 and origin is typing.Literal:
             return OneOf(args)
@@ -629,6 +649,9 @@ type_caster = TypeCaster()
 @dp
 def le(self: PythonDataType, other: PythonDataType):
     return issubclass(self.kernel, other.kernel)
+@dp
+def le(self: CallableType, other: CallableType):
+    return self.args >= other.args and self.ret <= other.ret
 @dp
 def le(self: TupleEllipsisType, other: TupleType):
     return True
