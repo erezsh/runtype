@@ -16,6 +16,7 @@ This is consistent with the view that a type hierarchy can be expressed as a pos
 """
 from typing import Callable, Sequence, Optional, Union
 from abc import ABC, abstractmethod
+from enum import Enum, auto
 
 from .dispatch import MultiDispatch
 from .typesystem import PythonBasic
@@ -131,11 +132,19 @@ class ProductType(Type):
 
 
 class ContainerType(DataType):
-    """Base class for containers, such as generics."""
+    """Base class for containers, such as generics.
+    
+    """
 
+    @abstractmethod
     def __getitem__(self, other):
-        return GenericType(self, other)
+        ...
 
+
+class Variance(Enum):
+    Covariant = auto()
+    Contravariant = auto()
+    Invariant = auto()
 
 class GenericType(ContainerType):
     """Implements a generic type. i.e. a container for items of a specific type.
@@ -145,8 +154,9 @@ class GenericType(ContainerType):
 
     base: Type
     item: Union[type, Type]
+    variance: Variance
 
-    def __init__(self, base: Type, item: Union[type, Type] = Any):
+    def __init__(self, base: Type, item: Union[type, Type], variance):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
             if not item <= base.item:
@@ -157,6 +167,7 @@ class GenericType(ContainerType):
 
         self.base = base
         self.item = item
+        self.variance = variance
 
     def __repr__(self):
         if self.item is Any:
@@ -164,7 +175,7 @@ class GenericType(ContainerType):
         return "%r[%r]" % (self.base, self.item)
 
     def __getitem__(self, item):
-        return type(self)(self, item)
+        return type(self)(self, item, self.variance)
 
     def __hash__(self):
         return hash((self.base, self.item))
@@ -328,7 +339,13 @@ def le(self: ProductType, other: ProductType):
 
 @dp
 def le(self: GenericType, other: GenericType):
-    return self.base <= other.base and self.item <= other.item
+    if self.variance == Variance.Covariant:
+        return self.base <= other.base and self.item <= other.item
+    elif self.variance == Variance.Contravariant:
+        return self.base <= other.base and self.item >= other.item
+    elif self.variance == Variance.Invariant:
+        return self.base <= other.base and self.item == other.item
+    raise RuntimeError()
 
 @dp
 def le(self: GenericType, other: Type):

@@ -4,8 +4,8 @@ from unittest import TestCase
 import typing
 import collections.abc as cabc
 
-from runtype.base_types import DataType, ContainerType, PhantomType
-from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType
+from runtype.base_types import DataType, GenericType, PhantomType, Variance
+from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence, Mapping    
 from runtype.typesystem import TypeSystem
 
 
@@ -13,7 +13,7 @@ class TestTypes(TestCase):
     def test_basic_types(self):
         Int = DataType()
         Str = DataType()
-        Array = ContainerType()
+        Array = GenericType(DataType(), Any, Variance.Covariant)
 
         assert Int == Int
         assert Int != Str
@@ -105,7 +105,7 @@ class TestTypes(TestCase):
         assert List[Any] == List
 
     def test_constraint(self):
-        int_pair = Constraint(typing.List[int], [lambda a: len(a) == 2])
+        int_pair = Constraint(typing.Sequence[int], [lambda a: len(a) == 2])
         assert int_pair.test_instance([1,2])
         assert not int_pair.test_instance([1,2,3])
         assert not int_pair.test_instance([1,'a'])
@@ -133,12 +133,12 @@ class TestTypes(TestCase):
         assert not int_pair <= Int + Dict
         assert not int_pair <= Tuple
 
-        assert int_pair <= List
-        assert List >= int_pair
-        assert int_pair <= List[Int]
-        assert List[Int] >= int_pair
-        assert not int_pair <= List[String]
-        assert not List[String] >= int_pair
+        assert int_pair <= Sequence
+        assert Sequence >= int_pair
+        assert int_pair <= Sequence[Int]
+        assert Sequence[Int] >= int_pair
+        assert not int_pair <= Sequence[String]
+        assert not Sequence[String] >= int_pair
 
 
 
@@ -271,6 +271,17 @@ class TestTypes(TestCase):
         assert Any + Int <= Any
         assert Any + NoneType <= Any
 
+    def test_invariance(self):
+        assert List <= Sequence
+        assert not List[List] <= List[Sequence]
+        assert not List[Sequence] <= List[List] 
+
+        assert Dict <= Mapping
+        assert Dict[Int, Int] <= Mapping[Int, Int]
+        assert Mapping[Int, List] <= Mapping[Int, Sequence]
+        assert not Dict[Int, List] <= Dict[Int, Sequence]
+        assert not Mapping[Int, Sequence] <= Mapping[Int, List]
+        assert not Dict[Int, Sequence] <= Dict[Int, List]
 
 
 if __name__ == '__main__':
