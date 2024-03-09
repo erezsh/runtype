@@ -2,6 +2,7 @@
 Python Types - contains an implementation of a Runtype type system that is parallel to the Python type system.
 """
 
+import io
 import typing as t
 import contextvars
 import types
@@ -565,6 +566,12 @@ class TypeCaster(ATypeCaster):
             return MutableSequence
         elif t is typing.Callable:
             return Callable
+        elif t is typing.IO:
+            return PythonDataType(io.IOBase)
+        elif t is typing.TextIO:
+            return PythonDataType(io.TextIOBase)
+        elif t is typing.BinaryIO:
+            return PythonDataType(io.BytesIO)
 
         if origin is None:
             if isinstance(t, typing.TypeVar):
