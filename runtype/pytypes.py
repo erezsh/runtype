@@ -599,7 +599,7 @@ class TypeCaster(ATypeCaster):
         elif origin is typing.Union:
             res = [to_canon(x) for x in args]
             return SumType(res)
-        elif origin is abc.Callable or t is typing.Callable:
+        elif origin is abc.Callable or origin is typing.Callable:
             return Callable[ProductType(to_canon(x) for x in args[:-1]), to_canon(args[-1])]
             return Callable  # TODO
         elif py38 and origin is typing.Literal:
