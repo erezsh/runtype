@@ -22,7 +22,7 @@ def get_func_signatures(typesystem, f):
             t = typesystem.default_type
         else:
             # Canonize to detect more collisions on construction, instead of during dispatch
-            t = typesystem.canonize_type(t)
+            t = typesystem.to_canonical_type(t)
 
         if p.default is not p.empty:
             # From now on, everything is optional
