@@ -58,8 +58,12 @@ class TestIsa(TestCase):
         assert not issubclass(tuple, Tuple[int])
 
         assert issubclass(Any, Any)
-        assert not issubclass(Any, int)
+        assert issubclass(Any, int)
         assert issubclass(List[int], Any)
+
+        assert issubclass(object, object)
+        assert not issubclass(object, int)
+        assert issubclass(List[int], object)
 
 
         # Tuples
@@ -483,7 +487,7 @@ class TestDispatch(TestCase):
             assert False
 
 
-    def test_canonization(self):
+    def test_canonical_types(self):
         def _test_canon(*types, include_none=False):
             dp = Dispatch()
 
@@ -513,7 +517,9 @@ class TestDispatch(TestCase):
                 except ValueError:
                     pass
 
-        _test_canon(object, Any, Union[Any], include_none=True)
+        _test_canon(object, Union[object], include_none=True)
+        # XXX the Any test should fail, but atm we only throw the error on lookup
+        # _test_canon(Any, Union[Any], include_none=True)
         _test_canon(list, List, List[Any], Union[List[Union[Any]]])
         _test_canon(tuple, Tuple)
         _test_canon(dict, Dict, Dict[Any, Any])
@@ -1066,7 +1072,8 @@ class TestDataclass(TestCase):
 
     def test_any(self):
         assert is_subtype(int, Any)
-        assert not is_subtype(Any, int)
+        assert is_subtype(Any, int)
+        assert is_subtype(Any, int)
         assert is_subtype(Any, Any)
         assert is_subtype(Any, Union[Any, int])
         assert is_subtype(Any, Union[Any, None])
@@ -1074,7 +1081,19 @@ class TestDataclass(TestCase):
         assert is_subtype(Union[Any, None], Any)
         assert is_subtype(Union[Any, None], Union[Any, None])
         assert is_subtype(dict, Any, )
-        assert not is_subtype(Any, dict)
+        assert is_subtype(Any, dict)
+
+    def test_all(self):
+        assert is_subtype(int, object)
+        assert not is_subtype(object, int)
+        assert is_subtype(object, object)
+        assert is_subtype(object, Union[object, int])
+        assert is_subtype(object, Union[object, None])
+        assert is_subtype(Union[object, int], object)
+        assert is_subtype(Union[object, None], object)
+        assert is_subtype(Union[object, None], Union[object, None])
+        assert is_subtype(dict, object, )
+        assert not is_subtype(object, dict)
 
 if __name__ == '__main__':
     unittest.main()

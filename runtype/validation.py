@@ -55,7 +55,7 @@ def assert_isa(obj, t):
 
 
 _CANONIZED_TYPES = {
-    Any: object,
+    # Any: object,
     List: list,
     Set: set,
     FrozenSet: frozenset,

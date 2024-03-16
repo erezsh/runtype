@@ -77,8 +77,15 @@ class AnyType(base_types.AnyType, PythonType):
     def cast_from(self, obj):
         return obj
 
+class AllType(base_types.AllType, PythonType):
+    def test_instance(self, obj, sampler=None):
+        return True
+
+    def cast_from(self, obj):
+        return obj
 
 Any = AnyType()
+All = AllType()
 
 
 class ProductType(base_types.ProductType, PythonType):
@@ -483,7 +490,7 @@ _type_cast_mapping = {
     float: Float,
     bytes: Bytes,
     type(None): NoneType,
-    object: Any,
+    object: All,
     typing.Any: Any,
     datetime: DateTime,
     date: Date,

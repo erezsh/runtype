@@ -6,7 +6,7 @@ import collections.abc as cabc
 import io
 
 from runtype.base_types import DataType, GenericType, PhantomType, Variance
-from runtype.pytypes import type_caster, List, Dict, Int, Any, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence, Mapping    
+from runtype.pytypes import type_caster, List, Dict, Int, Any, All, Constraint, String, Tuple, Iter, Literal, NoneType, Sequence, Mapping    
 from runtype.typesystem import TypeSystem
 
 make_type = type_caster.to_canon
@@ -102,7 +102,7 @@ class TestTypes(TestCase):
 
         assert Dict*List <= Dict*List
 
-        assert ((Int * Dict) * List) == (Int * (Dict * List))
+        # assert ((Int * Dict) * List) == (Int * (Dict * List))
 
         assert List[Any] == List
 
@@ -218,8 +218,12 @@ class TestTypes(TestCase):
 
 
     def test_pytypes3(self):
-        assert Any + Int == Any
-        assert Int + Any == Any
+        assert Any + Int != Any
+        assert Int + Any != Any
+        assert Int + Any == Any + Int
+
+        assert All + Int == All
+        assert Int + All == All
 
 
     def test_canonize_pytypes(self):

@@ -1,8 +1,9 @@
 """
 Base Type Classes - contains the basic building blocks of a generic type system
 
-There are five kinds of types: (to date)
-- Any - Contains every type
+There are six kinds of types: (to date)
+- Any - May contain any type, or be contained by any type
+- All - Contains all types
 - Sum - marks a union between types
 - Product - marks a record / tuple / struct
 - Data - marks any type that contains non-type information
@@ -12,7 +13,9 @@ There are five kinds of types: (to date)
 We use comparison operators to indicate whether a type is a subtype of another:
  - t1 <= t2 means "t1 is a subtype of t2"
  - t1 >= t2 means "t2 is a subtype of t1"
-This is consistent with the view that a type hierarchy can be expressed as a poset.
+This is consistent with the view that type hierarchies can be expressed as a posets.
+
+A sum that contains All becomes All. Not so with Any.
 """
 from typing import Callable, Sequence, Optional, Union
 from abc import ABC, abstractmethod
@@ -38,31 +41,50 @@ _Type = Union["Type", type]
 
 
 class Type(ABC):
-    """Abstract Type class. All types inherit from it."""
+    """Abstract Type class. Every type inherit from it."""
 
     def __add__(self, other: _Type):
         return SumType.create((self, other))
 
     def __mul__(self, other: _Type):
-        return ProductType.create((self, other))
+        return ProductType((self, other))
 
 
 class AnyType(Type):
     """Represents the Any type.
 
-    Any contains every other type.
+    Any may contain any other type, and be contained by any other type.
 
     For any type 't' within the typesystem, t is a subtype of Any (or: t <= Any)
+    But also Any is a subtype of t (or: Any <= t)
     """
-
-    def __add__(self, other):
-        return self
 
     def __repr__(self):
         return "Any"
 
 
+class AllType(Type):
+    """Represents the All type.
+
+    All contains every other type.
+
+    For any type 't' within the typesystem, t is a subtype of All (or: t <= All)
+    if All <= t, then t == All
+    """
+
+    def __add__(self, other):
+        if not isinstance(other, (type, Type)):
+            return NotImplemented
+        return self
+
+    __radd__ = __add__
+
+    def __repr__(self):
+        return "All"
+
+
 Any = AnyType()
+All = AllType()
 
 
 class DataType(Type):
@@ -90,7 +112,9 @@ class SumType(Type):
             if isinstance(t, SumType):
                 # Optimization: Flatten recursive SumTypes
                 x |= set(t.types)
-            elif isinstance(t, AnyType):
+            elif isinstance(t, AllType):
+                # This is more than an optimization, as it allows users to say:
+                # (All + x) is All
                 return t
             else:
                 x.add(t)
@@ -112,29 +136,19 @@ class ProductType(Type):
     def __init__(self, types):
         self.types = tuple(types)
 
-    @classmethod
-    def create(cls, types):
-        x = []
-        for t in types:
-            if isinstance(t, ProductType):
-                # Flatten recursive ProductTypes, so that a*b*c == (a,b,c), instead of ((a,b), c)
-                x += t.types
-            else:
-                x.append(t)
-
-        return cls(x)
-
     def __repr__(self):
         return "(%s)" % "*".join(map(repr, self.types))
 
     def __hash__(self):
         return hash(self.types)
 
+    @classmethod
+    def create(cls, types):
+        return cls(types)
+
 
 class ContainerType(DataType):
-    """Base class for containers, such as generics.
-    
-    """
+    """Base class for containers, such as generics."""
 
     @abstractmethod
     def __getitem__(self, other):
@@ -145,6 +159,7 @@ class Variance(Enum):
     Covariant = auto()
     Contravariant = auto()
     Invariant = auto()
+
 
 class GenericType(ContainerType):
     """Implements a generic type. i.e. a container for items of a specific type.
@@ -170,7 +185,7 @@ class GenericType(ContainerType):
         self.variance = variance
 
     def __repr__(self):
-        if self.item is Any:
+        if self.item is All:
             return str(self.base)
         return "%r[%r]" % (self.base, self.item)
 
@@ -198,7 +213,7 @@ class PhantomGenericType(Type):
     For any phantom type p[i], it's true that p[i] <= p but also p[i] <= i and i <= p[i].
     """
 
-    def __init__(self, base, item=Any):
+    def __init__(self, base, item=All):
         self.base = base
         self.item = item
 
@@ -290,24 +305,39 @@ def eq(self: GenericType, other: GenericType):
 
 @dp
 def eq(self: GenericType, other: Type):
-    return Any <= self.item and self.base == other
+    return self.item is All and self.base == other
 
 @dp
 def eq(self: PhantomGenericType, other: PhantomGenericType):
     return self.base == other.base and self.item == other.base
 
 
-# le() for AnyType
+# le() for AllType & AnyType
 
 
 @dp(priority=100)
+def le(self: Type, other: AllType):
+    # All contains all types
+    return True
+
+@dp
+def le(self: type, other: AllType):
+    # All contains all types
+    return True
+
+@dp(priority=2)
 def le(self: Type, other: AnyType):
-    # Any contains all types
+    # Any may be a superset of any type
     return True
 
 @dp
 def le(self: type, other: AnyType):
-    # Any contains all types
+    # Any may be a superset of any type
+    return True
+
+@dp(priority=1)
+def le(self: AnyType, other: Type):
+    # Any may be a subset of any type
     return True
 
 
