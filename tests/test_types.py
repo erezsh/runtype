@@ -147,7 +147,7 @@ class TestTypes(TestCase):
     def test_typesystem(self):
         t = TypeSystem()
         o = object()
-        assert t.canonize_type(o) is o
+        assert t.to_canonical_type(o) is o
 
         class IntOrder(TypeSystem):
             def issubclass(self, a, b):

@@ -54,7 +54,7 @@ def assert_isa(obj, t):
             raise TypeError(msg)
 
 
-_CANONIZED_TYPES = {
+_CANONICAL_TYPES = {
     # Any: object,
     List: list,
     Set: set,
@@ -68,9 +68,9 @@ _CANONIZED_TYPES = {
     Tuple[Any, ...]: tuple,
 }
 
-def canonize_type(t):
+def to_canonical_type(t):
     "Turns List -> list, Dict -> dict, etc."
-    return _CANONIZED_TYPES.get(t, t)
+    return _CANONICAL_TYPES.get(t, t)
 
 
 def issubclass(t1, t2):
@@ -90,7 +90,7 @@ def issubclass(t1, t2):
 class PythonTyping(TypeSystem):
     isinstance = staticmethod(isa)
     issubclass = staticmethod(issubclass)
-    canonize_type = staticmethod(canonize_type)
+    to_canonical_type = staticmethod(to_canonical_type)
     get_type = type
     default_type = object
 
