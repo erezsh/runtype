@@ -240,6 +240,31 @@ class TestIsa(TestCase):
         assert issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[int]])
         assert not issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[str]])
 
+    def test_any(self):
+        assert is_subtype(int, Any)
+        assert is_subtype(Any, int)
+        assert is_subtype(Any, int)
+        assert is_subtype(Any, Any)
+        assert is_subtype(Any, Union[Any, int])
+        assert is_subtype(Any, Union[Any, None])
+        assert is_subtype(Union[Any, int], Any)
+        assert is_subtype(Union[Any, None], Any)
+        assert is_subtype(Union[Any, None], Union[Any, None])
+        assert is_subtype(dict, Any, )
+        assert is_subtype(Any, dict)
+
+    def test_all(self):
+        assert is_subtype(int, object)
+        assert not is_subtype(object, int)
+        assert is_subtype(object, object)
+        assert is_subtype(object, Union[object, int])
+        assert is_subtype(object, Union[object, None])
+        assert is_subtype(Union[object, int], object)
+        assert is_subtype(Union[object, None], object)
+        assert is_subtype(Union[object, None], Union[object, None])
+        assert is_subtype(dict, object, )
+        assert not is_subtype(object, dict)
+
 
 class TestDispatch(TestCase):
     def setUp(self):
@@ -1070,30 +1095,29 @@ class TestDataclass(TestCase):
                 "d": {"a": {"baz": 2}}
                 }
 
-    def test_any(self):
-        assert is_subtype(int, Any)
-        assert is_subtype(Any, int)
-        assert is_subtype(Any, int)
-        assert is_subtype(Any, Any)
-        assert is_subtype(Any, Union[Any, int])
-        assert is_subtype(Any, Union[Any, None])
-        assert is_subtype(Union[Any, int], Any)
-        assert is_subtype(Union[Any, None], Any)
-        assert is_subtype(Union[Any, None], Union[Any, None])
-        assert is_subtype(dict, Any, )
-        assert is_subtype(Any, dict)
+    def test_update_options(self):
+        no_eq = dataclass(eq=False, check_types=True)
 
-    def test_all(self):
-        assert is_subtype(int, object)
-        assert not is_subtype(object, int)
-        assert is_subtype(object, object)
-        assert is_subtype(object, Union[object, int])
-        assert is_subtype(object, Union[object, None])
-        assert is_subtype(Union[object, int], object)
-        assert is_subtype(Union[object, None], object)
-        assert is_subtype(Union[object, None], Union[object, None])
-        assert is_subtype(dict, object, )
-        assert not is_subtype(object, dict)
+        @no_eq
+        class A:
+            a: int = None
+
+        assert A() != A()
+        self.assertRaises(TypeError, A, "a")
+
+        @no_eq(eq=True)
+        class B:
+            a: int = None
+
+        assert B() == B()
+        self.assertRaises(TypeError, B, "a")
+
+        @no_eq(check_types=False)
+        class C:
+            a: int = None
+
+        assert C() != C()
+        assert C("a").a == "a"
 
 if __name__ == '__main__':
     unittest.main()

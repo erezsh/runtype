@@ -49,6 +49,8 @@ class Type(ABC):
     def __mul__(self, other: _Type):
         return ProductType((self, other))
 
+    def __le__(self, other):
+        return NotImplemented
 
 class AnyType(Type):
     """Represents the Any type.
