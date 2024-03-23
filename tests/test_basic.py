@@ -35,6 +35,7 @@ class TestIsa(TestCase):
         assert isa(1, (int, str))
         assert not isa(1, (float, str))
         assert isa(int, Type[int])
+        assert not isa(str, Sequence[int])
 
         self.assertRaises(TypeError, isa, 1, 1)
         self.assertRaises(TypeError, issubclass, 1, 1)
