@@ -3,7 +3,11 @@ import textwrap
 import pytest
 
 from runtype import Dispatch
-import plum
+try:
+    import plum
+except ImportError:
+    class plum:
+        dispatch = None
 
 dispatch = Dispatch()
 

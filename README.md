@@ -51,7 +51,7 @@ pip install runtype
 
 No dependencies.
 
-Requires Python 3.6 or up.
+Requires Python 3.8 or up.
 
 [![codecov](https://codecov.io/gh/erezsh/runtype/branch/master/graph/badge.svg)](https://codecov.io/gh/erezsh/runtype)
 

@@ -20,12 +20,11 @@ packages = [{ include = "runtype" }]
 
 
 [tool.poetry.dependencies]
-python = "^3.6"
-dataclasses = {version = "*", python = "~3.6"}
-contextvars = {version = "*", python = "~3.6"}
+python = "^3.8"
 
 [tool.poetry.dev-dependencies]
 typing_extensions = "*"
+mypy = ">=1.9.0"
 # The following are used for benchmarking - 
 pytest-benchmark = "*"
 # beartype = "*"

@@ -62,7 +62,9 @@ class MultiDispatch:
 
         @wraps(func)
         def dispatched_f(*args, **kw):
-            return find_function_cached(args)(*args, **kw)
+            # Done in two steps to help debugging
+            f = find_function_cached(args)
+            return f(*args, **kw)
 
         dispatched_f.__dispatcher__ = self
         return dispatched_f
