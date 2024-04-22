@@ -3,7 +3,10 @@ import typing as t
 import pytest
 
 from runtype import isa, issubclass
-from beartype.door import is_bearable
+try:
+    from beartype.door import is_bearable
+except ImportError:
+    is_bearable = None
 
 STDLIB = ("stdlib (isinstance)", isinstance)
 RUNTYPE = ("runtype (isa)", isa)
