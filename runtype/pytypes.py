@@ -22,11 +22,7 @@ from . import datetime_parse
 
 
 if sys.version_info < (3, 9):
-    if sys.version_info < (3, 7):
-        # python 3.6 
-        _orig_eval = ForwardRef._eval_type
-    else:
-        _orig_eval = ForwardRef._evaluate
+    _orig_eval = ForwardRef._evaluate
 
     def _forwardref_evaluate(self, glob, loc, _):
         return _orig_eval(self, glob, loc)
@@ -563,7 +559,7 @@ class TypeCaster(ATypeCaster):
             return FrozenSet
         elif t is typing.Tuple:
             return Tuple
-        elif t is typing.Mapping:  # 3.6
+        elif t is typing.Mapping:
             return Mapping
         elif t is typing.MutableMapping:
             return MutableMapping
