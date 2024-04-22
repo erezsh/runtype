@@ -26,6 +26,7 @@ contextvars = {version = "*", python = "~3.6"}
 
 [tool.poetry.dev-dependencies]
 typing_extensions = "*"
+mypy = "*"
 # The following are used for benchmarking - 
 pytest-benchmark = "*"
 # beartype = "*"
