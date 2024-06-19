@@ -6,8 +6,8 @@ import random
 from copy import copy
 import dataclasses
 import typing
-from typing import Union, Any, Callable, TypeVar, Dict, Optional, overload
-from typing import TYPE_CHECKING, ClassVar, Type
+from typing import Union, Callable, TypeVar, Dict, Optional, overload
+from typing import TYPE_CHECKING, Type, ForwardRef
 from abc import ABC, abstractmethod
 import inspect
 import types
@@ -16,12 +16,10 @@ import warnings
 if TYPE_CHECKING:
     from typing_extensions import dataclass_transform
 else:
-
     def dataclass_transform(*a, **kw):
         return lambda f: f
 
 
-from .utils import ForwardRef
 from .common import CHECK_TYPES
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType, type_caster

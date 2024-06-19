@@ -15,19 +15,10 @@ import typing
 from datetime import datetime, date, time, timedelta
 from types import FrameType
 
-from .utils import ForwardRef
 from .base_types import DataType, Validator, TypeMismatchError, dp, Variance
 from . import base_types
 from . import datetime_parse
 
-
-if sys.version_info < (3, 9):
-    _orig_eval = ForwardRef._evaluate
-
-    def _forwardref_evaluate(self, glob, loc, _):
-        return _orig_eval(self, glob, loc)
-else:
-    _forwardref_evaluate = ForwardRef._evaluate
 
 try:
     import typing_extensions
@@ -526,10 +517,10 @@ class TypeCaster(ATypeCaster):
         if isinstance(t, (base_types.Type, Validator)):
             return t
 
-        if isinstance(t, ForwardRef):
+        if isinstance(t, typing.ForwardRef):
             if self.frame is None:
                 raise RuntimeError("Cannot resolve ForwardRef: TypeCaster initialized without a frame")
-            t = _forwardref_evaluate(t, self.frame.f_globals, self.frame.f_locals, frozenset())
+            t = typing._eval_type(t, self.frame.f_globals, self.frame.f_locals)
 
         if isinstance(t, tuple):
             return SumType.create([to_canon(x) for x in t])
