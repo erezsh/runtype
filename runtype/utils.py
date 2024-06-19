@@ -1,9 +1,6 @@
 import inspect
-import sys
 import contextvars
 from contextlib import contextmanager
-
-from typing import ForwardRef as ForwardRef
 
 def get_func_signatures(typesystem, f):
     sig = inspect.signature(f)
