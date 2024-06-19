@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "runtype"
-version = "0.5.0b"
+version = "0.5.0"
 description = "Type dispatch and validation for run-time Python"
 authors = ["Erez Shinan <erezshin@gmail.com>"]
 license = "MIT"
