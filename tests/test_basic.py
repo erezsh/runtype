@@ -241,6 +241,11 @@ class TestIsa(TestCase):
         assert issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[int]])
         assert not issubclass(typing.Type[typing.List[int]], typing.Type[typing.Sequence[str]])
 
+        assert issubclass(typing.Type[int], typing.Type[object])
+        assert issubclass(typing.Type[int], typing.Type[typing.Any])
+        assert not issubclass(typing.Type[object], typing.Type[int])
+        assert issubclass(typing.Type[typing.Any], typing.Type[int])
+
     def test_any(self):
         assert is_subtype(int, Any)
         assert is_subtype(Any, int)
@@ -862,6 +867,15 @@ class TestDataclass(TestCase):
         assert A(b=10) == A(4, 10)
         self.assertRaises(TypeError, A)
         self.assertRaises(TypeError, A, 2)
+
+    def test_self_reference(self):
+        @dataclass
+        class A:
+            items: List["A"]
+
+        a1 = A([])
+        a2 = A([a1])
+        self.assertRaises(TypeError, A, [1])
 
     def test_forward_references(self):
         @dataclass
