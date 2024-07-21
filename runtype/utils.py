@@ -2,6 +2,7 @@ import inspect
 import contextvars
 from contextlib import contextmanager
 
+
 def get_func_signatures(typesystem, f):
     sig = inspect.signature(f)
     typesigs = []
@@ -13,9 +14,9 @@ def get_func_signatures(typesystem, f):
         t = p.annotation
         if t is sig.empty:
             t = typesystem.default_type
-        else:
-            # Canonize to detect more collisions on construction, instead of during dispatch
-            t = typesystem.to_canonical_type(t)
+
+        # Canonicalize to detect more collisions on construction, instead of during dispatch
+        t = typesystem.to_canonical_type(t)
 
         if p.default is not p.empty:
             # From now on, everything is optional
@@ -28,7 +29,7 @@ def get_func_signatures(typesystem, f):
 
 
 class ContextVar:
-    def __init__(self, default, name=''):
+    def __init__(self, default, name=""):
         self._var = contextvars.ContextVar(name, default=default)
 
     def get(self):

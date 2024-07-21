@@ -15,6 +15,7 @@ class DispatchError(Exception):
 
 
 # TODO: Remove test_subtypes, replace with support for Type[], like isa(t, Type[t])
+@dataclass
 class MultiDispatch:
     """Creates a dispatch group for multiple dispatch
 
@@ -22,15 +23,16 @@ class MultiDispatch:
         typesystem - instance for interfacing with the typesystem
         test_subtypes: indices of params that should be matched by subclass instead of isinstance.
     """
+    typesystem: TypeSystem
+    test_subtypes: Sequence[int] = ()
+    enable_generics: bool = False
 
-    def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
+    def __post_init__(self):
         self.fname_to_tree: Dict[str, TypeTree] = {}
-        self.typesystem: TypeSystem = typesystem
-        if test_subtypes:
+        if self.test_subtypes:
             warnings.warn("The test_subtypes option is deprecated and will be removed in the future."
                           "Use typing.Type[t] instead.", DeprecationWarning)
 
-        self.test_subtypes = test_subtypes
 
     def __call__(self, func=None, *, priority=None):
         """Decorate the function
@@ -54,7 +56,7 @@ class MultiDispatch:
             tree = self.fname_to_tree[fname]
         except KeyError:
             tree = self.fname_to_tree[fname] = TypeTree(
-                fname, self.typesystem, self.test_subtypes
+                fname, self.typesystem, self.test_subtypes, enable_generics=self.enable_generics
             )
 
         tree.define_function(func)
@@ -106,14 +108,16 @@ class TypeTree:
     _cache: Dict[tuple, Callable]
     typesystem: TypeSystem
     test_subtypes: Sequence[int]
+    enable_generics: bool
 
-    def __init__(self, name: str, typesystem: TypeSystem, test_subtypes: Sequence[int]):
+    def __init__(self, name: str, typesystem: TypeSystem, test_subtypes: Sequence[int], enable_generics=False):
         self.root = TypeNode()
         self._cache = {}
         self.name = name
         self.typesystem = typesystem
         self.test_subtypes = test_subtypes
         self._get_type = self.typesystem.get_type
+        self.enable_generics = enable_generics
 
         if self.test_subtypes:
             # Deprecated!!
@@ -132,13 +136,7 @@ class TypeTree:
     def find_function(self, args):
         nodes = [self.root]
         for i, a in enumerate(args):
-            nodes = [
-                n
-                for node in nodes
-                for n in node.follow_arg(
-                    a, self.typesystem, test_subtype=i in self.test_subtypes
-                )
-            ]
+            nodes = [ n for node in nodes for n in node.follow_arg( a, self.typesystem, test_subtype=i in self.test_subtypes) ]
 
         funcs = [node.func for node in nodes if node.func]
 
@@ -164,10 +162,15 @@ class TypeTree:
 
     def find_function_cached(self, args):
         "Memoized version of find_function"
-        try:
-            return self._cache[tuple(map(self._get_type, args))]
-        except KeyError:
+        if self.enable_generics:
+            sig = tuple(a if isinstance(a, type) else self._get_type(a) 
+                        for a in args)
+        else:
             sig = tuple(map(self._get_type, args))
+
+        try:
+            return self._cache[sig]
+        except KeyError:
             f = self.find_function(args)
             self._cache[sig] = f
             return f
