@@ -1,25 +1,29 @@
 Dispatch
 ========
 
-Provides a decorator that enables multiple-dispatch for functions.
+Provides a decorator that enables multiple-dispatch for functions.  Inspired by Julia.
 
 Features:
 
 - Full specificity resolution
 
-- Mypy support
+- Partial mypy support
 
-(Inspired by Julia)
+- Fast
 
-See :ref:`benchmarks <benchmarks-dispatch>`.
 
 Decorator
 ---------
+
+.. autofunction:: runtype.multidispatch
 
 .. autofunction:: runtype.Dispatch
 
 .. autoclass:: runtype.dispatch.MultiDispatch
     :members: choices, feed_token, copy, pretty, resume_parse, exhaust_lexer, accepts, as_immutable
+
+.. autoclass:: runtype.dispatch.DispatchError
+
 
 
 What is multiple-dispatch?
@@ -27,9 +31,11 @@ What is multiple-dispatch?
 
 Multiple-dispatch is an advanced technique for structuring code, that complements object-oriented programming.
 
-Unlike in OOP, where the type of the "object" (or: first argument) is always what determines the dispatch, in multiple-dispatch all the arguments decide together, according the idea of specificity: The more specific classes (i.e. subclasses) get picked before the more abstract ones (i.e. superclasses).
+You can think of multiple-dispatch as function overloading on steroids.
 
-That means that when you need to define a logical operation that applies to several types, you can first solve the most abstract case, and then slowly add special handling for more specific types as required. If you ever found yourself writing several "isinstance" in a row, you could probably use multiple-dispatch to write better code!
+In OOP, the type of the object (aka the first argument) always determines the dispatch. Methods of subclasses override the methods of their superclasses. In other words, the more specific type is chosen over the less specific type.
+
+In multiple-dispatch, all the arguments decide together, according the same idea of specificity: The more specific classes (i.e. subclasses) get picked over the less specific types (i.e. superclasses). In cases when the dispatch is ambiguous, which will happen if different parameters can't agree on the correct dispatch, an error will be thrown.
 
 Multiple-dispatch allows you to:
 
@@ -37,7 +43,13 @@ Multiple-dispatch allows you to:
 
 2. Group your functions based on "action" instead of based on type.
 
-You can think of multiple-dispatch as function overloading on steroids.
+3. Replace long sequences of "if isinstance" statements
+
+
+A common way to use multiple-dispatch, is to first implement the most abstract case, and then slowly add special handling for more specific types as required.
+
+It is particularly useful for visiting ASTs.
+
 
 Runtype's dispatcher
 --------------------
@@ -166,14 +178,13 @@ Dispatch is designed to always throw an error when the right choice isn't obviou
 Another example:
 ::
 
-    @md
-    def join(seq, sep: str = ''):
-        return sep.join(str(s) for s in seq)
+    >>> @md
+    ... def join(seq, sep: str = ''):
+    ...    return sep.join(str(s) for s in seq)
 
-    @md
-    def join(seq, sep: list):
-        return join(join(sep, str(s)) for s in seq)
-    ...
+    >>> @md
+    ... def join(seq, sep: list):
+    ...    return join(join(sep, str(s)) for s in seq)
 
     >>> join([0, 0, 7])                 # -> 1st definition
     '007'

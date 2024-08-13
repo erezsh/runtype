@@ -11,7 +11,7 @@ from .typesystem import TypeSystem
 
 
 class DispatchError(Exception):
-    pass
+    "Thrown whenever a dispatch fails. Contains text describing the conflict."
 
 
 # TODO: Remove test_subtypes, replace with support for Type[], like isa(t, Type[t])
@@ -21,6 +21,7 @@ class MultiDispatch:
     Parameters:
         typesystem - instance for interfacing with the typesystem
         test_subtypes: indices of params that should be matched by subclass instead of isinstance.
+                        (will be soon deprecated, and replaced by using Type[..] annotations)
     """
 
     def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
