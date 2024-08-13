@@ -41,7 +41,7 @@ sphinx_markdown_tables = "*"
 sphinx_rtd_theme = ">=1.2"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.2.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
