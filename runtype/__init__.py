@@ -57,25 +57,25 @@ class PythonDispatch:
                 >>> from runtype import multidispatch as md
 
                 >>> @md
-                ... def add1(i: Optional[int]):
+                ... def add1(i: int):
                 ...     return i + 1
 
                 >>> @md
-                ... def add1(s: Optional[str]):
-                ...     return s + "1"
+                ... def add1(s: str):
+                ...     return s + '1'
 
                 >>> @md
                 ... def add1(a):  # accepts any type (least-specific)
-                ...     return (a, 1)
+                ...     return ('add', a, 1)
 
                 >>> add1(1)
                 2
 
-                >>> add1("1")
+                >>> add1('1')
                 11
 
                 >>> add1(1.0)
-                (1.0, 1)
+                ('add', 1.0, 1)
 
 
         """

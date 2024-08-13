@@ -19,9 +19,9 @@ class MultiDispatch:
     """Creates a dispatch group for multiple dispatch
 
     Parameters:
-        typesystem - instance for interfacing with the typesystem
+        typesystem (Typesystem): Which type-system to use for dispatch.
         test_subtypes: indices of params that should be matched by subclass instead of isinstance.
-                        (will be soon deprecated, and replaced by using Type[..] annotations)
+                        (will be soon deprecated and replaced by using Type[..] annotations)
     """
 
     def __init__(self, typesystem: TypeSystem, test_subtypes: Sequence[int] = ()):
