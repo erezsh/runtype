@@ -31,14 +31,14 @@ pytest-benchmark = "*"
 # plum-dispatch = "*"
 # multipledispatch = "*"
 
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-recommonmark = "*"
-sphinx-gallery = "*"
-sphinx_markdown_tables = "*"
-sphinx_rtd_theme = ">=1.2"
+# -- Groups not supported by old versions of poetry, had problems with gh-actions
+# [tool.poetry.group.docs]
+# optional = true
+# [tool.poetry.group.docs.dependencies]
+# recommonmark = "*"
+# sphinx-gallery = "*"
+# sphinx_markdown_tables = "*"
+# sphinx_rtd_theme = ">=1.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
