@@ -50,7 +50,7 @@ class MultiDispatch:
                 "Must either provide a function to decorate, or set a priority"
             )
 
-        fname = func.__name__
+        fname = func.__qualname__
         try:
             tree = self.fname_to_tree[fname]
         except KeyError:

@@ -121,20 +121,21 @@ assert mul([1, 2], [3, 4]) == [3, 8]        # list, list
 Dispatch can also be used for extending the dataclass builtin `__init__`:
 
 ```python
-@dataclass(frozen=False)
+@dataclass
 class Point:
     x: int = 0
     y: int = 0
-    
+
     @md
     def __init__(self, points: list | tuple):
-        self.x, self.y = points
+        # Call default constructor
+        self.__init__(*points)
 
     @md
     def __init__(self, points: dict):
-        self.x = points['x']
-        self.y = points['y']
-    
+        # Call default constructor
+        self.__init__(points['x'], points['y'])
+
 # Test constructors
 p0 = Point()                         # Default constructor
 assert p0 == Point(0, 0)             # Default constructor

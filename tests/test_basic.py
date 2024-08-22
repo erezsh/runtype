@@ -704,6 +704,19 @@ class TestDispatch(TestCase):
         assert f(2) == "int"
         assert f(None) == "none"
 
+    def test_qualified_name(self):
+        md = Dispatch()
+
+        class A:
+            @md
+            def a(self, points: list):
+                ...
+
+        class B:
+            @md
+            def a(self, points: list):
+                ...
+
 
 class TestDataclass(TestCase):
     def setUp(self):
