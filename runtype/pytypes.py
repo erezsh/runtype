@@ -27,9 +27,6 @@ except ImportError:
 
 
 
-py38 = sys.version_info >= (3, 8)
-
-
 class LengthMismatchError(TypeMismatchError):
     pass
 
@@ -486,21 +483,6 @@ _type_cast_mapping = {
 }
 
 
-if sys.version_info >= (3, 7):
-    origin_list = list
-    origin_dict = dict
-    origin_tuple = tuple
-    origin_set = set
-    origin_frozenset = frozenset
-else:
-    origin_list = typing.List
-    origin_dict = typing.Dict
-    origin_tuple = typing.Tuple
-    origin_set = typing.Set
-    origin_frozenset = typing.FrozenSet
-
-
-
 class ATypeCaster(ABC):
     @abstractmethod
     def to_canon(self, t: typing.Any): ...
@@ -575,19 +557,19 @@ class TypeCaster(ATypeCaster):
 
         args = getattr(t, '__args__', None)
 
-        if origin is origin_list:
+        if origin is list:
             x ,= args
             return List[to_canon(x)]
-        elif origin is origin_set:
+        elif origin is set:
             x ,= args
             return Set[to_canon(x)]
-        elif origin is origin_frozenset:
+        elif origin is frozenset:
             x ,= args
             return FrozenSet[to_canon(x)]
-        elif origin is origin_dict:
+        elif origin is dict:
             k, v = args
             return Dict[to_canon(k), to_canon(v)]
-        elif origin is origin_tuple:
+        elif origin is tuple:
             if not args:
                 return Tuple
             if Ellipsis in args:
@@ -603,7 +585,7 @@ class TypeCaster(ATypeCaster):
         elif origin is abc.Callable or origin is typing.Callable:
             return Callable[ProductType(to_canon(x) for x in args[:-1]), to_canon(args[-1])]
             return Callable  # TODO
-        elif py38 and origin is typing.Literal:
+        elif origin is typing.Literal:
             return OneOf(args)
         elif origin is abc.Mapping or origin is typing.Mapping:
             k, v = args
