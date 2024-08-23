@@ -1,11 +1,10 @@
 "User-facing API for validation"
 
-from typing import Any, Dict, List, Tuple, Set, FrozenSet
 from functools import wraps
 
 from .common import CHECK_TYPES
 from .utils import get_func_signatures
-from .pytypes import TypeMismatchError, type_caster
+from .pytypes import TypeMismatchError, type_caster, All
 from .typesystem import TypeSystem
 
 def ensure_isa(obj, t, sampler=None):
@@ -54,24 +53,6 @@ def assert_isa(obj, t):
             raise TypeError(msg)
 
 
-_CANONICAL_TYPES = {
-    # Any: object,
-    List: list,
-    Set: set,
-    FrozenSet: frozenset,
-    Dict: dict,
-    Tuple: tuple,
-    List[Any]: list,
-    Set[Any]: set,
-    FrozenSet[Any]: frozenset,
-    Dict[Any, Any]: dict,
-    Tuple[Any, ...]: tuple,
-}
-
-def to_canonical_type(t):
-    "Turns List -> list, Dict -> dict, etc."
-    return _CANONICAL_TYPES.get(t, t)
-
 
 def issubclass(t1, t2):
     """Test if t1 is a subclass of t2
@@ -90,9 +71,9 @@ def issubclass(t1, t2):
 class PythonTyping(TypeSystem):
     isinstance = staticmethod(isa)
     issubclass = staticmethod(issubclass)
-    to_canonical_type = staticmethod(to_canonical_type)
+    to_canonical_type = type_caster.to_canon
     get_type = type
-    default_type = object
+    default_type = All
 
 
 def validate_func(f):

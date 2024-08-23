@@ -12,20 +12,6 @@ Features:
 - Fast
 
 
-Decorator
----------
-
-.. autofunction:: runtype.multidispatch
-
-.. autofunction:: runtype.Dispatch
-
-.. autoclass:: runtype.dispatch.MultiDispatch
-    :members: choices, feed_token, copy, pretty, resume_parse, exhaust_lexer, accepts, as_immutable
-
-.. autoclass:: runtype.dispatch.DispatchError
-
-
-
 What is multiple-dispatch?
 --------------------------
 
@@ -118,6 +104,19 @@ Users who want to define a dispatch across several modules, or to have more gran
 Then, the group can be used as a decorator for any number of functions, in any module.
 
 Functions will still be grouped by name.
+
+
+Decorator
+---------
+
+.. autofunction:: runtype.multidispatch
+
+.. autofunction:: runtype.Dispatch
+
+.. autoclass:: runtype.dispatch.MultiDispatch
+    :members: choices, feed_token, copy, pretty, resume_parse, exhaust_lexer, accepts, as_immutable
+
+.. autoclass:: runtype.dispatch.DispatchError
 
 
 Specificity
