@@ -1,5 +1,6 @@
 "User-facing API for validation"
 
+from typing import Any, Tuple, Union, Type
 from functools import wraps
 
 from .common import CHECK_TYPES
@@ -23,21 +24,16 @@ def is_subtype(t1, t2):
     return ct1 <= ct2
 
 
-def isa(obj, t):
+def isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]) -> bool:
     """Tests if 'obj' is of type 't'
 
     Behaves like Python's isinstance, but supports the ``typing`` module and constraints.
     """
     ct = type_caster.to_canon(t)
     return ct.test_instance(obj)
-    # try:
-    #     ensure_isa(obj, t)
-    #     return True
-    # except TypeMismatchError:
-    #     return False
 
 
-def assert_isa(obj, t):
+def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]):
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
 
     Does nothing if Python is run with -O. (like the assert statement)
@@ -54,7 +50,7 @@ def assert_isa(obj, t):
 
 
 
-def issubclass(t1, t2):
+def issubclass(t1: Type[Any], t2: Union[Type[Any], Tuple[Type[Any], ...]]) -> bool:
     """Test if t1 is a subclass of t2
 
     Parameters:

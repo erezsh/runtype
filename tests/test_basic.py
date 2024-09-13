@@ -4,7 +4,7 @@ from collections import abc
 import sys
 
 import typing
-from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet, Sequence, Type
+from typing import Any, List, Dict, Tuple, Union, Optional, Callable, Set, FrozenSet, Sequence, Type, TypeVar, Generic
 from collections.abc import Iterable
 from dataclasses import FrozenInstanceError, field
 
@@ -716,6 +716,17 @@ class TestDispatch(TestCase):
             @md
             def a(self, points: list):
                 ...
+
+    def test_generic(self):
+        _Leaf_T = TypeVar("_Leaf_T")
+        class Tree(Generic[_Leaf_T]):
+            pass
+
+        @multidispatch
+        def f(t: Tree[int]):
+            pass
+
+        f(Tree())
 
 
 class TestDataclass(TestCase):

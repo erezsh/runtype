@@ -574,7 +574,7 @@ class TypeCaster(ATypeCaster):
                 return Tuple
             if Ellipsis in args:
                 if len(args) != 2 or args[0] == Ellipsis:
-                    raise ValueError("Tuple with '...'' expected to be of the exact form: tuple[t, ...].")
+                    raise ValueError("Tuple with '...' expected to be of the exact form: tuple[t, ...].")
                 return TupleEllipsis[to_canon(args[0])]
 
             return ProductType([to_canon(x) for x in args])
@@ -584,7 +584,6 @@ class TypeCaster(ATypeCaster):
             return SumType(res)
         elif origin is abc.Callable or origin is typing.Callable:
             return Callable[ProductType(to_canon(x) for x in args[:-1]), to_canon(args[-1])]
-            return Callable  # TODO
         elif origin is typing.Literal:
             return OneOf(args)
         elif origin is abc.Mapping or origin is typing.Mapping:
@@ -611,6 +610,8 @@ class TypeCaster(ATypeCaster):
                 return Type[self.to_canon(t)]
             # TODO test issubclass on t.__args__
             return Type
+        elif isinstance(t, typing._GenericAlias):
+            return self._to_canon(origin)
 
         raise NotImplementedError("No support for type:", t)
 
