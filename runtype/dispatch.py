@@ -188,12 +188,15 @@ class TypeTree:
 
     def choose_most_specific_function(self, args, *funcs):
         issubclass = self.typesystem.issubclass
+        any_type = self.typesystem.any_type
 
         class IsSubclass:
             def __init__(self, k):
                 self.i, self.t = k
 
             def __lt__(self, other):
+                if self.t is any_type:
+                    return False
                 return issubclass(self.t, other.t)
 
         most_specific_per_param = []
@@ -208,7 +211,7 @@ class TypeTree:
                 if ms_t == t:
                     # Add more indexes with the same type
                     ms_set.add(i)
-                elif issubclass(t, ms_t) or not issubclass(ms_t, t):
+                elif (issubclass(t, ms_t) and t is not any_type) or not issubclass(ms_t, t):
                     # Possibly ambiguous. We might throw an error below
                     # TODO secondary candidates should still obscure less specific candidates
                     #      by only considering the top match, we are ignoring them

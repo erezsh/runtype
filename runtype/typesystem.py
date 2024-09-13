@@ -1,4 +1,4 @@
-
+from typing import Any
 
 class TypeSystem:
     def isinstance(self, obj, t: type) -> bool:
@@ -14,6 +14,7 @@ class TypeSystem:
         raise NotImplementedError()
 
     default_type: type = NotImplemented
+    any_type: type = NotImplemented
 
 
 
@@ -22,3 +23,4 @@ class PythonBasic(TypeSystem):
     issubclass = issubclass
     get_type = type
     default_type = object
+    any_type = Any

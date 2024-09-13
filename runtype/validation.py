@@ -5,7 +5,8 @@ from functools import wraps
 
 from .common import CHECK_TYPES
 from .utils import get_func_signatures
-from .pytypes import TypeMismatchError, type_caster, All
+from .pytypes import TypeMismatchError, type_caster
+from . import pytypes
 from .typesystem import TypeSystem
 
 def ensure_isa(obj, t, sampler=None):
@@ -69,7 +70,8 @@ class PythonTyping(TypeSystem):
     issubclass = staticmethod(issubclass)
     to_canonical_type = type_caster.to_canon
     get_type = type
-    default_type = All
+    default_type = pytypes.All
+    any_type = pytypes.Any
 
 
 def validate_func(f):
