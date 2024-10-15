@@ -728,6 +728,24 @@ class TestDispatch(TestCase):
 
         f(Tree())
 
+    def test_literal_dispatch(self):
+        try:
+            @multidispatch
+            def f(x: typing.Literal[1]):
+                return 1
+
+            @multidispatch
+            def f(x: typing.Literal[2]):
+                return 2
+        except ValueError:
+            pass
+        else:
+            assert False
+
+        # If it was working..
+        # assert f(1) == 1
+        # assert f(2) == 2
+
 
 class TestDataclass(TestCase):
     def setUp(self):
