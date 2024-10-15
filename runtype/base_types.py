@@ -52,6 +52,7 @@ class Type(ABC):
     def __le__(self, other):
         return NotImplemented
 
+
 class AnyType(Type):
     """Represents the Any type.
 
