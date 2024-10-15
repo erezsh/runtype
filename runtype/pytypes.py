@@ -177,6 +177,15 @@ class PythonDataType(DataType, PythonType):
 
         return obj
 
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return False
+        return self.kernel == other.kernel
+
+    def __hash__(self):
+        return hash((type(self), self.kernel))
+
+
 class TupleType(PythonType):
     def test_instance(self, obj, sampler=None):
         return isinstance(obj, tuple)
