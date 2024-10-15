@@ -177,6 +177,10 @@ class TypeTree:
         for signature in get_func_signatures(self.typesystem, f):
             node = self.root
             for t in signature:
+                if not isinstance(t, type):
+                    # XXX this is a temporary fix for preventing certain types from being used for dispatch
+                    if not getattr(t, 'ALLOW_DISPATCH', True):
+                        raise ValueError(f"Type {t} cannot be used for dispatch")
                 node = node.follow_type[t]
 
             if node.func is not None:

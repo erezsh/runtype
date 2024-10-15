@@ -200,6 +200,8 @@ cv_type_checking = contextvars.ContextVar('type_checking', default=False)
 class OneOf(PythonType):
     values: typing.Sequence
 
+    ALLOW_DISPATCH = False
+
     def __init__(self, values):
         self.values = values
 
@@ -216,6 +218,7 @@ class OneOf(PythonType):
     def cast_from(self, obj):
         if obj not in self.values:
             raise TypeMismatchError(obj, self)
+
 
 
 class GenericType(base_types.GenericType, PythonType):
@@ -448,6 +451,8 @@ class _TimeDelta(PythonDataType):
 
 
 class _NoneType(OneOf):
+    ALLOW_DISPATCH = True   # Make an exception
+
     def __init__(self):
         super().__init__([None])
 
