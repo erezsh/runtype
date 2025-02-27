@@ -1,4 +1,5 @@
 import sys
+import copy
 import unittest
 from unittest import TestCase
 import typing
@@ -314,6 +315,47 @@ class TestTypes(TestCase):
         assert TextIO <= IO
         assert IO.test_instance(sys.stdout)
 
+    def test_equality_sanity(self):
+        def t(o):
+            return assert_object_sanity(make_type(o))
+
+        t(Int)
+        t(Any)
+        t(All)
+        t(NoneType)
+        t(List[int])
+        t(Dict[int, str])
+        t(tuple[int, str])
+        # t(Iter[int])
+        t(typing.Sequence[int])
+        t(Mapping[int, str])
+        t(Literal([1, 2]))
+        # t(PhantomType())
+        # t(PhantomType()[int])
+
+
+import pickle
+def assert_object_copy_sanity(o, copy):
+    o2 = copy(o)
+    assert o == o2, (o, o2)
+    assert o <= o2
+    assert o >= o2
+    assert not (o != o2)
+    assert not (o < o2)
+    assert not (o > o2)
+    assert hash(o) == hash(o2), (o, o2)
+
+def assert_object_sanity(o):
+    assert_object_copy_sanity(o, lambda x: x)
+    assert_object_copy_sanity(o, copy.copy)
+    assert_object_copy_sanity(o, copy.deepcopy)
+    assert_object_copy_sanity(o, lambda x: pickle.loads(pickle.dumps(x)))
+    # assert o == o
+    # assert not (o != o)
+    # assert o <= o
+    # assert o >= o
+    # assert not (o < o)
+    # assert not (o > o)
 
 
 if __name__ == '__main__':
