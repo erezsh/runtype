@@ -219,6 +219,9 @@ class OneOf(PythonType):
         if obj not in self.values:
             raise TypeMismatchError(obj, self)
 
+    def __hash__(self):
+        return hash((type(self), frozenset(self.values)))
+
 
 
 class GenericType(base_types.GenericType, PythonType):
@@ -678,3 +681,11 @@ def le(self: OneOf, other: PythonType):
     except TypeMismatchError:
         return False
     return True
+
+@dp
+def eq(self: PythonDataType, other: PythonDataType):
+    return self.kernel == other.kernel
+
+@dp
+def eq(self: OneOf, other: OneOf):
+    return self.values == other.values

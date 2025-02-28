@@ -52,8 +52,14 @@ class Type(ABC):
     def __le__(self, other):
         return NotImplemented
 
+    def __lt__(self, other):
+        return self <= other and self != other
 
-class AnyType(Type):
+class SingletonType(Type):
+    def __hash__(self):
+        return hash(type(self))
+
+class AnyType(SingletonType):
     """Represents the Any type.
 
     Any may contain any other type, and be contained by any other type.
@@ -64,9 +70,9 @@ class AnyType(Type):
 
     def __repr__(self):
         return "Any"
+    
 
-
-class AllType(Type):
+class AllType(SingletonType):
     """Represents the All type.
 
     All contains every other type.
@@ -313,6 +319,10 @@ def eq(self: GenericType, other: Type):
 @dp
 def eq(self: PhantomGenericType, other: PhantomGenericType):
     return self.base == other.base and self.item == other.base
+
+@dp
+def eq(self: SingletonType, other: SingletonType):
+    return type(self) == type(other)
 
 
 # le() for AllType & AnyType
