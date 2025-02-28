@@ -325,7 +325,7 @@ class TestTypes(TestCase):
         t(NoneType)
         t(List[int])
         t(Dict[int, str])
-        t(tuple[int, str])
+        t(typing.Tuple[int, str])
         # t(Iter[int])
         t(typing.Sequence[int])
         t(Mapping[int, str])
