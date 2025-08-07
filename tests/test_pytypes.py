@@ -315,6 +315,19 @@ class TestTypes(TestCase):
         assert TextIO <= IO
         assert IO.test_instance(sys.stdout)
 
+    def test_iterable(self):
+        t = make_type(cabc.Iterable[typing.Tuple[str, typing.Tuple]])
+        assert t.test_instance([('a', (1, 2))])
+        assert t.test_instance([('a', (1, 'b'))])
+        assert not t.test_instance([('a', 1)])
+        assert not t.test_instance([(1, (1, 2))])
+
+        # Test with iterator
+        assert t.test_instance(iter([('a', (1, 2))]))
+
+        # Test with generator
+        assert t.test_instance((s, (1, 2)) for s in ['a'])
+
     def test_equality_sanity(self):
         def t(o):
             return assert_object_sanity(make_type(o))
