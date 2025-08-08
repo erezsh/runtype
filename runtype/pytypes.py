@@ -612,6 +612,9 @@ class TypeCaster(ATypeCaster):
         elif origin is abc.Sequence or origin is typing.Sequence:
             x ,= args
             return Sequence[to_canon(x)]
+        elif origin is abc.Iterable or origin is typing.Iterable:
+            x, = args
+            return Iter[to_canon(x)]
         elif origin is abc.MutableSequence or origin is typing.MutableSequence:
             x ,= args
             return MutableSequence[to_canon(x)]
