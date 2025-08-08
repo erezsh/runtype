@@ -316,7 +316,7 @@ class TestTypes(TestCase):
         assert IO.test_instance(sys.stdout)
 
     def test_iterable(self):
-        t = make_type(cabc.Iterable[typing.Tuple[str, typing.Tuple]])
+        t = make_type(typing.Iterable[typing.Tuple[str, typing.Tuple]])
         assert t.test_instance([('a', (1, 2))])
         assert t.test_instance([('a', (1, 'b'))])
         assert not t.test_instance([('a', 1)])
