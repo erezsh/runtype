@@ -2,22 +2,30 @@ name: Tests
 on: [push, pull_request]
 
 jobs:
-  build:
-    runs-on: ubuntu-20.04   # See https://github.com/actions/setup-python/issues/544
+  test:
+    runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy3"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "pypy-3.10"]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+      
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+          
       - name: Install Poetry
-        run: pip install poetry
-      - name: Install Dependencies
-        run: poetry install
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.2
+          
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction
+          
       - name: Run tests
         run: |
           poetry run pytest
