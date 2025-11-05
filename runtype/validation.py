@@ -3,8 +3,8 @@
 from typing import Any, Tuple, Union, Type
 from functools import wraps
 
-from .common import CHECK_TYPES
-from .utils import get_func_signatures
+from .common import CHECK_TYPES, DEFAULT_MAX_REPR_LENGTH
+from .utils import get_func_signatures, limit_length
 from .pytypes import TypeMismatchError, type_caster
 from . import pytypes
 from .typesystem import TypeSystem
@@ -34,7 +34,7 @@ def isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]) -> bool:
     return ct.test_instance(obj)
 
 
-def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]):
+def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]], max_length: int | None = DEFAULT_MAX_REPR_LENGTH) -> None:
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
 
     Does nothing if Python is run with -O. (like the assert statement)
@@ -44,9 +44,10 @@ def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]):
             ensure_isa(obj, t)
         except TypeMismatchError as e:
             item_value, item_type = e.args
-            msg = f"Expected value of type '{t}', instead got '{obj!r}'."
+            obj_repr = limit_length(repr(obj), max_length)
+            msg = f"Expected value of type '{t}', instead got '{obj_repr}'."
             if item_value is not obj:
-                msg += f"\n\n    Failed on item: '{item_value!r}', expected type '{item_type}'."
+                msg += f"\n\n    Failed on item with value: {item_value!r}\n    Expected type for item:    {item_type}."
             raise TypeError(msg)
 
 

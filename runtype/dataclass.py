@@ -21,9 +21,10 @@ else:
         return lambda f: f
 
 
-from .common import CHECK_TYPES
+from .common import CHECK_TYPES, DEFAULT_MAX_REPR_LENGTH
 from .validation import TypeMismatchError, ensure_isa as default_ensure_isa
 from .pytypes import TypeCaster, SumType, NoneType, ATypeCaster, PythonType, type_caster
+from .utils import limit_length
 
 Required = object()
 Skip = object()
@@ -93,6 +94,16 @@ class Configuration(ABC):
         however this assertion is not validated, for performance reasons.
         """
 
+    @property
+    def max_error_repr_length(self) -> int | None:
+        """Maximum length of object representation in error messages.
+
+        If None, no limit is applied.
+
+        Default value is %s.
+        """ % DEFAULT_MAX_REPR_LENGTH
+        return DEFAULT_MAX_REPR_LENGTH
+
 
 class PythonConfiguration(Configuration):
     """Configuration to support Mypy-like and Pydantic-like features
@@ -141,7 +152,7 @@ def _get_field_type(type_caster, field):
         return type_
 
 
-def _validate_attr(config, should_cast, sampler, obj, name, type_, value):
+def _validate_attr(config: Configuration, should_cast, sampler, obj, name, type_, value):
     try:
         if should_cast:  # Basic cast
             assert not sampler
@@ -154,10 +165,11 @@ def _validate_attr(config, should_cast, sampler, obj, name, type_, value):
             config.ensure_isa(value, type_, sampler)
     except TypeMismatchError as e:
         item_value, item_type = e.args
+        obj_repr = limit_length(repr(value), config.max_error_repr_length)
         msg = f"[{type(obj).__name__}] Attribute '{name}' expected a value of type '{type_}'."
-        msg += f" Instead got type '{type(value).__name__}', with value {value!r}."
-        if item_value is not value:
-            msg += f"\n\n    Failed on item: {item_value!r}, expected type {item_type}"
+        msg += f" Instead got type '{type(value).__name__}', with value {obj_repr}."
+        if item_value is not obj:
+            msg += f"\n\n    Failed on item with value: {item_value!r}\n    Expected type for item:    {item_type}."
         raise TypeError(msg)
     return Skip
 

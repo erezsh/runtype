@@ -41,3 +41,10 @@ class ContextVar:
             yield
         finally:
             self._var.reset(token)
+
+
+def limit_length(s: str, max_length: int | None) -> str:
+    """Limit the length of string 's' to 'max_length' characters"""
+    if max_length is None or len(s) <= max_length:
+        return s
+    return s[:max_length//2] + "  ... ...  " + s[-max_length//2:]
