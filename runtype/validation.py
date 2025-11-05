@@ -1,6 +1,6 @@
 "User-facing API for validation"
 
-from typing import Any, Tuple, Union, Type
+from typing import Any, Tuple, Union, Type, Optional
 from functools import wraps
 
 from .common import CHECK_TYPES, DEFAULT_MAX_REPR_LENGTH
@@ -34,7 +34,7 @@ def isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]]) -> bool:
     return ct.test_instance(obj)
 
 
-def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]], max_length: int | None = DEFAULT_MAX_REPR_LENGTH) -> None:
+def assert_isa(obj: Any, t: Union[Type[Any], Tuple[Type[Any], ...]], max_length: Optional[int] = DEFAULT_MAX_REPR_LENGTH) -> None:
     """Ensure 'obj' is of type 't'. Otherwise, throws a TypeError
 
     Does nothing if Python is run with -O. (like the assert statement)

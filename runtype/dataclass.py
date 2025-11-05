@@ -95,7 +95,7 @@ class Configuration(ABC):
         """
 
     @property
-    def max_error_repr_length(self) -> int | None:
+    def max_error_repr_length(self) -> Optional[int]:
         """Maximum length of object representation in error messages.
 
         If None, no limit is applied.

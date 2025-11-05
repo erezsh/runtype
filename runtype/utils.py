@@ -1,3 +1,4 @@
+from typing import Optional
 import inspect
 import contextvars
 from contextlib import contextmanager
@@ -43,7 +44,7 @@ class ContextVar:
             self._var.reset(token)
 
 
-def limit_length(s: str, max_length: int | None) -> str:
+def limit_length(s: str, max_length: Optional[int]) -> str:
     """Limit the length of string 's' to 'max_length' characters"""
     if max_length is None or len(s) <= max_length:
         return s
