@@ -305,8 +305,11 @@ class DictType(GenericContainerType):
         assert isinstance(self.item, base_types.ProductType)
         kt, vt = self.item.types
         for k, v in sampler(obj.items()) if sampler else obj.items():
-            kt.validate_instance(k, sampler)
-            vt.validate_instance(v, sampler)
+            try:
+                kt.validate_instance(k, sampler)
+                vt.validate_instance(v, sampler)
+            except TypeMismatchError as e:
+                raise TypeMismatchError((k, v), self.item) from e
 
     def test_instance_items(self, obj: t.Mapping, sampler) -> bool:
         assert isinstance(self.item, base_types.ProductType)
