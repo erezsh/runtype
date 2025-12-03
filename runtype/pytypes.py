@@ -359,6 +359,7 @@ class CallableType(PythonDataType):
 
 Object = PythonDataType(object)
 Iter = SequenceType(PythonDataType(collections.abc.Iterable))
+OrderedDict = DictType(PythonDataType(collections.OrderedDict), variance=Variance.Invariant)
 Sequence = SequenceType(PythonDataType(abc.Sequence))
 List = SequenceType(PythonDataType(list), variance=Variance.Invariant)
 MutableSequence = SequenceType(PythonDataType(abc.MutableSequence), variance=Variance.Invariant)
@@ -486,6 +487,7 @@ _type_cast_mapping = {
     set: Set,
     frozenset: FrozenSet,
     dict: Dict,
+    collections.OrderedDict: OrderedDict,
     tuple: Tuple,
     bool: Bool,
     None: NoneType,
@@ -633,6 +635,9 @@ class TypeCaster(ATypeCaster):
                 return Type[self.to_canon(t)]
             # TODO test issubclass on t.__args__
             return Type
+        elif origin is collections.OrderedDict:
+            a, b = args
+            return OrderedDict[to_canon(a), to_canon(b)]
         elif isinstance(t, typing._GenericAlias):
             return self._to_canon(origin)
 
