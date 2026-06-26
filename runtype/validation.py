@@ -66,11 +66,11 @@ def issubclass(t1: Type[Any], t2: Union[Type[Any], Tuple[Type[Any], ...]]) -> bo
     return is_subtype(t1, t2)
 
 
-class PythonTyping(TypeSystem):
-    isinstance = staticmethod(isa)
-    issubclass = staticmethod(issubclass)
+class PythonTyping(TypeSystem[pytypes.PythonType]):
+    isinstance = staticmethod(isa)            # type: ignore[assignment]
+    issubclass = staticmethod(issubclass)     # type: ignore[assignment]
     to_canonical_type = type_caster.to_canon
-    get_type = type
+    get_type = type                           # type: ignore[assignment]
     default_type = pytypes.All
     any_type = pytypes.Any
 
