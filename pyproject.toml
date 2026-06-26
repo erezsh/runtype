@@ -55,3 +55,15 @@ addopts = "--benchmark-skip --benchmark-warmup=on --benchmark-warmup-iterations=
 [tool.ruff]
 line-length = 120
 target-version = "py311"
+
+[tool.ruff.lint.per-file-ignores]
+# silence `@dp` multiple-dispatch errors (the le/eq/ge operator overloads)
+"runtype/base_types.py" = ["F811"]
+"runtype/pytypes.py" = ["F811"]
+
+[tool.mypy]
+
+[[tool.mypy.overrides]]
+# silence mypy's no-redef for the internal dispatch modules only. 
+module = ["runtype.base_types", "runtype.pytypes"]
+disable_error_code = ["no-redef"]

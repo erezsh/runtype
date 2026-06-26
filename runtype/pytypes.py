@@ -20,6 +20,7 @@ from . import base_types
 from . import datetime_parse
 
 
+typing_extensions: t.Optional[types.ModuleType]
 try:
     import typing_extensions
 except ImportError:
