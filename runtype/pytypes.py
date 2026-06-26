@@ -348,7 +348,7 @@ class CallableType(PythonDataType):
     def __init__(self, args: PythonType = Any, ret: PythonType = Any):
         self.args = args
         self.ret = ret
-        self.kernel = typing.Callable
+        self.kernel = typing.Callable  # type: ignore[assignment]
 
     def __getitem__(self, signature):
         args, ret = signature

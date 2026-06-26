@@ -118,7 +118,7 @@ class TypeTree:
 
         if self.test_subtypes:
             # Deprecated!!
-            self.find_function_cached = self._old_find_function_cached
+            self.find_function_cached = self._old_find_function_cached  # type: ignore[method-assign]
 
     def get_arg_types(self, args):
         if self.test_subtypes:
