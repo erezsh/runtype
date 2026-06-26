@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 from runtype import Dispatch, DispatchError, dataclass, isa, is_subtype, issubclass, assert_isa, String, Int, validate_func, cv_type_checking, multidispatch
-from runtype.dispatch import MultiDispatch
+from runtype.dispatch import MultiDispatch, DuplicateSignatureError
 from runtype.dataclass import Configuration
 
 try:
@@ -291,7 +291,7 @@ class TestDispatch(TestCase):
             @dy
             def f(x: int):
                 return NotImplemented
-        except ValueError:
+        except DuplicateSignatureError:
             pass
         else:
             assert False, f
@@ -512,7 +512,7 @@ class TestDispatch(TestCase):
             @dy
             def f(i:int, j:object, k:object):
                 return "Oops"
-        except ValueError:
+        except DuplicateSignatureError:
             pass
         else:
             assert False
@@ -536,7 +536,7 @@ class TestDispatch(TestCase):
                     def f(x):
                         pass
                     assert False
-                except ValueError:
+                except DuplicateSignatureError:
                     pass
 
             for t in types[1:]:
@@ -545,7 +545,7 @@ class TestDispatch(TestCase):
                     def f(x: t):
                         pass
                     assert False, t
-                except ValueError:
+                except DuplicateSignatureError:
                     pass
 
         _test_canon(object, Union[object], include_none=True)
@@ -688,7 +688,7 @@ class TestDispatch(TestCase):
         def f(a: int):
             return 'a'
         f.__module__ = 'a'
-        self.assertRaises(ValueError, multidispatch, f)
+        self.assertRaises(DuplicateSignatureError, multidispatch, f)
 
     def test_none(self):
         dp = Dispatch()

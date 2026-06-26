@@ -1,6 +1,6 @@
 from collections import defaultdict
 from functools import wraps
-from typing import Any, Dict, Callable, Sequence
+from typing import Any, Dict, Callable, Sequence, List
 from operator import itemgetter
 import warnings
 
@@ -12,6 +12,22 @@ from .typesystem import TypeSystem
 
 class DispatchError(Exception):
     "Thrown whenever a dispatch fails. Contains text describing the conflict."
+
+
+@dataclass
+class DuplicateSignatureError(Exception):
+    signature: List[type]
+    first: Callable
+    second: Callable
+
+    def __str__(self):
+        code1 = self.first.__code__
+        code2 = self.second.__code__
+        return (f"Duplicate signature defined for '{self.first.__name__}'\n"
+                 f" - Signature: {self.signature}.\n"
+                 f" - Definition 1: {code1.co_filename}:{code1.co_firstlineno}\n"
+                 f" - Definition 2: {code2.co_filename}:{code2.co_firstlineno}\n"
+        )
 
 
 # TODO: Remove test_subtypes, replace with support for Type[], like isa(t, Type[t])
@@ -184,10 +200,8 @@ class TypeTree:
                 node = node.follow_type[t]
 
             if node.func is not None:
-                code_obj = node.func[0].__code__
-                raise ValueError(
-                    f"Function {f.__name__} at {code_obj.co_filename}:{code_obj.co_firstlineno} matches existing signature: {signature}!"
-                )
+                raise DuplicateSignatureError(signature, node.func[0], f)
+
             node.func = f, signature
 
     def choose_most_specific_function(self, args, *funcs):
