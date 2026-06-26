@@ -52,6 +52,9 @@ class Type(ABC):
     def __le__(self, other):
         return NotImplemented
 
+    def __ge__(self, other):
+        return NotImplemented
+
     def __lt__(self, other):
         return self <= other and self != other
 
@@ -183,7 +186,7 @@ class GenericType(ContainerType):
     def __init__(self, base: Type, item: Union[type, Type], variance):
         assert isinstance(item, (Type, type)), item
         if isinstance(base, GenericType):
-            if not item <= base.item:
+            if not item <= base.item:  # type: ignore[operator]
                 raise TypeError(
                     f"Expecting new generic to be a subtype of base, but {item} </= {base.item}"
                 )
@@ -427,8 +430,8 @@ def le(self: Constraint, other: Type):
     return self.type <= other
 
 
-Type.__eq__ = eq
-Type.__le__ = le
-Type.__ge__ = ge
+Type.__eq__ = eq    # type: ignore[method-assign]
+Type.__le__ = le    # type: ignore[method-assign]
+Type.__ge__ = ge    # type: ignore[method-assign]
 
 # fmt: on

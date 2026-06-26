@@ -20,6 +20,7 @@ from . import base_types
 from . import datetime_parse
 
 
+typing_extensions: t.Optional[types.ModuleType]
 try:
     import typing_extensions
 except ImportError:
@@ -272,17 +273,17 @@ class SequenceType(GenericContainerType):
     def accepts_any(self):
         return self.item is Any
 
-    def validate_instance_items(self, obj: t.Sequence, sampler):
+    def validate_instance_items(self, obj: t.Iterable, sampler):
         for item in sampler(obj) if sampler else obj:
             self.item.validate_instance(item, sampler)
 
-    def test_instance_items(self, obj: t.Sequence, sampler) -> bool:
+    def test_instance_items(self, obj: t.Iterable, sampler) -> bool:
         return all(
             self.item.test_instance(item, sampler)
             for item in (sampler(obj) if sampler else obj)
         )
 
-    def cast_from_items(self, obj: t.Sequence):
+    def cast_from_items(self, obj: t.Iterable):
         # Recursively cast each item
         return self.base.kernel(self.item.cast_from(item) for item in obj)
 
@@ -301,7 +302,7 @@ class DictType(GenericContainerType):
     def accepts_any(self):
         return self.item is Any or self.item == Any*Any
 
-    def validate_instance_items(self, obj: t.Mapping, sampler):
+    def validate_instance_items(self, obj: t.Mapping, sampler):  # type: ignore[override]
         assert isinstance(self.item, base_types.ProductType)
         kt, vt = self.item.types
         for k, v in sampler(obj.items()) if sampler else obj.items():
@@ -311,7 +312,7 @@ class DictType(GenericContainerType):
             except TypeMismatchError as e:
                 raise TypeMismatchError((k, v), self.item) from e
 
-    def test_instance_items(self, obj: t.Mapping, sampler) -> bool:
+    def test_instance_items(self, obj: t.Mapping, sampler) -> bool:  # type: ignore[override]
         assert isinstance(self.item, base_types.ProductType)
         kt, vt = self.item.types
         return all(
@@ -347,7 +348,7 @@ class CallableType(PythonDataType):
     def __init__(self, args: PythonType = Any, ret: PythonType = Any):
         self.args = args
         self.ret = ret
-        self.kernel = typing.Callable
+        self.kernel = typing.Callable  # type: ignore[assignment]
 
     def __getitem__(self, signature):
         args, ret = signature
